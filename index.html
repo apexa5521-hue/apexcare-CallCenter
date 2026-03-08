@@ -5,12 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>APEXCARE - نظام الجودة</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+  // تطبيق الثيم مبكراً لتجنب الوميض
+  (function(){
+    var t = localStorage.getItem('apex-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 <style>
+  /* ══════════════════════════════════════════
+     THEME VARIABLES
+  ══════════════════════════════════════════ */
   :root {
-    --apex-dark: #0a0e1a;
-    --apex-navy: #111827;
-    --apex-card: #161d2e;
-    --apex-border: #1e2d4a;
     --apex-gold: #d4a843;
     --apex-gold-light: #f0c96a;
     --apex-teal: #0ea5b0;
@@ -18,27 +24,99 @@
     --apex-red: #ef4444;
     --apex-green: #10b981;
     --apex-purple: #8b5cf6;
-    --apex-text: #e2e8f0;
-    --apex-muted: #64748b;
     --apex-radius: 12px;
+  }
+
+  /* الوضع الداكن (افتراضي) */
+  :root, [data-theme="dark"] {
+    --bg:          #0a0e1a;
+    --bg-nav:      rgba(10,14,26,0.97);
+    --bg-card:     #161d2e;
+    --bg-input:    #111827;
+    --bg-input-hover: #1a2234;
+    --border:      #1e2d4a;
+    --text:        #e2e8f0;
+    --text-muted:  #64748b;
+    --text-label:  #94a3b8;
+    --select-opt:  #111827;
+    --shadow:      0 4px 24px rgba(0,0,0,0.4);
+    
+    --apex-dark:   #0a0e1a;
+    --apex-navy:   #111827;
+    --apex-card:   #161d2e;
+    --apex-border: #1e2d4a;
+    --apex-text:   #e2e8f0;
+    --apex-muted:  #64748b;
     --apex-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  /* الوضع الفاتح */
+  [data-theme="light"] {
+    --bg:          #f1f5f9;
+    --bg-nav:      rgba(255,255,255,0.97);
+    --bg-card:     #ffffff;
+    --bg-input:    #f8fafc;
+    --bg-input-hover: #f1f5f9;
+    --border:      #e2e8f0;
+    --text:        #111827;
+    --text-muted:  #6b7280;
+    --text-label:  #374151;
+    --select-opt:  #ffffff;
+    --shadow:      0 2px 12px rgba(0,0,0,0.08);
+    
+    --apex-dark:   #f1f5f9;
+    --apex-navy:   #ffffff;
+    --apex-card:   #ffffff;
+    --apex-border: #e2e8f0;
+    --apex-text:   #111827;
+    --apex-muted:  #6b7280;
+    --apex-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  /* زر التبديل */
+  .theme-toggle {
+    width: 40px; height: 22px;
+    background: var(--border);
+    border-radius: 11px;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .theme-toggle::after {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    top: 3px; right: 3px;
+    transition: transform 0.3s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+  [data-theme="light"] .theme-toggle { background: #0ea5b0; }
+  [data-theme="light"] .theme-toggle::after { transform: translateX(-18px); }
+  .theme-toggle-wrap {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--text-muted); font-family: Cairo;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     font-family: 'Cairo', sans-serif;
-    background: var(--apex-dark);
-    color: var(--apex-text);
+    background: var(--bg);
+    color: var(--text);
     min-height: 100vh;
     direction: rtl;
+    transition: background 0.3s, color 0.3s;
   }
 
   /* ---- TOP NAV ---- */
   .nav {
-    background: rgba(10,14,26,0.95);
+    background: var(--bg-nav);
     backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--apex-border);
+    border-bottom: 1px solid var(--border);
     padding: 0 24px;
     display: flex;
     align-items: center;
@@ -47,6 +125,7 @@
     position: sticky;
     top: 0;
     z-index: 100;
+    transition: background 0.3s;
   }
 
   .nav-logo {
@@ -71,6 +150,7 @@
   .nav-title {
     font-size: 18px;
     font-weight: 700;
+    color: var(--text);
     background: linear-gradient(90deg, var(--apex-gold), var(--apex-teal-light));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -81,7 +161,7 @@
     gap: 4px;
   }
 
-  .nav-tab {
+  .nav-tab { color: var(--text-muted);
     padding: 8px 20px;
     border-radius: 8px;
     font-size: 14px;
@@ -91,17 +171,17 @@
     border: none;
     transition: all 0.2s;
     background: transparent;
-    color: var(--apex-muted);
+    
   }
 
-  .nav-tab.active {
-    background: var(--apex-card);
+  .nav-tab.active { color: var(--text);
+    background: var(--bg-card);
     color: var(--apex-gold);
-    border: 1px solid var(--apex-border);
+    border: 1px solid var(--border);
   }
 
   .nav-tab:hover:not(.active) {
-    color: var(--apex-text);
+    color: var(--text);
     background: rgba(255,255,255,0.05);
   }
 
@@ -118,8 +198,8 @@
   }
 
   .auth-box {
-    background: var(--apex-card);
-    border: 1px solid var(--apex-border);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 40px;
     width: 360px;
@@ -133,7 +213,7 @@
     color: var(--apex-gold);
   }
 
-  .auth-box p { color: var(--apex-muted); font-size: 14px; margin-bottom: 24px; }
+  .auth-box p { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
 
   /* ---- MAIN LAYOUT ---- */
   .main {
@@ -147,14 +227,15 @@
 
   /* ---- CARDS ---- */
   .card {
-    background: var(--apex-card);
-    border: 1px solid var(--apex-border);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
     border-radius: var(--apex-radius);
     padding: 24px;
     margin-bottom: 20px;
   }
 
-  .card-title {
+  .card-title { color: var(--text);
     font-size: 16px;
     font-weight: 700;
     color: var(--apex-gold);
@@ -186,29 +267,42 @@
 
   label {
     font-size: 13px;
-    color: var(--apex-muted);
+    color: var(--text-muted);
     font-weight: 600;
   }
 
-  select, input, textarea {
-    background: var(--apex-dark);
-    border: 1px solid var(--apex-border);
+  select, input[type="text"], input[type="password"], input[type="email"], textarea {
+    background: var(--bg-input);
+    border: 1.5px solid var(--border);
     border-radius: 8px;
-    color: var(--apex-text);
+    color: var(--text);
     font-family: 'Cairo', sans-serif;
     font-size: 14px;
     padding: 10px 14px;
     width: 100%;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, background 0.2s;
     direction: rtl;
+    appearance: auto;
+  }
+
+  select { cursor: pointer; }
+
+  select:hover, input:hover, textarea:hover {
+    background: var(--bg-input-hover);
   }
 
   select:focus, input:focus, textarea:focus {
     outline: none;
     border-color: var(--apex-teal);
+    box-shadow: 0 0 0 3px rgba(14,165,176,0.15);
   }
 
-  select option { background: var(--apex-navy); }
+  select option {
+    background: var(--select-opt);
+    color: var(--text);
+    font-family: 'Cairo', sans-serif;
+    padding: 8px;
+  }
 
   /* ---- TRACK BADGE ---- */
   .track-badge {
@@ -253,7 +347,7 @@
     line-height: 1;
   }
 
-  .score-ring-label { font-size: 10px; color: var(--apex-muted); }
+  .score-ring-label { font-size: 10px; color: var(--text-muted); }
 
   /* ---- EMPLOYEE GRID ---- */
   .employees-grid {
@@ -263,8 +357,8 @@
   }
 
   .employee-card {
-    background: var(--apex-dark);
-    border: 1px solid var(--apex-border);
+    background: var(--bg);
+    border: 1px solid var(--border);
     border-radius: 12px;
     padding: 20px;
     transition: border-color 0.2s, transform 0.2s;
@@ -292,7 +386,7 @@
   /* ---- PROGRESS BAR ---- */
   .progress-bar {
     height: 6px;
-    background: var(--apex-border);
+    background: var(--border);
     border-radius: 3px;
     overflow: hidden;
     margin-top: 10px;
@@ -348,7 +442,7 @@
 
   /* ---- UPLOAD ZONE ---- */
   .upload-zone {
-    border: 2px dashed var(--apex-border);
+    border: 2px dashed var(--border);
     border-radius: 10px;
     padding: 24px;
     text-align: center;
@@ -362,7 +456,7 @@
   }
 
   .upload-zone-icon { font-size: 32px; margin-bottom: 8px; }
-  .upload-zone-text { font-size: 13px; color: var(--apex-muted); }
+  .upload-zone-text { font-size: 13px; color: var(--text-muted); }
 
   .upload-preview {
     width: 100%;
@@ -422,7 +516,7 @@
   }
 
   .escalation-box {
-    background: var(--apex-card);
+    background: var(--bg-card);
     border: 2px solid var(--apex-red);
     border-radius: 16px;
     padding: 40px;
@@ -441,7 +535,7 @@
 
   .escalation-icon { font-size: 48px; margin-bottom: 16px; }
   .escalation-title { font-size: 22px; font-weight: 900; color: var(--apex-red); margin-bottom: 8px; }
-  .escalation-msg { color: var(--apex-muted); font-size: 14px; margin-bottom: 24px; }
+  .escalation-msg { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
 
   /* ---- CRITERIA SELECTOR ---- */
   .criteria-group {
@@ -450,18 +544,18 @@
 
   .criteria-group-title {
     font-size: 12px;
-    color: var(--apex-muted);
+    color: var(--text-muted);
     font-weight: 700;
     padding: 4px 8px;
-    background: var(--apex-border);
+    background: var(--border);
     border-radius: 4px;
     margin-bottom: 4px;
   }
 
   /* ---- SUPERVISOR SCORE DISPLAY ---- */
   .sup-score-bar {
-    background: var(--apex-dark);
-    border: 1px solid var(--apex-border);
+    background: var(--bg);
+    border: 1px solid var(--border);
     border-radius: 10px;
     padding: 16px 20px;
     display: flex;
@@ -477,8 +571,8 @@
     min-width: 80px;
   }
 
-  .sup-score-label { font-size: 12px; color: var(--apex-muted); }
-  .sup-score-info { font-size: 13px; color: var(--apex-text); }
+  .sup-score-label { font-size: 12px; color: var(--text-muted); }
+  .sup-score-info { font-size: 13px; color: var(--text); }
 
   /* ---- DEDUCTION BUTTONS ---- */
   .deduct-grid {
@@ -495,9 +589,9 @@
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
-    border: 1px solid var(--apex-border);
-    background: var(--apex-dark);
-    color: var(--apex-text);
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
     text-align: center;
     transition: all 0.2s;
   }
@@ -516,7 +610,7 @@
   }
 
   .report-table th {
-    background: var(--apex-border);
+    background: var(--border);
     padding: 10px 14px;
     text-align: right;
     font-weight: 700;
@@ -525,7 +619,7 @@
 
   .report-table td {
     padding: 10px 14px;
-    border-bottom: 1px solid var(--apex-border);
+    border-bottom: 1px solid var(--border);
   }
 
   .report-table tr:hover td { background: rgba(255,255,255,0.02); }
@@ -534,7 +628,7 @@
   .log-table-wrap {
     overflow-x: auto;
     border-radius: 8px;
-    border: 1px solid var(--apex-border);
+    border: 1px solid var(--border);
   }
 
   .log-table {
@@ -545,14 +639,14 @@
   }
 
   .log-table th {
-    background: var(--apex-border);
+    background: var(--border);
     padding: 8px 12px;
     text-align: right;
     font-size: 12px;
-    color: var(--apex-muted);
+    color: var(--text-muted);
   }
 
-  .log-table td {
+  .log-table td { color: var(--text);
     padding: 8px 12px;
     border-bottom: 1px solid rgba(30,45,74,0.5);
   }
@@ -574,7 +668,7 @@
   .loading-spinner {
     width: 20px;
     height: 20px;
-    border: 2px solid var(--apex-border);
+    border: 2px solid var(--border);
     border-top-color: var(--apex-gold);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
@@ -586,7 +680,7 @@
   /* ---- DIVIDER ---- */
   .divider {
     border: none;
-    border-top: 1px solid var(--apex-border);
+    border-top: 1px solid var(--border);
     margin: 20px 0;
   }
 
@@ -598,15 +692,15 @@
     margin-bottom: 24px;
   }
 
-  .stat-chip {
-    background: var(--apex-dark);
-    border: 1px solid var(--apex-border);
+  .stat-chip { background: var(--bg-card); border: 1px solid var(--border);
+    background: var(--bg);
+    border: 1px solid var(--border);
     border-radius: 10px;
     padding: 16px;
   }
 
   .stat-chip-value { font-size: 24px; font-weight: 900; }
-  .stat-chip-label { font-size: 12px; color: var(--apex-muted); margin-top: 2px; }
+  .stat-chip-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
   /* ---- IMAGE MODAL ---- */
   .img-modal {
@@ -625,8 +719,8 @@
     border-radius: 8px;
   }
 
-  /* صفحة المشرفة — خلفية بيضاء */
-  #page-supervisor { background: #f3f4f6; margin: -24px; padding: 24px; min-height: 100vh; }
+  /* صفحة المشرفة — خلفية فاتحة دائماً */
+  #page-supervisor { background: var(--bg); margin: -24px; padding: 24px; min-height: 100vh; }
 
   @media (max-width: 640px) {
     .form-row { grid-template-columns: 1fr; }
@@ -635,6 +729,47 @@
     .nav-title { font-size: 14px; }
     .stat-row { grid-template-columns: 1fr 1fr; }
   }
+
+  /* ── Theme-aware utility classes ── */
+  .t-card-title { font-size:15px; font-weight:700; color:var(--text); font-family:Cairo; }
+  .t-card-title-sm { font-size:14px; font-weight:700; color:var(--text); font-family:Cairo; }
+  .t-text { color:var(--text); font-family:Cairo; }
+  .t-text-muted { color:var(--text-muted); }
+  .t-input {
+    background:var(--bg-input) !important;
+    border:1.5px solid var(--border) !important;
+    color:var(--text) !important;
+    border-radius:8px;
+    padding:10px 14px;
+    font-family:Cairo;
+    font-size:14px;
+    width:100%;
+  }
+  .t-input option { background:var(--select-opt); color:var(--text); }
+  .t-modal-box {
+    background:var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:16px;
+  }
+  .t-inner-box {
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px;
+  }
+  .t-cancel-btn {
+    flex:1; padding:11px; border-radius:8px; font-family:Cairo; font-size:14px;
+    font-weight:700; cursor:pointer;
+    border:1px solid var(--border);
+    background:var(--bg-card);
+    color:var(--text);
+  }
+  .t-section-header {
+    font-size:15px; font-weight:700; color:var(--text);
+    font-family:Cairo; margin-bottom:16px;
+    display:flex; align-items:center; gap:8px;
+  }
+
 </style>
 </head>
 <body>
@@ -653,7 +788,22 @@
 </div>
 
 <!-- MANAGER AUTH OVERLAY -->
-<div id="manager-auth">
+<!-- SUPERVISOR AUTH -->
+<div id="supervisor-auth" style="position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center">
+  <div class="auth-box">
+    <div style="font-size:36px;margin-bottom:12px">🛡️</div>
+    <h3>واجهة الإشراف</h3>
+    <p>أدخلي رمز الدخول للمتابعة</p>
+    <div class="form-group" style="margin-bottom:16px">
+      <label>رمز الدخول</label>
+      <input type="password" id="supervisorPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkSupervisorAuth()">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="checkSupervisorAuth()">دخول</button>
+  </div>
+</div>
+
+<!-- MANAGER AUTH -->
+<div id="manager-auth" style="display:none">
   <div class="auth-box">
     <div style="font-size:36px;margin-bottom:12px">🔒</div>
     <h3>لوحة مدير الجودة</h3>
@@ -663,10 +813,6 @@
       <input type="password" id="managerPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkManagerAuth()">
     </div>
     <button class="btn btn-primary btn-full" onclick="checkManagerAuth()">دخول</button>
-    <hr class="divider">
-    <button class="btn btn-teal btn-full" onclick="goToSupervisor()" style="margin-top:0">
-      الذهاب لواجهة المشرفة →
-    </button>
   </div>
 </div>
 
@@ -681,9 +827,14 @@
     <div class="nav-logo-icon">A</div>
     <span class="nav-title">APEXCARE · نظام الجودة</span>
   </div>
-  <div id="navDateDisplay" style="font-family:Cairo;font-size:12px;color:var(--apex-muted);text-align:center;line-height:1.5;display:flex;flex-direction:column;align-items:center"></div>
+  <div id="navDateDisplay" style="font-family:Cairo;font-size:12px;color:var(--text-muted);text-align:center;line-height:1.5;display:flex;flex-direction:column;align-items:center"></div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span id="themeIcon" style="font-size:16px">🌙</span>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="تبديل الوضع"></button>
+    <span id="themeLabel" style="font-size:11px;color:var(--text-muted);font-family:Cairo">ليلي</span>
+  </div>
   <div class="nav-tabs">
-    <button class="nav-tab active" id="tabSup" onclick="switchPage('supervisor')">واجهة الإشراف</button>
+    <button class="nav-tab active" id="tabSup" onclick="switchPage('supervisor')">الإشراف</button>
     <button class="nav-tab" id="tabMgr" onclick="switchPage('manager')">لوحة المدير</button>
   </div>
 </nav>
@@ -712,27 +863,27 @@
     </div>
 
     <!-- ── شريط تقدم نقاط رهف ── -->
-    <div style="background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb">
+    <div style="background:var(--bg-card);border-radius:12px;padding:16px 20px;margin-bottom:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <span style="font-size:12px;font-weight:700;color:#6b7280;font-family:Cairo">تقدمك نحو الحد الأقصى</span>
+        <span style="font-size:12px;font-weight:700;color:var(--text-muted);font-family:Cairo">تقدمك نحو الحد الأقصى</span>
         <span style="font-size:12px;color:#1a56db;font-weight:700;font-family:Cairo"><span id="supScoreDisplay2">0</span> / 900 نقطة</span>
       </div>
-      <div style="height:10px;background:#e5e7eb;border-radius:5px;overflow:hidden">
+      <div style="height:10px;background:var(--border);border-radius:5px;overflow:hidden">
         <div id="supScoreBar" style="height:100%;width:0%;background:linear-gradient(90deg,#1a56db,#0ea5b0);border-radius:5px;transition:width 0.8s ease"></div>
       </div>
-      <div style="font-size:11px;color:#9ca3af;margin-top:6px;font-family:Cairo">كل مخالفة موثّقة = <strong style="color:#1a56db">+2 نقطة</strong></div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px;font-family:Cairo">كل مخالفة موثّقة = <strong style="color:#1a56db">+2 نقطة</strong></div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
 
       <!-- ── أرصدة الموظفات (قابل للطي) ── -->
-      <div style="background:#fff;border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1;overflow:hidden">
+      <div style="background:var(--bg-card);border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1;overflow:hidden">
         <button onclick="toggleSection('empSection','empChevron')" style="width:100%;background:none;border:none;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:Cairo">
           <div style="display:flex;align-items:center;gap:10px">
             <span style="width:4px;height:18px;background:#1a56db;border-radius:2px;display:inline-block"></span>
-            <span style="font-size:15px;font-weight:700;color:#111827">أرصدة الموظفات — هذا الشهر</span>
+            <span style="font-size:15px;font-weight:700;color:var(--text)">أرصدة الموظفات — هذا الشهر</span>
           </div>
-          <span id="empChevron" style="font-size:18px;color:#9ca3af;transition:transform 0.3s">▾</span>
+          <span id="empChevron" style="font-size:18px;color:var(--text-muted);transition:transform 0.3s">▾</span>
         </button>
         <div id="empSection" style="padding:0 20px 20px">
           <div id="supEmployeeList" style="display:flex;flex-direction:column;gap:10px">
@@ -742,34 +893,39 @@
       </div>
 
       <!-- ── تذكير بمعايير الجودة (قابل للطي) ── -->
-      <div style="background:#fff;border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1;overflow:hidden">
+      <div style="background:var(--bg-card);border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1;overflow:hidden">
         <button onclick="toggleSection('criteriaSection','criteriaChevron')" style="width:100%;background:none;border:none;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:Cairo">
           <div style="display:flex;align-items:center;gap:10px">
             <span style="width:4px;height:18px;background:#f59e0b;border-radius:2px;display:inline-block"></span>
-            <span style="font-size:15px;font-weight:700;color:#111827">تذكير بمعايير الجودة 💡</span>
-            <span style="font-size:11px;color:#9ca3af;font-weight:400">راجعي المعايير قبل كل جلسة تقييم</span>
+            <span style="font-size:15px;font-weight:700;color:var(--text)">تذكير بمعايير الجودة 💡</span>
+            <span style="font-size:11px;color:var(--text-muted);font-weight:400">راجعي المعايير قبل كل جلسة تقييم</span>
           </div>
-          <span id="criteriaChevron" style="font-size:18px;color:#9ca3af;transition:transform 0.3s">▸</span>
+          <span id="criteriaChevron" style="font-size:18px;color:var(--text-muted);transition:transform 0.3s">▸</span>
         </button>
         <div id="criteriaSection" style="display:none;padding:0 20px 20px">
           <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
             <button onclick="showCriteria('calls')" id="ctab-calls" style="padding:7px 16px;border-radius:20px;border:1.5px solid #0ea5b0;background:#e0f2fe;color:#0369a1;font-family:Cairo;font-size:12px;font-weight:700;cursor:pointer">📞 مكالمات</button>
-            <button onclick="showCriteria('messages')" id="ctab-messages" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e5e7eb;background:#f9fafb;color:#6b7280;font-family:Cairo;font-size:12px;font-weight:700;cursor:pointer">💬 رسائل</button>
-            <button onclick="showCriteria('dual')" id="ctab-dual" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e5e7eb;background:#f9fafb;color:#6b7280;font-family:Cairo;font-size:12px;font-weight:700;cursor:pointer">🔀 مشترك</button>
+            <button onclick="showCriteria('messages')" id="ctab-messages" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e5e7eb;background:var(--bg-card);color:var(--text-muted);font-family:Cairo;font-size:12px;font-weight:700;cursor:pointer">💬 رسائل</button>
+            <button onclick="showCriteria('dual')" id="ctab-dual" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e5e7eb;background:var(--bg-card);color:var(--text-muted);font-family:Cairo;font-size:12px;font-weight:700;cursor:pointer">🔀 مشترك</button>
           </div>
           <div id="criteriaPanel" style="display:flex;flex-direction:column;gap:8px"></div>
         </div>
       </div>      <!-- ── فورم تسجيل المخالفة ── -->
-      <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1">
-        <div style="font-size:15px;font-weight:700;color:#111827;font-family:Cairo;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <div style="background:var(--bg-card);border-radius:14px;padding:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1">
+        <div style="font-size:15px;font-weight:700;color:var(--text);font-family:Cairo;margin-bottom:16px;display:flex;align-items:center;gap:8px">
           <span style="width:4px;height:18px;background:#ef4444;border-radius:2px;display:inline-block"></span>
           تسجيل مخالفة تشغيلية
         </div>
 
         <div class="form-row" style="margin-bottom:14px">
           <div class="form-group">
-            <label style="color:#374151;font-size:13px;font-weight:600">اسم الموظفة</label>
-            <select id="empSelect" onchange="onEmployeeChange()" style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:8px;color:#111827;padding:10px 14px;font-family:Cairo;font-size:14px">
+            <label style="color:var(--text-label);font-size:13px;font-weight:600">اسم المشرفة <span style="color:#ef4444">*</span></label>
+            <input type="text" id="supervisorName" placeholder="اكتبي اسمك هنا..."
+              class="t-input">
+          </div>
+          <div class="form-group">
+            <label style="color:var(--text-label);font-size:13px;font-weight:600">اسم الموظفة</label>
+            <select id="empSelect" onchange="onEmployeeChange()" class="t-input">
               <option value="">-- اختر الموظفة --</option>
               <option value="مرح">مرح</option>
               <option value="هيلة">هيلة</option>
@@ -782,12 +938,11 @@
               <option value="تهاني">تهاني</option>
             </select>
           </div>
-          <div class="form-group">
-            <label style="color:#374151;font-size:13px;font-weight:600">المسار</label>
-            <div id="trackDisplay" style="padding:10px 14px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:8px;min-height:42px;display:flex;align-items:center">
-              <span style="color:#9ca3af;font-size:13px;font-family:Cairo">يُحدد بعد اختيار الموظفة</span>
-            </div>
-          </div>
+        </div>
+
+        <!-- عرض المسار -->
+        <div id="trackDisplayRow" style="display:none;margin-bottom:14px">
+          <div id="trackDisplay" style="padding:10px 14px;background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:8px;min-height:42px;display:flex;align-items:center;font-family:Cairo"></div>
         </div>
 
         <!-- رصيد الموظفة المختارة -->
@@ -811,16 +966,16 @@
 
         <div class="form-row" style="margin-bottom:14px">
           <div class="form-group">
-            <label style="color:#374151;font-size:13px;font-weight:600">الفئة</label>
+            <label style="color:var(--text-label);font-size:13px;font-weight:600">الفئة</label>
             <select id="categorySelect" onchange="onCategoryChange()" disabled
-              style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:8px;color:#111827;padding:10px 14px;font-family:Cairo;font-size:14px">
+              class="t-input">
               <option value="">-- اختر الفئة --</option>
             </select>
           </div>
           <div class="form-group">
-            <label style="color:#374151;font-size:13px;font-weight:600">المعيار</label>
+            <label style="color:var(--text-label);font-size:13px;font-weight:600">المعيار</label>
             <select id="criterionSelect" onchange="onCriterionChange()" disabled
-              style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:8px;color:#111827;padding:10px 14px;font-family:Cairo;font-size:14px">
+              class="t-input">
               <option value="">-- اختر المعيار --</option>
             </select>
           </div>
@@ -846,15 +1001,15 @@
 
         <!-- رفع صورة -->
         <div class="form-group" style="margin-bottom:14px">
-          <label style="color:#374151;font-size:13px;font-weight:600">صورة التوثيق (اختياري)</label>
+          <label style="color:var(--text-label);font-size:13px;font-weight:600">صورة التوثيق (اختياري)</label>
           <div class="upload-zone" id="uploadZone"
             onclick="document.getElementById('imageInput').click()"
             ondragover="event.preventDefault();this.classList.add('dragover')"
             ondragleave="this.classList.remove('dragover')"
             ondrop="handleDrop(event)"
-            style="border:2px dashed #d1d5db;background:#f9fafb;border-radius:10px;padding:20px;text-align:center;cursor:pointer">
+            style="border:2px dashed var(--border);background:var(--bg-input);border-radius:10px;padding:20px;text-align:center;cursor:pointer">
             <div class="upload-zone-icon" style="font-size:28px;margin-bottom:6px">📷</div>
-            <div style="font-size:12px;color:#6b7280;font-family:Cairo">اضغط لرفع صورة أو اسحبها هنا<br><small>JPG, PNG (حد أقصى 5MB)</small></div>
+            <div style="font-size:12px;color:var(--text-muted);font-family:Cairo">اضغط لرفع صورة أو اسحبها هنا<br><small>JPG, PNG (حد أقصى 5MB)</small></div>
           </div>
           <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="previewImage(this)">
           <img id="imagePreview" class="upload-preview" style="display:none;border-radius:8px;margin-top:10px;width:100%;max-height:150px;object-fit:cover" alt="">
@@ -862,9 +1017,9 @@
 
         <!-- ملاحظات -->
         <div class="form-group" style="margin-bottom:18px">
-          <label style="color:#374151;font-size:13px;font-weight:600">ملاحظات إضافية</label>
+          <label style="color:var(--text-label);font-size:13px;font-weight:600">ملاحظات إضافية</label>
           <textarea id="notesInput" rows="2" placeholder="أي تفاصيل إضافية..."
-            style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:8px;color:#111827;padding:10px 14px;font-family:Cairo;font-size:14px;width:100%;resize:vertical"></textarea>
+            style="background:var(--bg-card);border:1.5px solid #e5e7eb;border-radius:8px;color:var(--text);padding:10px 14px;font-family:Cairo;font-size:14px;width:100%;resize:vertical"></textarea>
         </div>
 
         <button id="submitBtn" onclick="submitViolation()" style="
@@ -877,26 +1032,26 @@
       </div>
 
       <!-- ── آخر المخالفات ── -->
-      <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1">
-        <div style="font-size:15px;font-weight:700;color:#111827;font-family:Cairo;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <div style="background:var(--bg-card);border-radius:14px;padding:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1">
+        <div style="font-size:15px;font-weight:700;color:var(--text);font-family:Cairo;margin-bottom:16px;display:flex;align-items:center;gap:8px">
           <span style="width:4px;height:18px;background:#8b5cf6;border-radius:2px;display:inline-block"></span>
           آخر المخالفات المسجلة
         </div>
         <div class="log-table-wrap" style="border:1px solid #f3f4f6;border-radius:8px">
           <table class="log-table" style="font-size:12px">
             <thead>
-              <tr style="background:#f9fafb">
-                <th style="color:#6b7280;font-weight:600;padding:10px 12px">التاريخ</th>
-                <th style="color:#6b7280;font-weight:600;padding:10px 12px">الموظفة</th>
-                <th style="color:#6b7280;font-weight:600;padding:10px 12px">الفئة</th>
-                <th style="color:#6b7280;font-weight:600;padding:10px 12px">المعيار</th>
-                <th style="color:#6b7280;font-weight:600;padding:10px 12px">الخصم</th>
-                <th style="color:#6b7280;font-weight:600;padding:10px 12px">#</th>
-                <th style="color:#6b7280;font-weight:600;padding:10px 12px">صورة</th>
+              <tr style="background:var(--bg-card)">
+                <th style="color:var(--text-muted);font-weight:600;padding:10px 12px">التاريخ</th>
+                <th style="color:var(--text-muted);font-weight:600;padding:10px 12px">الموظفة</th>
+                <th style="color:var(--text-muted);font-weight:600;padding:10px 12px">الفئة</th>
+                <th style="color:var(--text-muted);font-weight:600;padding:10px 12px">المعيار</th>
+                <th style="color:var(--text-muted);font-weight:600;padding:10px 12px">الخصم</th>
+                <th style="color:var(--text-muted);font-weight:600;padding:10px 12px">#</th>
+                <th style="color:var(--text-muted);font-weight:600;padding:10px 12px">صورة</th>
               </tr>
             </thead>
             <tbody id="logTableBody">
-              <tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:20px;font-family:Cairo">جاري التحميل...</td></tr>
+              <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px;font-family:Cairo">جاري التحميل...</td></tr>
             </tbody>
           </table>
         </div>
@@ -1025,15 +1180,26 @@
   </div>
 </div>
 
+<!-- VIOLATION CONFIRM MODAL -->
+<div id="violationConfirmModal" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);align-items:center;justify-content:center">
+  <div class="t-modal-box" style="padding:28px;max-width:400px;width:90%;border-top:3px solid #1a56db;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+    <div style="font-size:36px;text-align:center;margin-bottom:12px">📋</div>
+    <div style="font-size:17px;font-weight:700;color:var(--text);font-family:Cairo;text-align:center;margin-bottom:20px">تأكيد تسجيل المخالفة</div>
+    <div id="violConfirmSummary" class="t-inner-box" style="font-family:Cairo;font-size:13px;line-height:2;margin-bottom:20px"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeViolationConfirm()" class="t-cancel-btn">إلغاء</button>
+      <button onclick="confirmAndSubmit()" style="flex:1;padding:11px;border-radius:8px;border:none;background:linear-gradient(135deg,#1a56db,#0ea5b0);color:#fff;font-family:Cairo;font-size:14px;font-weight:700;cursor:pointer">✓ تأكيد التسجيل</button>
+    </div>
+  </div>
+</div>
+
 <!-- RESET CONFIRMATION MODAL -->
 <div id="resetModal" style="
   display:none;position:fixed;inset:0;z-index:900;
   background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);
   align-items:center;justify-content:center;">
   <div style="
-    background:#161d2e;border:1px solid #1e2d4a;border-radius:16px;
-    padding:36px;max-width:420px;width:90%;text-align:center;
-    border-top:3px solid #ef4444;">
+    class="t-modal-box" style="padding:36px;max-width:420px;width:90%;text-align:center;border-top:3px solid #ef4444;">
     <div style="font-size:44px;margin-bottom:12px">⚠️</div>
     <div style="font-size:18px;font-weight:700;color:#ef4444;margin-bottom:8px;font-family:Cairo">
       تأكيد إعادة التعيين الشهرية
@@ -1045,8 +1211,7 @@
 
     <!-- ملخص الأرصدة الحالية -->
     <div id="resetSummary" style="
-      background:#0a0e1a;border:1px solid #1e2d4a;border-radius:10px;
-      padding:14px;margin-bottom:20px;text-align:right;font-family:Cairo;font-size:13px">
+      class="t-inner-box" style="margin-bottom:20px;text-align:right;font-family:Cairo;font-size:13px">
     </div>
 
     <div style="font-size:12px;color:#ef4444;margin-bottom:20px;font-family:Cairo">
@@ -1055,9 +1220,7 @@
 
     <div style="display:flex;gap:10px;justify-content:center">
       <button onclick="closeResetModal()" style="
-        flex:1;padding:11px;border-radius:8px;font-family:Cairo;font-size:14px;
-        font-weight:700;cursor:pointer;border:1px solid #1e2d4a;
-        background:#111827;color:#e2e8f0">
+        class="t-cancel-btn">
         إلغاء
       </button>
       <button onclick="executeReset()" style="
@@ -1087,7 +1250,8 @@
 // ============================================================
 // CONFIG & STATE
 // ============================================================
-const MANAGER_PASSWORD = "T9@MG7tYxia8"; // Change this
+const MANAGER_PASSWORD    = "T9@MG7tYxia8";
+const SUPERVISOR_PASSWORD = "Apex@sup2025"; // رمز دخول واجهة الإشراف
 const GAS_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"; // ← ضع رابط Web App هنا
 
 const EMPLOYEES = {
@@ -1185,6 +1349,7 @@ const CRITERIA = {
 // Local state (mirrors what's in Sheets)
 let state = {
   managerUnlocked: false,
+  supervisorUnlocked: false,
   employeeScores: {},
   violationLog: [],
   supervisorScore: 0,
@@ -1200,6 +1365,19 @@ Object.keys(EMPLOYEES).forEach(name => {
 // ============================================================
 // AUTH
 // ============================================================
+function checkSupervisorAuth() {
+  const pw = document.getElementById("supervisorPassword").value;
+  if (pw === SUPERVISOR_PASSWORD) {
+    state.supervisorUnlocked = true;
+    document.getElementById("supervisor-auth").style.display = "none";
+    switchPage("supervisor");
+    showToast("أهلاً بك في واجهة الإشراف ✓", "success");
+  } else {
+    showToast("رمز الدخول غير صحيح", "error");
+    document.getElementById("supervisorPassword").value = "";
+  }
+}
+
 function checkManagerAuth() {
   const pw = document.getElementById("managerPassword").value;
   if (pw === MANAGER_PASSWORD) {
@@ -1210,6 +1388,7 @@ function checkManagerAuth() {
     showToast("تم الدخول بنجاح ✓", "success");
   } else {
     showToast("كلمة المرور غير صحيحة", "error");
+    document.getElementById("managerPassword").value = "";
   }
 }
 
@@ -1222,17 +1401,23 @@ function goToSupervisor() {
 // PAGE SWITCHING
 // ============================================================
 function switchPage(page) {
+  if (page === "supervisor" && !state.supervisorUnlocked) {
+    document.getElementById("supervisor-auth").style.display = "flex";
+    return;
+  }
   if (page === "manager" && !state.managerUnlocked) {
     document.getElementById("manager-auth").style.display = "flex";
     return;
   }
+  document.getElementById("manager-auth").style.display    = "none";
+  document.getElementById("supervisor-auth").style.display = "none";
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
   document.getElementById("page-" + page).classList.add("active");
   document.getElementById("tab" + (page === "supervisor" ? "Sup" : "Mgr")).classList.add("active");
 
   if (page === "supervisor") refreshSupervisorPage();
-  if (page === "manager") refreshManagerPage();
+  if (page === "manager")    refreshManagerPage();
 }
 
 // ============================================================
@@ -1240,6 +1425,8 @@ function switchPage(page) {
 // ============================================================
 function onEmployeeChange() {
   const name = document.getElementById("empSelect").value;
+  const trackDisplayRow = document.getElementById("trackDisplayRow");
+  if (trackDisplayRow) trackDisplayRow.style.display = name ? "block" : "none";
   const trackDisplay = document.getElementById("trackDisplay");
   const catSelect = document.getElementById("categorySelect");
   const critSelect = document.getElementById("criterionSelect");
@@ -1367,91 +1554,117 @@ function handleDrop(e) {
 // ============================================================
 // SUBMIT VIOLATION
 // ============================================================
-async function submitViolation() {
-  const name = document.getElementById("empSelect").value;
-  const cat = document.getElementById("categorySelect").value;
-  const crit = document.getElementById("criterionSelect").value;
-  const notes = document.getElementById("notesInput").value;
+let _pendingViolation = null;
 
-  if (!name || !cat || !crit) {
-    showToast("يرجى تحديد الموظفة والفئة والمعيار", "error");
-    return;
-  }
+function submitViolation() {
+  const supName = document.getElementById("supervisorName").value.trim();
+  const name    = document.getElementById("empSelect").value;
+  const cat     = document.getElementById("categorySelect").value;
+  const crit    = document.getElementById("criterionSelect").value;
+  const notes   = document.getElementById("notesInput").value;
 
-  const track = EMPLOYEES[name].track;
-  const points = CRITERIA[track][cat][crit];
-  const violNum = getViolationCount(name, crit) + 1;
+  if (!supName) { showToast("يرجى كتابة اسم المشرفة", "error"); document.getElementById("supervisorName").focus(); return; }
+  if (!name || !cat || !crit) { showToast("يرجى تحديد الموظفة والفئة والمعيار", "error"); return; }
+
+  const track    = EMPLOYEES[name].track;
+  const points   = CRITERIA[track][cat][crit];
+  const violNum  = getViolationCount(name, crit) + 1;
   const deductPer = Math.ceil(points / 3);
   const deduction = violNum <= 3 ? deductPer : 0;
 
-  // Show loading
+  // احفظ البيانات مؤقتاً
+  _pendingViolation = { supName, name, cat, crit, notes, track, points, violNum, deduction };
+
+  // ابنِ ملخص المودال
+  const escLabel = violNum === 4 ? "⚠️ إنذار شفهي" : violNum === 5 ? "⚠️ إنذار كتابي" : violNum > 5 ? "🚨 رفع للإدارة" : "";
+  document.getElementById("violConfirmSummary").innerHTML = `
+    <div><span style="color:var(--text-muted)">المشرفة:</span> <strong>${supName}</strong></div>
+    <div><span style="color:var(--text-muted)">الموظفة:</span> <strong>${name}</strong></div>
+    <div><span style="color:var(--text-muted)">الفئة:</span> <strong>${cat}</strong></div>
+    <div><span style="color:var(--text-muted)">المعيار:</span> <strong>${crit}</strong></div>
+    <div><span style="color:var(--text-muted)">الخصم:</span> <strong style="color:#dc2626">-${deduction} نقطة</strong></div>
+    <div><span style="color:var(--text-muted)">رقم المخالفة:</span> <strong style="color:#d97706">#${violNum}</strong></div>
+    ${escLabel ? `<div style="margin-top:4px;padding:6px 10px;background:#fef2f2;border-radius:6px;color:#dc2626;font-weight:700">${escLabel}</div>` : ""}
+    ${notes ? `<div><span style="color:var(--text-muted)">ملاحظات:</span> ${notes}</div>` : ""}
+  `;
+
+  document.getElementById("violationConfirmModal").style.display = "flex";
+}
+
+function closeViolationConfirm() {
+  document.getElementById("violationConfirmModal").style.display = "none";
+  _pendingViolation = null;
+}
+
+async function confirmAndSubmit() {
+  document.getElementById("violationConfirmModal").style.display = "none";
+  if (!_pendingViolation) return;
+
+  const { supName, name, cat, crit, notes, track, points, violNum, deduction } = _pendingViolation;
+  _pendingViolation = null;
+
   const btn = document.getElementById("submitBtn");
   btn.disabled = true;
   document.getElementById("submitBtnText").innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
 
-  // Local state update
-  state.employeeScores[name].balance = Math.max(0, state.employeeScores[name].balance - deduction);
+  // تحديث محلي
+  state.employeeScores[name].balance  = Math.max(0, state.employeeScores[name].balance - deduction);
   state.employeeScores[name].deducted += deduction;
   state.supervisorScore = Math.min(900, state.supervisorScore + 2);
 
   const logEntry = {
     date: new Date().toLocaleDateString("ar-SA"),
     time: new Date().toLocaleTimeString("ar-SA"),
+    supervisor: supName,
     employee: name,
     category: cat,
     criterion: crit,
-    points,
-    deduction,
-    violNum,
+    points, deduction, violNum,
     imageUrl: state.imageData ? "مرفق" : "",
     notes
   };
   state.violationLog.unshift(logEntry);
 
-  // Try GAS
+  // إرسال للشيت
   try {
-    const payload = { employeeName: name, criterion: crit, category: cat, notes, imageUrl: "" };
+    const payload = { supervisorName: supName, employeeName: name, criterion: crit, category: cat, notes, imageUrl: "" };
     if (state.imageData) {
       const imgRes = await callGAS("uploadImage", { base64Data: state.imageData, fileName: `${name}_${Date.now()}.jpg` });
       if (imgRes && imgRes.success) payload.imageUrl = imgRes.url;
     }
     await callGAS("recordViolation", payload);
   } catch (e) {
-    console.warn("GAS error:", e.message); // offline mode — البيانات محفوظة محلياً
+    console.warn("GAS error:", e.message);
   }
 
-  // Update UI
   updateSupervisorScoreDisplay();
   updateEmpBalanceDisplay(name);
   renderLogTable();
   refreshManagerPage();
+  renderSupEmployeeList();
 
-  // Check escalation
+  // تصعيد
   let escalation = null;
   if (violNum === 4) escalation = "إنذار شفهي";
   else if (violNum === 5) escalation = "إنذار كتابي";
-  else if (violNum > 5) escalation = "رفع للإدارة";
+  else if (violNum > 5)  escalation = "رفع للإدارة";
 
-  if (escalation) {
-    showEscalation(escalation, name, crit);
-  } else {
-    showToast(`✓ تم تسجيل المخالفة | خُصم ${deduction} نقطة | +2 لرهف`, "success");
-  }
+  if (escalation) showEscalation(escalation, name, crit);
+  else showToast(`✓ تم تسجيل المخالفة | خُصم ${deduction} نقطة | +2 لرهف`, "success");
 
-  // Reset form
+  // تفريغ الفورم
   btn.disabled = false;
-  document.getElementById("submitBtnText").textContent = "تسجيل المخالفة";
+  document.getElementById("submitBtnText").textContent = "✓ تسجيل المخالفة";
   document.getElementById("empSelect").value = "";
   document.getElementById("categorySelect").innerHTML = '<option value="">-- اختر الفئة --</option>';
   document.getElementById("categorySelect").disabled = true;
   document.getElementById("criterionSelect").innerHTML = '<option value="">-- اختر المعيار --</option>';
   document.getElementById("criterionSelect").disabled = true;
   document.getElementById("criterionInfo").style.display = "none";
+  document.getElementById("empBalanceRow").style.display = "none";
   document.getElementById("notesInput").value = "";
   document.getElementById("imagePreview").style.display = "none";
-  document.getElementById("empBalanceRow").style.display = "none";
-  document.getElementById("trackDisplay").innerHTML = '<span style="color:var(--apex-muted);font-size:13px">يُحدد بعد اختيار الموظفة</span>';
-  document.querySelector(".upload-zone-icon").textContent = "📷";
+  document.getElementById("uploadZone").style.display = "block";
   state.imageData = null;
 }
 
@@ -1579,28 +1792,28 @@ function renderSupEmployeeList() {
     const bdClr  = pct >= 80 ? "#bbf7d0" : pct >= 60 ? "#fde68a" : "#fecaca";
     const emp    = EMPLOYEES[name];
     const rank   = idx < 3 ? `<span style="font-size:18px">${rankIcons[idx]}</span>` :
-                   `<span style="width:24px;height:24px;border-radius:50%;background:#f3f4f6;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#6b7280">${idx+1}</span>`;
+                   `<span style="width:24px;height:24px;border-radius:50%;background:var(--bg-card);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text-muted)">${idx+1}</span>`;
 
     return `
     <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:${bgClr};border:1.5px solid ${bdClr};border-radius:10px;transition:transform 0.15s" 
          onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
       ${rank}
       <div style="min-width:52px">
-        <div style="font-size:14px;font-weight:700;color:#111827;font-family:Cairo">${name}</div>
-        <div style="font-size:11px;color:#6b7280;font-family:Cairo">${trackIcon[emp.track]} ${trackLabel[emp.track]}</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);font-family:Cairo">${name}</div>
+        <div style="font-size:11px;color:var(--text-muted);font-family:Cairo">${trackIcon[emp.track]} ${trackLabel[emp.track]}</div>
       </div>
       <div style="flex:1">
-        <div style="height:7px;background:#e5e7eb;border-radius:4px;overflow:hidden">
+        <div style="height:7px;background:var(--border);border-radius:4px;overflow:hidden">
           <div style="height:100%;width:${pct}%;background:${barClr};border-radius:4px;transition:width 0.6s ease"></div>
         </div>
       </div>
       <div style="text-align:center;min-width:38px">
         <div style="font-size:18px;font-weight:900;color:${barClr};font-family:Cairo;line-height:1">${pct}</div>
-        <div style="font-size:10px;color:#9ca3af;font-family:Cairo">نقطة</div>
+        <div style="font-size:10px;color:var(--text-muted);font-family:Cairo">نقطة</div>
       </div>
-      <div style="text-align:center;min-width:60px;background:#fff;border-radius:8px;padding:4px 8px;border:1px solid #e5e7eb">
+      <div style="text-align:center;min-width:60px;background:var(--bg-card);border-radius:8px;padding:4px 8px;border:1px solid #e5e7eb">
         <div style="font-size:12px;font-weight:700;color:#059669;font-family:Cairo">${pct*5} ر</div>
-        <div style="font-size:9px;color:#9ca3af;font-family:Cairo">حافز</div>
+        <div style="font-size:9px;color:var(--text-muted);font-family:Cairo">حافز</div>
       </div>
     </div>`;
   }).join("");
@@ -1676,10 +1889,10 @@ function renderLogTable() {
   }
   tbody.innerHTML = state.violationLog.slice(0, 30).map(v => `
     <tr style="border-bottom:1px solid #f3f4f6">
-      <td style="padding:9px 12px;color:#6b7280;font-size:12px;font-family:Cairo">${v.date}</td>
-      <td style="padding:9px 12px;font-weight:700;color:#111827;font-family:Cairo">${v.employee}</td>
-      <td style="padding:9px 12px;color:#374151;font-family:Cairo">${v.category}</td>
-      <td style="padding:9px 12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#374151;font-family:Cairo" title="${v.criterion}">${v.criterion}</td>
+      <td style="padding:9px 12px;color:var(--text-muted);font-size:12px;font-family:Cairo">${v.date}</td>
+      <td style="padding:9px 12px;font-weight:700;color:var(--text);font-family:Cairo">${v.employee}</td>
+      <td style="padding:9px 12px;color:var(--text-label);font-family:Cairo">${v.category}</td>
+      <td style="padding:9px 12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-label);font-family:Cairo" title="${v.criterion}">${v.criterion}</td>
       <td style="padding:9px 12px;font-weight:700;color:#dc2626;font-family:Cairo">-${v.deduction}</td>
       <td style="padding:9px 12px"><span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:4px;font-size:11px;font-family:Cairo">#${v.violNum}</span></td>
       <td style="padding:9px 12px">${v.imageUrl ? `<span style="color:#1a56db;cursor:pointer;font-size:13px">📷</span>` : '-'}</td>
@@ -1717,6 +1930,28 @@ function showToast(msg, type = "info") {
 // ============================================================
 // ============================================================
 // طي / فتح الأقسام
+// ============================================================
+// الوضع الليلي / النهاري
+// ============================================================
+function toggleTheme() {
+  const html  = document.documentElement;
+  const isDark = html.getAttribute("data-theme") !== "light";
+  const next  = isDark ? "light" : "dark";
+  html.setAttribute("data-theme", next);
+  localStorage.setItem("apex-theme", next);
+  document.getElementById("themeIcon").textContent  = next === "light" ? "☀️" : "🌙";
+  document.getElementById("themeLabel").textContent = next === "light" ? "نهاري" : "ليلي";
+}
+
+function initTheme() {
+  const saved = localStorage.getItem("apex-theme") || "dark";
+  document.documentElement.setAttribute("data-theme", saved);
+  if (document.getElementById("themeIcon"))
+    document.getElementById("themeIcon").textContent  = saved === "light" ? "☀️" : "🌙";
+  if (document.getElementById("themeLabel"))
+    document.getElementById("themeLabel").textContent = saved === "light" ? "نهاري" : "ليلي";
+}
+
 // ============================================================
 // عرض التاريخ الحي
 // ============================================================
@@ -1764,6 +1999,7 @@ function toggleSection(sectionId, chevronId) {
 // ============================================================
 // ============================================================
 const MOTIVATIONAL_QUOTES = [
+  "أهلاً بك 👋  نتمنى لك يوماً موفقاً ومثمراً",
   "التوثيق ضرورة — كل ملاحظة موثّقة تحمي الفريق وتحسّن الأداء 📋",
   "لا تنسي التوثيق بالصورة — هو الدليل الذي يجعل التقييم عادلاً 📸",
   "كل نقطة تسجّلينها اليوم تعكس اهتمامك بجودة الخدمة ⭐",
@@ -1918,8 +2154,8 @@ function showCriteria(track) {
       btn.style.borderColor = t === "calls" ? "#0ea5b0" : t === "messages" ? "#8b5cf6" : "#f59e0b";
       btn.style.color       = t === "calls" ? "#0369a1" : t === "messages" ? "#5b21b6" : "#92400e";
     } else {
-      btn.style.background  = "#f9fafb";
-      btn.style.borderColor = "#e5e7eb";
+      btn.style.background  = "";
+      btn.style.borderColor = "";
       btn.style.color       = "#6b7280";
     }
   });
@@ -1934,10 +2170,10 @@ function showCriteria(track) {
         ${sec.cat}
       </div>
       ${sec.items.map(item => `
-        <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-top:1px solid ${sec.border};background:#fff">
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-top:1px solid ${sec.border};background:var(--bg-card)">
           <div style="flex:1">
-            <div style="font-size:13px;color:#111827;font-family:Cairo">${item.text}</div>
-            <div style="font-size:11px;color:#9ca3af;font-family:Cairo;margin-top:2px">💡 ${item.tip}</div>
+            <div style="font-size:13px;color:var(--text);font-family:Cairo">${item.text}</div>
+            <div style="font-size:11px;color:var(--text-muted);font-family:Cairo;margin-top:2px">💡 ${item.tip}</div>
           </div>
           <div style="min-width:36px;text-align:center">
             <span style="background:${sec.bg};color:${sec.color};border:1.5px solid ${sec.border};border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;font-family:Cairo">${item.pts}</span>
@@ -2034,13 +2270,13 @@ function confirmReset() {
     const clr  = pct >= 80 ? "#10b981" : pct >= 60 ? "#f59e0b" : "#ef4444";
     const bar  = "█".repeat(Math.round(pct / 10)) + "░".repeat(10 - Math.round(pct / 10));
     html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
-      <span style="min-width:52px;color:#e2e8f0;font-size:12px">${name}</span>
+      <span style="min-width:52px;color:var(--text);font-size:12px">${name}</span>
       <span style="font-family:Courier New;font-size:10px;color:${clr}">${bar}</span>
       <span style="color:${clr};font-weight:700;font-size:12px">${pct}</span>
       <span style="color:#10b981;font-size:11px;margin-right:auto">${pct * 5} ر</span>
     </div>`;
   });
-  html += `<div style="border-top:1px solid #1e2d4a;margin-top:8px;padding-top:8px;
+  html += `<div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;
     color:#f0c96a;font-weight:700;font-size:13px;text-align:center">
     إجمالي الحوافز: ${totalBonus.toLocaleString()} ريال
   </div>`;
@@ -2076,6 +2312,7 @@ function executeReset() {
 // INIT
 // ============================================================
 document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
   updateDateDisplays();
   setInterval(updateDateDisplays, 60000);
   refreshSupervisorPage();
