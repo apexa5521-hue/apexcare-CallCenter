@@ -952,7 +952,52 @@
   </div>
 </div>
 
-<!-- PRINT STYLES -->
+<!-- RESET CONFIRMATION MODAL -->
+<div id="resetModal" style="
+  display:none;position:fixed;inset:0;z-index:900;
+  background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;">
+  <div style="
+    background:#161d2e;border:1px solid #1e2d4a;border-radius:16px;
+    padding:36px;max-width:420px;width:90%;text-align:center;
+    border-top:3px solid #ef4444;">
+    <div style="font-size:44px;margin-bottom:12px">⚠️</div>
+    <div style="font-size:18px;font-weight:700;color:#ef4444;margin-bottom:8px;font-family:Cairo">
+      تأكيد إعادة التعيين الشهرية
+    </div>
+    <div style="font-size:13px;color:#94a3b8;margin-bottom:20px;font-family:Cairo;line-height:1.8">
+      سيتم حفظ تقييم الشهر الحالي في سجل منفصل<br>
+      قبل إعادة التعيين — <strong style="color:#f0c96a">لن تضيع أي بيانات</strong>
+    </div>
+
+    <!-- ملخص الأرصدة الحالية -->
+    <div id="resetSummary" style="
+      background:#0a0e1a;border:1px solid #1e2d4a;border-radius:10px;
+      padding:14px;margin-bottom:20px;text-align:right;font-family:Cairo;font-size:13px">
+    </div>
+
+    <div style="font-size:12px;color:#ef4444;margin-bottom:20px;font-family:Cairo">
+      ⛔ بعد التأكيد تُصبح جميع الأرصدة 100 من جديد
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button onclick="closeResetModal()" style="
+        flex:1;padding:11px;border-radius:8px;font-family:Cairo;font-size:14px;
+        font-weight:700;cursor:pointer;border:1px solid #1e2d4a;
+        background:#111827;color:#e2e8f0">
+        إلغاء
+      </button>
+      <button onclick="executeReset()" style="
+        flex:1;padding:11px;border-radius:8px;font-family:Cairo;font-size:14px;
+        font-weight:700;cursor:pointer;border:none;
+        background:linear-gradient(135deg,#ef4444,#b91c1c);color:white">
+        ✓ تأكيد التعيين
+      </button>
+    </div>
+  </div>
+</div>
+
+
 <style id="printStyles">
 @media print {
   body { background: white !important; color: black !important; }
@@ -969,8 +1014,8 @@
 // ============================================================
 // CONFIG & STATE
 // ============================================================
-const MANAGER_PASSWORD = "apex2025"; // Change this
-const GAS_URL = "1YPsGBb0rTZbV7UihsAP4p0IoPVFa41FOB4cPq_PH6L8"; // Set your deployed Apps Script URL here
+const MANAGER_PASSWORD = "T9@MG7tYxia8"; // Change this
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyl_6Npe-LWJEf8s0j3IjH6lko5QnCj0GDS8vRST42gbC-4ieujc7XUEiTuuBphOAqI/exec"; // ← ضع رابط Web App هنا
 
 const EMPLOYEES = {
   "مرح":    { track: "calls",    trackLabel: "مكالمات" },
@@ -1290,16 +1335,16 @@ async function submitViolation() {
   };
   state.violationLog.unshift(logEntry);
 
-  // Try GAS if URL set
-  if (GAS_URL) {
-    try {
-      const payload = { employeeName: name, criterion: crit, category: cat, notes, imageUrl: "" };
-      if (state.imageData) {
-        const imgRes = await callGAS("uploadImage", { base64Data: state.imageData, fileName: `${name}_${Date.now()}.jpg` });
-        if (imgRes.success) payload.imageUrl = imgRes.url;
-      }
-      await callGAS("recordViolation", payload);
-    } catch (e) { /* offline mode */ }
+  // Try GAS
+  try {
+    const payload = { employeeName: name, criterion: crit, category: cat, notes, imageUrl: "" };
+    if (state.imageData) {
+      const imgRes = await callGAS("uploadImage", { base64Data: state.imageData, fileName: `${name}_${Date.now()}.jpg` });
+      if (imgRes && imgRes.success) payload.imageUrl = imgRes.url;
+    }
+    await callGAS("recordViolation", payload);
+  } catch (e) {
+    console.warn("GAS error:", e.message); // offline mode — البيانات محفوظة محلياً
   }
 
   // Update UI
@@ -1352,10 +1397,10 @@ async function deductRahaf(amount) {
 
   state.rahafBalance = Math.max(0, state.rahafBalance - amount);
 
-  if (GAS_URL) {
-    try {
-      await callGAS("recordSupervisorEvaluation", { criterion, evalType, deduction: amount, notes });
-    } catch (e) {}
+  try {
+    await callGAS("recordSupervisorEvaluation", { criterion, evalType, deduction: amount, notes });
+  } catch (e) {
+    console.warn("GAS error:", e.message);
   }
 
   updateRahafDisplay();
@@ -1538,42 +1583,138 @@ function showToast(msg, type = "info") {
 }
 
 // ============================================================
-// GAS API CALL
+// GAS API CALL — يدعم CORS عبر no-cors redirect trick
+// Apps Script يقبل POST ويرجع JSON
 // ============================================================
-async function callGAS(action, data) {
+async function callGAS(action, data = {}) {
+  if (!GAS_URL || GAS_URL.includes("YOUR_DEPLOYMENT_ID")) {
+    throw new Error("GAS_URL غير مضبوط");
+  }
   const res = await fetch(GAS_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "text/plain" }, // text/plain يتجاوز CORS preflight
     body: JSON.stringify({ action, ...data })
   });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
+}
+
+// ============================================================
+// تحميل البيانات من الشيت عند الفتح
+// ============================================================
+async function loadFromSheet() {
+  if (!GAS_URL || GAS_URL.includes("YOUR_DEPLOYMENT_ID")) return;
+
+  // أظهر مؤشر تحميل
+  showToast("جاري تحميل البيانات من الشيت...", "info");
+
+  try {
+    const result = await callGAS("getAllData");
+    if (!result.success) throw new Error(result.error);
+
+    // ── حدّث الأرصدة ──
+    if (result.employeeScores) {
+      Object.entries(result.employeeScores).forEach(([name, sc]) => {
+        if (state.employeeScores[name]) {
+          state.employeeScores[name].balance  = sc.balance  ?? 100;
+          state.employeeScores[name].deducted = sc.deducted ?? 0;
+        }
+      });
+    }
+
+    // ── حدّث نقاط رهف ──
+    if (result.supervisorScore !== undefined) state.supervisorScore = result.supervisorScore;
+    if (result.rahafBalance    !== undefined) state.rahafBalance    = result.rahafBalance;
+
+    // ── حدّث سجل المخالفات ──
+    if (result.violationCounts) {
+      // violationCounts = { "اسم__معيار": عدد }
+      // نحوّلها لـ violationLog محلي (للعرض فقط)
+      state.violationLog = [];
+      Object.entries(result.violationCounts).forEach(([key, count]) => {
+        const [employee, criterion] = key.split("__");
+        for (let i = 0; i < count; i++) {
+          state.violationLog.push({ employee, criterion, date: "--", category: "--",
+                                    points: 0, deduction: 0, violNum: i + 1, imageUrl: "", notes: "" });
+        }
+      });
+    }
+
+    // ── أعد رسم الواجهة ──
+    refreshSupervisorPage();
+    if (state.managerUnlocked) refreshManagerPage();
+
+    showToast("✓ تم تحميل البيانات من Google Sheets", "success");
+
+  } catch (err) {
+    // الشغل بدون اتصال — البيانات المحلية فقط
+    console.warn("تعذّر الاتصال بالشيت:", err.message);
+    showToast("وضع غير متصل — البيانات محلية فقط", "warning");
+  }
 }
 
 // ============================================================
 // RESET
 // ============================================================
 function confirmReset() {
-  if (!confirm("⚠️ هل أنت متأكد من إعادة تعيين جميع الأرصدة لبداية الشهر الجديد؟\n\nهذا الإجراء لا يمكن التراجع عنه.")) return;
+  // ابنِ ملخص الأرصدة الحالية قبل العرض
+  const summary = document.getElementById("resetSummary");
+  const totalBonus = Object.values(state.employeeScores)
+    .reduce((s, sc) => s + sc.balance * 5, 0);
+  const sorted = Object.entries(state.employeeScores)
+    .sort((a, b) => b[1].balance - a[1].balance);
+
+  let html = `<div style="margin-bottom:10px;color:#d4a843;font-weight:700;font-size:12px">
+    📊 ملخص الشهر الحالي — سيُحفظ قبل التعيين</div>`;
+  sorted.forEach(([name, sc]) => {
+    const pct  = sc.balance;
+    const clr  = pct >= 80 ? "#10b981" : pct >= 60 ? "#f59e0b" : "#ef4444";
+    const bar  = "█".repeat(Math.round(pct / 10)) + "░".repeat(10 - Math.round(pct / 10));
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+      <span style="min-width:52px;color:#e2e8f0;font-size:12px">${name}</span>
+      <span style="font-family:Courier New;font-size:10px;color:${clr}">${bar}</span>
+      <span style="color:${clr};font-weight:700;font-size:12px">${pct}</span>
+      <span style="color:#10b981;font-size:11px;margin-right:auto">${pct * 5} ر</span>
+    </div>`;
+  });
+  html += `<div style="border-top:1px solid #1e2d4a;margin-top:8px;padding-top:8px;
+    color:#f0c96a;font-weight:700;font-size:13px;text-align:center">
+    إجمالي الحوافز: ${totalBonus.toLocaleString()} ريال
+  </div>`;
+
+  summary.innerHTML = html;
+  document.getElementById("resetModal").style.display = "flex";
+}
+
+function closeResetModal() {
+  document.getElementById("resetModal").style.display = "none";
+}
+
+function executeReset() {
+  closeResetModal();
+
+  // حفظ snapshot في الشيت قبل التعيين
+  callGAS("resetMonthlyScores").catch(() => {});
+
+  // إعادة التعيين محلياً
   Object.keys(state.employeeScores).forEach(name => {
     state.employeeScores[name] = { balance: 100, deducted: 0 };
   });
   state.supervisorScore = 0;
-  state.rahafBalance = 100;
-  state.violationLog = [];
+  state.rahafBalance    = 100;
+  state.violationLog    = [];
+
   refreshManagerPage();
   refreshSupervisorPage();
-  showToast("تمت إعادة التعيين بنجاح ✓", "success");
-
-  if (GAS_URL) callGAS("resetMonthlyScores", {}).catch(() => {});
+  showToast("✓ تمت إعادة التعيين — البيانات محفوظة في الشيت", "success");
 }
 
 // ============================================================
 // INIT
 // ============================================================
 document.addEventListener("DOMContentLoaded", () => {
-  // Start on manager auth (manager page is default on load)
-  // supervisor is visible, manager requires auth
   refreshSupervisorPage();
+  loadFromSheet(); // ← تحميل البيانات الحقيقية من الشيت فور فتح الصفحة
 });
 </script>
 
