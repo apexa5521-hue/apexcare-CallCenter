@@ -625,6 +625,9 @@
     border-radius: 8px;
   }
 
+  /* صفحة المشرفة — خلفية بيضاء */
+  #page-supervisor { background: #f3f4f6; margin: -24px; padding: 24px; min-height: 100vh; }
+
   @media (max-width: 640px) {
     .form-row { grid-template-columns: 1fr; }
     .employees-grid { grid-template-columns: 1fr 1fr; }
@@ -678,8 +681,9 @@
     <div class="nav-logo-icon">A</div>
     <span class="nav-title">APEXCARE · نظام الجودة</span>
   </div>
+  <div id="navDateDisplay" style="font-family:Cairo;font-size:12px;color:var(--apex-muted);text-align:center;line-height:1.5;display:flex;flex-direction:column;align-items:center"></div>
   <div class="nav-tabs">
-    <button class="nav-tab active" id="tabSup" onclick="switchPage('supervisor')">واجهة المشرفة</button>
+    <button class="nav-tab active" id="tabSup" onclick="switchPage('supervisor')">واجهة الإشراف</button>
     <button class="nav-tab" id="tabMgr" onclick="switchPage('manager')">لوحة المدير</button>
   </div>
 </nav>
@@ -690,158 +694,227 @@
   <!-- ==================== SUPERVISOR PAGE ==================== -->
   <div class="page active" id="page-supervisor">
 
-    <!-- Supervisor Score Bar -->
-    <div class="sup-score-bar">
-      <div>
-        <div class="sup-score-num" id="supScoreDisplay">0</div>
-        <div class="sup-score-label">نقاط رهف التراكمية</div>
+    <!-- ── هيدر تشجيعي دوّار ── -->
+    <div style="background:linear-gradient(135deg,#1a56db 0%,#0ea5b0 100%);border-radius:16px;padding:24px 28px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;opacity:0.05;background:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22><circle cx=%2230%22 cy=%2230%22 r=%2228%22 fill=%22none%22 stroke=%22white%22 stroke-width=%221%22/></svg>') repeat"></div>
+      <div style="position:relative;flex:1">
+        <div style="font-size:11px;color:rgba(255,255,255,0.65);font-family:Cairo;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">APEXCARE · نظام الجودة</div>
+        <div id="motivationalQuote" style="font-size:18px;font-weight:700;color:#fff;font-family:Cairo;line-height:1.5;transition:opacity 0.5s"></div>
+        <div style="width:40px;height:3px;background:rgba(255,255,255,0.4);border-radius:2px;margin-top:10px"></div>
+        <div style="display:flex;gap:6px;margin-top:8px" id="quoteDots"></div>
+        <div id="supDateDisplay" style="margin-top:12px;font-family:Cairo;font-size:12px;color:rgba(255,255,255,0.75);background:rgba(255,255,255,0.1);border-radius:8px;padding:5px 12px;display:inline-block"></div>
       </div>
-      <div style="flex:1">
-        <div class="progress-bar" style="height:8px">
-          <div class="progress-fill" id="supScoreBar" style="width:0%;background:linear-gradient(90deg,var(--apex-gold),var(--apex-teal-light))"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;margin-top:4px">
-          <span class="sup-score-label">0</span>
-          <span class="sup-score-label">الحد الأقصى: 900</span>
-        </div>
-      </div>
-      <div>
-        <div class="sup-score-info">كل مخالفة موثقة = <strong style="color:var(--apex-gold)">+2 نقطة</strong></div>
-        <div class="sup-score-label">الحافز المستحق: <strong style="color:var(--apex-green)" id="supBonusDisplay">0</strong> ريال</div>
+      <div style="background:rgba(255,255,255,0.15);border-radius:12px;padding:14px 20px;text-align:center;backdrop-filter:blur(8px);position:relative">
+        <div style="font-size:11px;color:rgba(255,255,255,0.75);font-family:Cairo">نقاطك التراكمية</div>
+        <div style="font-size:28px;font-weight:900;color:#fde68a;font-family:Cairo" id="supScoreDisplay">0</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.75);font-family:Cairo">حافز: <span id="supBonusDisplay" style="color:#6ee7b7;font-weight:700">0</span> ريال</div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">📋 تسجيل مخالفة تشغيلية</div>
+    <!-- ── شريط تقدم نقاط رهف ── -->
+    <div style="background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:12px;font-weight:700;color:#6b7280;font-family:Cairo">تقدمك نحو الحد الأقصى</span>
+        <span style="font-size:12px;color:#1a56db;font-weight:700;font-family:Cairo"><span id="supScoreDisplay2">0</span> / 900 نقطة</span>
+      </div>
+      <div style="height:10px;background:#e5e7eb;border-radius:5px;overflow:hidden">
+        <div id="supScoreBar" style="height:100%;width:0%;background:linear-gradient(90deg,#1a56db,#0ea5b0);border-radius:5px;transition:width 0.8s ease"></div>
+      </div>
+      <div style="font-size:11px;color:#9ca3af;margin-top:6px;font-family:Cairo">كل مخالفة موثّقة = <strong style="color:#1a56db">+2 نقطة</strong></div>
+    </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label>اسم الموظفة</label>
-          <select id="empSelect" onchange="onEmployeeChange()">
-            <option value="">-- اختر الموظفة --</option>
-            <option value="مرح">مرح</option>
-            <option value="هيلة">هيلة</option>
-            <option value="جنان">جنان</option>
-            <option value="أسيل">أسيل</option>
-            <option value="حور">حور</option>
-            <option value="سارة">سارة</option>
-            <option value="طيف">طيف</option>
-            <option value="روان">روان</option>
-            <option value="تهاني">تهاني</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>المسار</label>
-          <div id="trackDisplay" style="padding:10px 14px;background:var(--apex-dark);border:1px solid var(--apex-border);border-radius:8px;min-height:42px;display:flex;align-items:center">
-            <span style="color:var(--apex-muted);font-size:13px">يُحدد بعد اختيار الموظفة</span>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+      <!-- ── أرصدة الموظفات (قابل للطي) ── -->
+      <div style="background:#fff;border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1;overflow:hidden">
+        <button onclick="toggleSection('empSection','empChevron')" style="width:100%;background:none;border:none;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:Cairo">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:4px;height:18px;background:#1a56db;border-radius:2px;display:inline-block"></span>
+            <span style="font-size:15px;font-weight:700;color:#111827">أرصدة الموظفات — هذا الشهر</span>
+          </div>
+          <span id="empChevron" style="font-size:18px;color:#9ca3af;transition:transform 0.3s">▾</span>
+        </button>
+        <div id="empSection" style="padding:0 20px 20px">
+          <div id="supEmployeeList" style="display:flex;flex-direction:column;gap:10px">
+            <!-- تُملأ من JS -->
           </div>
         </div>
       </div>
 
-      <!-- Employee Balance Display -->
-      <div id="empBalanceRow" style="display:none;margin-bottom:16px">
-        <div style="display:flex;align-items:center;gap:12px;background:var(--apex-dark);border:1px solid var(--apex-border);border-radius:10px;padding:14px 18px">
-          <div>
-            <div style="font-size:11px;color:var(--apex-muted)">الرصيد الحالي</div>
-            <div style="font-size:22px;font-weight:900" id="empCurrentBalance">100</div>
+      <!-- ── تذكير بمعايير الجودة (قابل للطي) ── -->
+      <div style="background:#fff;border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1;overflow:hidden">
+        <button onclick="toggleSection('criteriaSection','criteriaChevron')" style="width:100%;background:none;border:none;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:Cairo">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:4px;height:18px;background:#f59e0b;border-radius:2px;display:inline-block"></span>
+            <span style="font-size:15px;font-weight:700;color:#111827">تذكير بمعايير الجودة 💡</span>
+            <span style="font-size:11px;color:#9ca3af;font-weight:400">راجعي المعايير قبل كل جلسة تقييم</span>
           </div>
-          <div style="flex:1">
-            <div class="progress-bar">
-              <div class="progress-fill" id="empBalanceBar" style="width:100%;background:var(--apex-green)"></div>
+          <span id="criteriaChevron" style="font-size:18px;color:#9ca3af;transition:transform 0.3s">▸</span>
+        </button>
+        <div id="criteriaSection" style="display:none;padding:0 20px 20px">
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+            <button onclick="showCriteria('calls')" id="ctab-calls" style="padding:7px 16px;border-radius:20px;border:1.5px solid #0ea5b0;background:#e0f2fe;color:#0369a1;font-family:Cairo;font-size:12px;font-weight:700;cursor:pointer">📞 مكالمات</button>
+            <button onclick="showCriteria('messages')" id="ctab-messages" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e5e7eb;background:#f9fafb;color:#6b7280;font-family:Cairo;font-size:12px;font-weight:700;cursor:pointer">💬 رسائل</button>
+            <button onclick="showCriteria('dual')" id="ctab-dual" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e5e7eb;background:#f9fafb;color:#6b7280;font-family:Cairo;font-size:12px;font-weight:700;cursor:pointer">🔀 مشترك</button>
+          </div>
+          <div id="criteriaPanel" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>      <!-- ── فورم تسجيل المخالفة ── -->
+      <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1">
+        <div style="font-size:15px;font-weight:700;color:#111827;font-family:Cairo;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+          <span style="width:4px;height:18px;background:#ef4444;border-radius:2px;display:inline-block"></span>
+          تسجيل مخالفة تشغيلية
+        </div>
+
+        <div class="form-row" style="margin-bottom:14px">
+          <div class="form-group">
+            <label style="color:#374151;font-size:13px;font-weight:600">اسم الموظفة</label>
+            <select id="empSelect" onchange="onEmployeeChange()" style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:8px;color:#111827;padding:10px 14px;font-family:Cairo;font-size:14px">
+              <option value="">-- اختر الموظفة --</option>
+              <option value="مرح">مرح</option>
+              <option value="هيلة">هيلة</option>
+              <option value="جنان">جنان</option>
+              <option value="أسيل">أسيل</option>
+              <option value="حور">حور</option>
+              <option value="سارة">سارة</option>
+              <option value="طيف">طيف</option>
+              <option value="روان">روان</option>
+              <option value="تهاني">تهاني</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="color:#374151;font-size:13px;font-weight:600">المسار</label>
+            <div id="trackDisplay" style="padding:10px 14px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:8px;min-height:42px;display:flex;align-items:center">
+              <span style="color:#9ca3af;font-size:13px;font-family:Cairo">يُحدد بعد اختيار الموظفة</span>
             </div>
           </div>
-          <div>
-            <div style="font-size:11px;color:var(--apex-muted)">الحافز المستحق</div>
-            <div style="font-size:16px;font-weight:700;color:var(--apex-green)" id="empCurrentBonus">500 ريال</div>
+        </div>
+
+        <!-- رصيد الموظفة المختارة -->
+        <div id="empBalanceRow" style="display:none;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:12px;background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px 16px">
+            <div style="text-align:center;min-width:56px">
+              <div style="font-size:11px;color:#0369a1;font-family:Cairo">الرصيد</div>
+              <div style="font-size:24px;font-weight:900;color:#0369a1;font-family:Cairo" id="empCurrentBalance">100</div>
+            </div>
+            <div style="flex:1">
+              <div style="height:8px;background:#bae6fd;border-radius:4px;overflow:hidden">
+                <div id="empBalanceBar" style="height:100%;width:100%;background:#0ea5e9;border-radius:4px;transition:width 0.5s"></div>
+              </div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:11px;color:#0369a1;font-family:Cairo">الحافز</div>
+              <div style="font-size:15px;font-weight:700;color:#059669;font-family:Cairo" id="empCurrentBonus">500 ريال</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label>الفئة</label>
-          <select id="categorySelect" onchange="onCategoryChange()" disabled>
-            <option value="">-- اختر الفئة --</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>المعيار</label>
-          <select id="criterionSelect" onchange="onCriterionChange()" disabled>
-            <option value="">-- اختر المعيار --</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Criterion Points Info -->
-      <div id="criterionInfo" style="display:none;margin-bottom:16px">
-        <div style="background:rgba(14,165,176,0.08);border:1px solid rgba(14,165,176,0.2);border-radius:8px;padding:12px 16px;display:flex;gap:20px;flex-wrap:wrap">
-          <div>
-            <span style="font-size:11px;color:var(--apex-muted)">نقاط المعيار: </span>
-            <strong id="infoPoints" style="color:var(--apex-teal-light)">--</strong>
+        <div class="form-row" style="margin-bottom:14px">
+          <div class="form-group">
+            <label style="color:#374151;font-size:13px;font-weight:600">الفئة</label>
+            <select id="categorySelect" onchange="onCategoryChange()" disabled
+              style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:8px;color:#111827;padding:10px 14px;font-family:Cairo;font-size:14px">
+              <option value="">-- اختر الفئة --</option>
+            </select>
           </div>
-          <div>
-            <span style="font-size:11px;color:var(--apex-muted)">خصم هذه المخالفة: </span>
-            <strong id="infoDeduct" style="color:var(--apex-red)">--</strong>
-          </div>
-          <div>
-            <span style="font-size:11px;color:var(--apex-muted)">رقم المخالفة على هذا المعيار: </span>
-            <strong id="infoViolNum" style="color:var(--apex-gold)">--</strong>
+          <div class="form-group">
+            <label style="color:#374151;font-size:13px;font-weight:600">المعيار</label>
+            <select id="criterionSelect" onchange="onCriterionChange()" disabled
+              style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:8px;color:#111827;padding:10px 14px;font-family:Cairo;font-size:14px">
+              <option value="">-- اختر المعيار --</option>
+            </select>
           </div>
         </div>
-      </div>
 
-      <div class="form-group full" style="margin-bottom:16px">
-        <label>صورة التوثيق (اختياري)</label>
-        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('imageInput').click()"
-          ondragover="event.preventDefault();this.classList.add('dragover')"
-          ondragleave="this.classList.remove('dragover')"
-          ondrop="handleDrop(event)">
-          <div class="upload-zone-icon">📷</div>
-          <div class="upload-zone-text">اضغط لرفع صورة أو اسحبها هنا<br><small>JPG, PNG (حد أقصى 5MB)</small></div>
+        <!-- معلومات المعيار -->
+        <div id="criterionInfo" style="display:none;margin-bottom:14px">
+          <div style="background:#fef3c7;border:1.5px solid #fcd34d;border-radius:8px;padding:12px 16px;display:flex;gap:20px;flex-wrap:wrap">
+            <div>
+              <span style="font-size:11px;color:#92400e;font-family:Cairo">نقاط المعيار: </span>
+              <strong id="infoPoints" style="color:#1d4ed8">--</strong>
+            </div>
+            <div>
+              <span style="font-size:11px;color:#92400e;font-family:Cairo">خصم هذه المخالفة: </span>
+              <strong id="infoDeduct" style="color:#dc2626">--</strong>
+            </div>
+            <div>
+              <span style="font-size:11px;color:#92400e;font-family:Cairo">رقم المخالفة: </span>
+              <strong id="infoViolNum" style="color:#d97706">--</strong>
+            </div>
+          </div>
         </div>
-        <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="previewImage(this)">
-        <img id="imagePreview" class="upload-preview" style="display:none" alt="">
+
+        <!-- رفع صورة -->
+        <div class="form-group" style="margin-bottom:14px">
+          <label style="color:#374151;font-size:13px;font-weight:600">صورة التوثيق (اختياري)</label>
+          <div class="upload-zone" id="uploadZone"
+            onclick="document.getElementById('imageInput').click()"
+            ondragover="event.preventDefault();this.classList.add('dragover')"
+            ondragleave="this.classList.remove('dragover')"
+            ondrop="handleDrop(event)"
+            style="border:2px dashed #d1d5db;background:#f9fafb;border-radius:10px;padding:20px;text-align:center;cursor:pointer">
+            <div class="upload-zone-icon" style="font-size:28px;margin-bottom:6px">📷</div>
+            <div style="font-size:12px;color:#6b7280;font-family:Cairo">اضغط لرفع صورة أو اسحبها هنا<br><small>JPG, PNG (حد أقصى 5MB)</small></div>
+          </div>
+          <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="previewImage(this)">
+          <img id="imagePreview" class="upload-preview" style="display:none;border-radius:8px;margin-top:10px;width:100%;max-height:150px;object-fit:cover" alt="">
+        </div>
+
+        <!-- ملاحظات -->
+        <div class="form-group" style="margin-bottom:18px">
+          <label style="color:#374151;font-size:13px;font-weight:600">ملاحظات إضافية</label>
+          <textarea id="notesInput" rows="2" placeholder="أي تفاصيل إضافية..."
+            style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:8px;color:#111827;padding:10px 14px;font-family:Cairo;font-size:14px;width:100%;resize:vertical"></textarea>
+        </div>
+
+        <button id="submitBtn" onclick="submitViolation()" style="
+          width:100%;padding:13px;border-radius:10px;border:none;
+          background:linear-gradient(135deg,#1a56db,#0ea5b0);
+          color:#fff;font-family:Cairo;font-size:15px;font-weight:700;
+          cursor:pointer;transition:all 0.2s;box-shadow:0 4px 14px rgba(26,86,219,0.3)">
+          <span id="submitBtnText">✓ تسجيل المخالفة</span>
+        </button>
       </div>
 
-      <div class="form-group full" style="margin-bottom:20px">
-        <label>ملاحظات إضافية</label>
-        <textarea id="notesInput" rows="2" placeholder="أي تفاصيل إضافية..."></textarea>
+      <!-- ── آخر المخالفات ── -->
+      <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1">
+        <div style="font-size:15px;font-weight:700;color:#111827;font-family:Cairo;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+          <span style="width:4px;height:18px;background:#8b5cf6;border-radius:2px;display:inline-block"></span>
+          آخر المخالفات المسجلة
+        </div>
+        <div class="log-table-wrap" style="border:1px solid #f3f4f6;border-radius:8px">
+          <table class="log-table" style="font-size:12px">
+            <thead>
+              <tr style="background:#f9fafb">
+                <th style="color:#6b7280;font-weight:600;padding:10px 12px">التاريخ</th>
+                <th style="color:#6b7280;font-weight:600;padding:10px 12px">الموظفة</th>
+                <th style="color:#6b7280;font-weight:600;padding:10px 12px">الفئة</th>
+                <th style="color:#6b7280;font-weight:600;padding:10px 12px">المعيار</th>
+                <th style="color:#6b7280;font-weight:600;padding:10px 12px">الخصم</th>
+                <th style="color:#6b7280;font-weight:600;padding:10px 12px">#</th>
+                <th style="color:#6b7280;font-weight:600;padding:10px 12px">صورة</th>
+              </tr>
+            </thead>
+            <tbody id="logTableBody">
+              <tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:20px;font-family:Cairo">جاري التحميل...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <button class="btn btn-primary btn-full" id="submitBtn" onclick="submitViolation()">
-        <span id="submitBtnText">تسجيل المخالفة</span>
-      </button>
-    </div>
 
-    <!-- Recent Log -->
-    <div class="card">
-      <div class="card-title">📜 آخر المخالفات المسجلة</div>
-      <div class="log-table-wrap">
-        <table class="log-table">
-          <thead>
-            <tr>
-              <th>التاريخ</th>
-              <th>الموظفة</th>
-              <th>الفئة</th>
-              <th>المعيار</th>
-              <th>الخصم</th>
-              <th>رقم المخالفة</th>
-              <th>صورة</th>
-            </tr>
-          </thead>
-          <tbody id="logTableBody">
-            <tr><td colspan="7" style="text-align:center;color:var(--apex-muted);padding:20px">جاري التحميل...</td></tr>
-          </tbody>
-        </table>
-      </div>
     </div>
   </div>
+
 
   <!-- ==================== MANAGER PAGE ==================== -->
   <div class="page" id="page-manager">
 
     <div class="section-header">
-      <h2>📊 لوحة مدير الجودة</h2>
+      <div>
+        <h2>📊 لوحة مدير الجودة</h2>
+        <div id="mgrDateDisplay" style="font-family:Cairo;font-size:12px;color:var(--apex-muted);margin-top:4px"></div>
+      </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-teal" onclick="generateWeeklyReport()">📄 تقرير أسبوعي</button>
         <button class="btn btn-danger" onclick="confirmReset()">🔄 إعادة تعيين الشهر</button>
@@ -1484,12 +1557,61 @@ function printReport() {
 function refreshSupervisorPage() {
   updateSupervisorScoreDisplay();
   renderLogTable();
+  renderSupEmployeeList();
+}
+
+function renderSupEmployeeList() {
+  const list = document.getElementById("supEmployeeList");
+  if (!list) return;
+
+  const sorted = Object.entries(state.employeeScores)
+    .sort((a, b) => b[1].balance - a[1].balance);
+
+  const rankColors = ["#f59e0b","#9ca3af","#b45309"];
+  const rankIcons  = ["🥇","🥈","🥉"];
+  const trackIcon  = { calls:"📞", messages:"💬", dual:"🔀" };
+  const trackLabel = { calls:"مكالمات", messages:"رسائل", dual:"مشترك" };
+
+  list.innerHTML = sorted.map(([name, sc], idx) => {
+    const pct    = sc.balance;
+    const barClr = pct >= 80 ? "#10b981" : pct >= 60 ? "#f59e0b" : "#ef4444";
+    const bgClr  = pct >= 80 ? "#f0fdf4" : pct >= 60 ? "#fffbeb" : "#fef2f2";
+    const bdClr  = pct >= 80 ? "#bbf7d0" : pct >= 60 ? "#fde68a" : "#fecaca";
+    const emp    = EMPLOYEES[name];
+    const rank   = idx < 3 ? `<span style="font-size:18px">${rankIcons[idx]}</span>` :
+                   `<span style="width:24px;height:24px;border-radius:50%;background:#f3f4f6;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#6b7280">${idx+1}</span>`;
+
+    return `
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:${bgClr};border:1.5px solid ${bdClr};border-radius:10px;transition:transform 0.15s" 
+         onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+      ${rank}
+      <div style="min-width:52px">
+        <div style="font-size:14px;font-weight:700;color:#111827;font-family:Cairo">${name}</div>
+        <div style="font-size:11px;color:#6b7280;font-family:Cairo">${trackIcon[emp.track]} ${trackLabel[emp.track]}</div>
+      </div>
+      <div style="flex:1">
+        <div style="height:7px;background:#e5e7eb;border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${barClr};border-radius:4px;transition:width 0.6s ease"></div>
+        </div>
+      </div>
+      <div style="text-align:center;min-width:38px">
+        <div style="font-size:18px;font-weight:900;color:${barClr};font-family:Cairo;line-height:1">${pct}</div>
+        <div style="font-size:10px;color:#9ca3af;font-family:Cairo">نقطة</div>
+      </div>
+      <div style="text-align:center;min-width:60px;background:#fff;border-radius:8px;padding:4px 8px;border:1px solid #e5e7eb">
+        <div style="font-size:12px;font-weight:700;color:#059669;font-family:Cairo">${pct*5} ر</div>
+        <div style="font-size:9px;color:#9ca3af;font-family:Cairo">حافز</div>
+      </div>
+    </div>`;
+  }).join("");
 }
 
 function updateSupervisorScoreDisplay() {
-  document.getElementById("supScoreDisplay").textContent = state.supervisorScore;
-  document.getElementById("supBonusDisplay").textContent = (state.supervisorScore * 5);
-  document.getElementById("supScoreBar").style.width = (state.supervisorScore / 900 * 100) + "%";
+  document.getElementById("supScoreDisplay").textContent  = state.supervisorScore;
+  if (document.getElementById("supScoreDisplay2"))
+    document.getElementById("supScoreDisplay2").textContent = state.supervisorScore;
+  document.getElementById("supBonusDisplay").textContent  = state.supervisorScore * 5;
+  document.getElementById("supScoreBar").style.width      = (state.supervisorScore / 900 * 100) + "%";
 }
 
 function refreshManagerPage() {
@@ -1553,14 +1675,14 @@ function renderLogTable() {
     return;
   }
   tbody.innerHTML = state.violationLog.slice(0, 30).map(v => `
-    <tr>
-      <td>${v.date}</td>
-      <td><strong>${v.employee}</strong></td>
-      <td>${v.category}</td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${v.criterion}">${v.criterion}</td>
-      <td style="color:var(--apex-red);font-weight:700">-${v.deduction}</td>
-      <td><span style="background:rgba(212,168,67,0.15);color:var(--apex-gold);padding:2px 8px;border-radius:4px;font-size:11px">#${v.violNum}</span></td>
-      <td>${v.imageUrl ? `<span style="color:var(--apex-teal-light);cursor:pointer" onclick="showImg()">📷</span>` : '-'}</td>
+    <tr style="border-bottom:1px solid #f3f4f6">
+      <td style="padding:9px 12px;color:#6b7280;font-size:12px;font-family:Cairo">${v.date}</td>
+      <td style="padding:9px 12px;font-weight:700;color:#111827;font-family:Cairo">${v.employee}</td>
+      <td style="padding:9px 12px;color:#374151;font-family:Cairo">${v.category}</td>
+      <td style="padding:9px 12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#374151;font-family:Cairo" title="${v.criterion}">${v.criterion}</td>
+      <td style="padding:9px 12px;font-weight:700;color:#dc2626;font-family:Cairo">-${v.deduction}</td>
+      <td style="padding:9px 12px"><span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:4px;font-size:11px;font-family:Cairo">#${v.violNum}</span></td>
+      <td style="padding:9px 12px">${v.imageUrl ? `<span style="color:#1a56db;cursor:pointer;font-size:13px">📷</span>` : '-'}</td>
     </tr>
   `).join("");
 }
@@ -1591,7 +1713,240 @@ function showToast(msg, type = "info") {
 }
 
 // ============================================================
-// GAS API CALL — يدعم CORS عبر no-cors redirect trick
+// العبارات التشجيعية الدوّارة
+// ============================================================
+// ============================================================
+// طي / فتح الأقسام
+// ============================================================
+// عرض التاريخ الحي
+// ============================================================
+function updateDateDisplays() {
+  const now  = new Date();
+
+  const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+  const months = ["يناير","فبراير","مارس","أبريل","مايو","يونيو",
+                  "يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+
+  const dayName = days[now.getDay()];
+  const day     = now.getDate();
+  const month   = months[now.getMonth()];
+  const year    = now.getFullYear();
+  const time    = now.toLocaleTimeString("ar-SA", { hour:"2-digit", minute:"2-digit" });
+
+  const fullDate  = `${dayName}، ${day} ${month} ${year}`;
+  const withTime  = `${dayName}، ${day} ${month} ${year}  ·  ${time}`;
+
+  // الـ nav
+  const nav = document.getElementById("navDateDisplay");
+  if (nav) nav.innerHTML =
+    `<span style="color:var(--apex-gold);font-weight:700">${time}</span>` +
+    `<span>${day} ${month} ${year}</span>`;
+
+  // هيدر المشرفة
+  const sup = document.getElementById("supDateDisplay");
+  if (sup) sup.textContent = `📅 ${fullDate}`;
+
+  // هيدر المدير
+  const mgr = document.getElementById("mgrDateDisplay");
+  if (mgr) mgr.textContent = `📅 ${withTime}`;
+}
+
+// ============================================================
+function toggleSection(sectionId, chevronId) {
+  const section = document.getElementById(sectionId);
+  const chevron = document.getElementById(chevronId);
+  if (!section) return;
+  const isOpen = section.style.display !== "none";
+  section.style.display = isOpen ? "none" : "block";
+  if (chevron) chevron.textContent = isOpen ? "▸" : "▾";
+}
+
+// ============================================================
+// ============================================================
+const MOTIVATIONAL_QUOTES = [
+  "التوثيق ضرورة — كل ملاحظة موثّقة تحمي الفريق وتحسّن الأداء 📋",
+  "لا تنسي التوثيق بالصورة — هو الدليل الذي يجعل التقييم عادلاً 📸",
+  "كل نقطة تسجّلينها اليوم تعكس اهتمامك بجودة الخدمة ⭐",
+  "المتابعة اليومية تختصر الكثير من المشاكل لاحقاً 🎯",
+  "فريق قوي يبدأ من متابعة دقيقة — شكراً على جهدك 💙",
+  "لا تتركي محادثة مفتوحة أو مخالفة دون إجراء — كل تفصيل مهم ✅",
+  "حافزك في نهاية الشهر يعكس دقتك في التوثيق طوله 💰",
+  "العمل الجيد لا يحتاج إلى إعلان — التقارير تتكلم عنه 📊",
+];
+
+let quoteIndex = 0;
+let quoteTimer = null;
+
+function initMotivationalQuotes() {
+  const el   = document.getElementById("motivationalQuote");
+  const dots = document.getElementById("quoteDots");
+  if (!el || !dots) return;
+
+  // أنشئ النقاط
+  dots.innerHTML = MOTIVATIONAL_QUOTES.map((_, i) =>
+    `<span id="qdot-${i}" style="width:6px;height:6px;border-radius:50%;background:${i===0?'#fff':'rgba(255,255,255,0.35)'};transition:background 0.3s;cursor:pointer" onclick="goToQuote(${i})"></span>`
+  ).join("");
+
+  showQuote(0);
+
+  // تبديل تلقائي كل 5 ثوانٍ
+  quoteTimer = setInterval(() => {
+    quoteIndex = (quoteIndex + 1) % MOTIVATIONAL_QUOTES.length;
+    showQuote(quoteIndex);
+  }, 5000);
+}
+
+function showQuote(idx) {
+  const el = document.getElementById("motivationalQuote");
+  if (!el) return;
+  el.style.opacity = "0";
+  setTimeout(() => {
+    el.textContent  = MOTIVATIONAL_QUOTES[idx];
+    el.style.opacity = "1";
+  }, 250);
+  // حدّث النقاط
+  MOTIVATIONAL_QUOTES.forEach((_, i) => {
+    const dot = document.getElementById(`qdot-${i}`);
+    if (dot) dot.style.background = i === idx ? "#fff" : "rgba(255,255,255,0.35)";
+  });
+}
+
+function goToQuote(idx) {
+  clearInterval(quoteTimer);
+  quoteIndex = idx;
+  showQuote(idx);
+  quoteTimer = setInterval(() => {
+    quoteIndex = (quoteIndex + 1) % MOTIVATIONAL_QUOTES.length;
+    showQuote(quoteIndex);
+  }, 5000);
+}
+
+// ============================================================
+// قائمة المعايير
+// ============================================================
+const CRITERIA_DISPLAY = {
+  calls: [
+    { cat:"📞 المكالمات", color:"#0369a1", bg:"#e0f2fe", border:"#bae6fd", items:[
+      { text:"الصياغة التعريفية في بداية المكالمة", pts:14, tip:"«حياك الله، معك نورة من عيادات أبكس كير»" },
+      { text:"التحقق من ملف المراجع برقم الجوال", pts:11, tip:"ابحثي قبل أن تسألي" },
+      { text:"الرد على جميع المكالمات الواردة", pts:10, tip:"كل مكالمة فائتة = فرصة ضائعة" },
+      { text:"تقديم خدمة مكتملة حتى الإغلاق", pts:8, tip:"أغلقي الطلب بوضوح" },
+      { text:"استخدام ألفاظ مهنية مناسبة", pts:6, tip:"تفضلي، أبشري، سمي" },
+      { text:"إقفال المكالمة بعبارة ختامية", pts:6, tip:"«نتمنى لك يوماً سعيداً»" },
+    ]},
+    { cat:"📁 فتح الملف", color:"#92400e", bg:"#fffbeb", border:"#fde68a", items:[
+      { text:"إدخال الاسم الرباعي بشكل صحيح", pts:7, tip:"الاسم الكامل أساس كل شيء" },
+      { text:"إدخال رقم الهوية بشكل صحيح", pts:6, tip:"تحققي مرتين قبل الحفظ" },
+      { text:"إدخال تاريخ الميلاد بشكل صحيح", pts:6, tip:"بيانات دقيقة = ملف موثوق" },
+      { text:"إدخال العنوان بشكل صحيح", pts:4, tip:"العنوان الصحيح يسهّل التواصل" },
+      { text:"التحري بالدقة في إدخال البيانات", pts:2, tip:"الدقة عادة احترافية" },
+    ]},
+    { cat:"📅 المواعيد", color:"#065f46", bg:"#ecfdf5", border:"#a7f3d0", items:[
+      { text:"تعويض المواعيد الملغاة", pts:6, tip:"كل موعد ملغى = فرصة لمراجع آخر" },
+      { text:"تأكيد المواعيد مع المراجعين", pts:5, tip:"التأكيد يقلل الغياب" },
+      { text:"تعبئة المواعيد عند توفر بديل", pts:5, tip:"الجدول الممتلئ = عيادة ناجحة" },
+      { text:"ترتيب جدول الدكتور متتالياً", pts:4, tip:"الجدول المنظم يعكس كفاءتك" },
+    ]},
+  ],
+  messages: [
+    { cat:"💬 الرسائل", color:"#5b21b6", bg:"#f5f3ff", border:"#ddd6fe", items:[
+      { text:"الرد على الرسائل خلال 10 دقائق", pts:14, tip:"السرعة = رضا المريض" },
+      { text:"متابعة المحادثات وعدم تركها مفتوحة", pts:11, tip:"محادثة مفتوحة = مراجع غير مخدوم" },
+      { text:"التحقق من ملف المراجع فور الفتح", pts:10, tip:"ابدأي بالبحث برقم الجوال" },
+      { text:"التفاعل مع المراجع خلال دقيقة", pts:8, tip:"أظهري حضورك فوراً" },
+      { text:"عبارة ختامية مهذبة في آخر رد", pts:6, tip:"الختام الجميل يكمل التجربة" },
+      { text:"الالتزام بالاختصارات المعتمدة", pts:6, tip:"التوحيد يعكس احترافية الفريق" },
+    ]},
+    { cat:"📁 فتح الملف", color:"#92400e", bg:"#fffbeb", border:"#fde68a", items:[
+      { text:"إدخال الاسم الرباعي بشكل صحيح", pts:7, tip:"الاسم الكامل أساس كل شيء" },
+      { text:"إدخال رقم الهوية بشكل صحيح", pts:6, tip:"تحققي مرتين قبل الحفظ" },
+      { text:"إدخال تاريخ الميلاد بشكل صحيح", pts:6, tip:"بيانات دقيقة = ملف موثوق" },
+      { text:"إدخال العنوان بشكل صحيح", pts:4, tip:"العنوان الصحيح يسهّل التواصل" },
+      { text:"التحري بالدقة في إدخال البيانات", pts:2, tip:"الدقة عادة احترافية" },
+    ]},
+    { cat:"📅 المواعيد", color:"#065f46", bg:"#ecfdf5", border:"#a7f3d0", items:[
+      { text:"تعويض المواعيد الملغاة", pts:6, tip:"كل موعد ملغى = فرصة لمراجع آخر" },
+      { text:"تأكيد المواعيد مع المراجعين", pts:5, tip:"التأكيد يقلل الغياب" },
+      { text:"تعبئة المواعيد عند توفر بديل", pts:5, tip:"الجدول الممتلئ = عيادة ناجحة" },
+      { text:"ترتيب جدول الدكتور متتالياً", pts:4, tip:"الجدول المنظم يعكس كفاءتك" },
+    ]},
+  ],
+  dual: [
+    { cat:"📞 المكالمات", color:"#0369a1", bg:"#e0f2fe", border:"#bae6fd", items:[
+      { text:"الصياغة التعريفية في بداية المكالمة", pts:8, tip:"«حياك الله، معك نورة من عيادات أبكس كير»" },
+      { text:"التحقق من ملف المراجع برقم الجوال", pts:6, tip:"ابحثي قبل أن تسألي" },
+      { text:"الرد على جميع المكالمات الواردة", pts:5, tip:"كل مكالمة فائتة = فرصة ضائعة" },
+      { text:"تقديم خدمة مكتملة حتى الإغلاق", pts:5, tip:"أغلقي الطلب بوضوح" },
+      { text:"استخدام ألفاظ مهنية مناسبة", pts:3, tip:"تفضلي، أبشري، سمي" },
+      { text:"إقفال المكالمة بعبارة ختامية", pts:3, tip:"«نتمنى لك يوماً سعيداً»" },
+    ]},
+    { cat:"💬 الرسائل", color:"#5b21b6", bg:"#f5f3ff", border:"#ddd6fe", items:[
+      { text:"الرد على الرسائل خلال 10 دقائق", pts:8, tip:"السرعة = رضا المريض" },
+      { text:"متابعة المحادثات وعدم تركها مفتوحة", pts:5, tip:"محادثة مفتوحة = مراجع غير مخدوم" },
+      { text:"التحقق من ملف المراجع فور الفتح", pts:5, tip:"ابدأي بالبحث برقم الجوال" },
+      { text:"التفاعل مع المراجع خلال دقيقة", pts:4, tip:"أظهري حضورك فوراً" },
+      { text:"عبارة ختامية مهذبة في آخر رد", pts:4, tip:"الختام الجميل يكمل التجربة" },
+      { text:"الالتزام بالاختصارات المعتمدة", pts:4, tip:"التوحيد يعكس احترافية الفريق" },
+    ]},
+    { cat:"📁 فتح الملف", color:"#92400e", bg:"#fffbeb", border:"#fde68a", items:[
+      { text:"إدخال الاسم الرباعي بشكل صحيح", pts:7, tip:"الاسم الكامل أساس كل شيء" },
+      { text:"إدخال رقم الهوية بشكل صحيح", pts:6, tip:"تحققي مرتين قبل الحفظ" },
+      { text:"إدخال تاريخ الميلاد بشكل صحيح", pts:6, tip:"بيانات دقيقة = ملف موثوق" },
+      { text:"إدخال العنوان بشكل صحيح", pts:4, tip:"العنوان الصحيح يسهّل التواصل" },
+      { text:"التحري بالدقة في إدخال البيانات", pts:2, tip:"الدقة عادة احترافية" },
+    ]},
+    { cat:"📅 المواعيد", color:"#065f46", bg:"#ecfdf5", border:"#a7f3d0", items:[
+      { text:"تعويض المواعيد الملغاة", pts:5, tip:"كل موعد ملغى = فرصة لمراجع آخر" },
+      { text:"تأكيد المواعيد مع المراجعين", pts:4, tip:"التأكيد يقلل الغياب" },
+      { text:"تعبئة المواعيد عند توفر بديل", pts:3, tip:"الجدول الممتلئ = عيادة ناجحة" },
+      { text:"ترتيب جدول الدكتور متتالياً", pts:3, tip:"الجدول المنظم يعكس كفاءتك" },
+    ]},
+  ]
+};
+
+let activeCriteriaTrack = "calls";
+
+function showCriteria(track) {
+  activeCriteriaTrack = track;
+
+  // حدّث التبويبات
+  ["calls","messages","dual"].forEach(t => {
+    const btn = document.getElementById("ctab-" + t);
+    if (!btn) return;
+    if (t === track) {
+      btn.style.background = t === "calls" ? "#e0f2fe" : t === "messages" ? "#f5f3ff" : "#fef3c7";
+      btn.style.borderColor = t === "calls" ? "#0ea5b0" : t === "messages" ? "#8b5cf6" : "#f59e0b";
+      btn.style.color       = t === "calls" ? "#0369a1" : t === "messages" ? "#5b21b6" : "#92400e";
+    } else {
+      btn.style.background  = "#f9fafb";
+      btn.style.borderColor = "#e5e7eb";
+      btn.style.color       = "#6b7280";
+    }
+  });
+
+  const panel = document.getElementById("criteriaPanel");
+  if (!panel) return;
+
+  const sections = CRITERIA_DISPLAY[track] || [];
+  panel.innerHTML = sections.map(sec => `
+    <div style="border:1.5px solid ${sec.border};border-radius:10px;overflow:hidden;margin-bottom:4px">
+      <div style="background:${sec.bg};padding:10px 14px;font-size:13px;font-weight:700;color:${sec.color};font-family:Cairo">
+        ${sec.cat}
+      </div>
+      ${sec.items.map(item => `
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-top:1px solid ${sec.border};background:#fff">
+          <div style="flex:1">
+            <div style="font-size:13px;color:#111827;font-family:Cairo">${item.text}</div>
+            <div style="font-size:11px;color:#9ca3af;font-family:Cairo;margin-top:2px">💡 ${item.tip}</div>
+          </div>
+          <div style="min-width:36px;text-align:center">
+            <span style="background:${sec.bg};color:${sec.color};border:1.5px solid ${sec.border};border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;font-family:Cairo">${item.pts}</span>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `).join("");
+}
 // Apps Script يقبل POST ويرجع JSON
 // ============================================================
 async function callGAS(action, data = {}) {
@@ -1721,8 +2076,12 @@ function executeReset() {
 // INIT
 // ============================================================
 document.addEventListener("DOMContentLoaded", () => {
+  updateDateDisplays();
+  setInterval(updateDateDisplays, 60000);
   refreshSupervisorPage();
-  loadFromSheet(); // ← تحميل البيانات الحقيقية من الشيت فور فتح الصفحة
+  initMotivationalQuotes();
+  showCriteria("calls");
+  loadFromSheet();
 });
 </script>
 
