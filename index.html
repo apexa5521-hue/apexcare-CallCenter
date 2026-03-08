@@ -186,15 +186,24 @@
   }
 
   /* ---- MANAGER AUTH ---- */
-  #manager-auth {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.85);
-    backdrop-filter: blur(10px);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  /* ---- LANDING SCREEN ---- */
+  #landing-screen { transition: background 0.3s; }
+  #landing-screen input[type="password"] {
+    background: var(--bg-input);
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 12px 14px;
+    width: 100%;
+    font-family: Cairo;
+    font-size: 15px;
+    direction: rtl;
+    transition: border-color 0.2s;
+  }
+  #landing-screen input[type="password"]:focus {
+    outline: none;
+    border-color: var(--apex-teal);
+    box-shadow: 0 0 0 3px rgba(14,165,176,0.15);
   }
 
   .auth-box {
@@ -788,31 +797,79 @@
 </div>
 
 <!-- MANAGER AUTH OVERLAY -->
-<!-- SUPERVISOR AUTH -->
-<div id="supervisor-auth" style="position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center">
-  <div class="auth-box">
-    <div style="font-size:36px;margin-bottom:12px">🛡️</div>
-    <h3>واجهة الإشراف</h3>
-    <p>أدخلي رمز الدخول للمتابعة</p>
-    <div class="form-group" style="margin-bottom:16px">
-      <label>رمز الدخول</label>
-      <input type="password" id="supervisorPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkSupervisorAuth()">
-    </div>
-    <button class="btn btn-primary btn-full" onclick="checkSupervisorAuth()">دخول</button>
-  </div>
-</div>
+<!-- ══ شاشة الاختيار والدخول ══ -->
+<div id="landing-screen" style="position:fixed;inset:0;z-index:600;display:flex;align-items:center;justify-content:center;background:var(--bg)">
 
-<!-- MANAGER AUTH -->
-<div id="manager-auth" style="display:none">
-  <div class="auth-box">
-    <div style="font-size:36px;margin-bottom:12px">🔒</div>
-    <h3>لوحة مدير الجودة</h3>
-    <p>هذه الواجهة سرية وخاصة بمدير الجودة فقط</p>
-    <div class="form-group" style="margin-bottom:16px">
-      <label>كلمة المرور</label>
-      <input type="password" id="managerPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkManagerAuth()">
+  <!-- خلفية زخرفية -->
+  <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none">
+    <div style="position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(14,165,176,0.12),transparent);top:-100px;right:-100px"></div>
+    <div style="position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(212,168,67,0.1),transparent);bottom:-80px;left:-80px"></div>
+  </div>
+
+  <div style="position:relative;width:100%;max-width:420px;padding:24px;text-align:center">
+
+    <!-- لوجو -->
+    <div style="width:64px;height:64px;background:linear-gradient(135deg,var(--apex-gold),var(--apex-teal));border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#0a0e1a;margin:0 auto 20px">A</div>
+    <div style="font-size:22px;font-weight:900;color:var(--text);font-family:Cairo;margin-bottom:4px">APEXCARE</div>
+    <div style="font-size:13px;color:var(--text-muted);font-family:Cairo;margin-bottom:32px">نظام إدارة الجودة — مركز الاتصال</div>
+
+    <!-- ── شاشة الاختيار ── -->
+    <div id="role-select-screen">
+      <div style="font-size:14px;color:var(--text-muted);font-family:Cairo;margin-bottom:20px">اختر واجهة الدخول</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+
+        <button onclick="showLoginScreen('supervisor')"
+          style="padding:18px 20px;border-radius:14px;border:1.5px solid var(--border);background:var(--bg-card);cursor:pointer;display:flex;align-items:center;gap:16px;transition:all 0.2s;text-align:right"
+          onmouseover="this.style.borderColor='var(--apex-teal)';this.style.background='rgba(14,165,176,0.06)'"
+          onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg-card)'">
+          <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#0ea5b0,#1a56db);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🛡️</div>
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--text);font-family:Cairo">واجهة الإشراف</div>
+          </div>
+          <div style="margin-right:auto;color:var(--text-muted);font-size:18px">←</div>
+        </button>
+
+        <button onclick="showLoginScreen('manager')"
+          style="padding:18px 20px;border-radius:14px;border:1.5px solid var(--border);background:var(--bg-card);cursor:pointer;display:flex;align-items:center;gap:16px;transition:all 0.2s;text-align:right"
+          onmouseover="this.style.borderColor='var(--apex-gold)';this.style.background='rgba(212,168,67,0.06)'"
+          onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg-card)'">
+          <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#d4a843,#b8860b);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📊</div>
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--text);font-family:Cairo">لوحة مدير الجودة</div>
+          </div>
+          <div style="margin-right:auto;color:var(--text-muted);font-size:18px">←</div>
+        </button>
+
+      </div>
     </div>
-    <button class="btn btn-primary btn-full" onclick="checkManagerAuth()">دخول</button>
+
+    <!-- ── شاشة الدخول ── -->
+    <div id="login-screen" style="display:none">
+
+      <!-- هيدر الدور المختار -->
+      <div id="login-role-header" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border);margin-bottom:20px;text-align:right">
+        <div id="login-role-icon" style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0"></div>
+        <div>
+          <div id="login-role-title" style="font-size:14px;font-weight:700;color:var(--text);font-family:Cairo"></div>
+          <div id="login-role-desc" style="font-size:11px;color:var(--text-muted);font-family:Cairo"></div>
+        </div>
+        <button onclick="showRoleSelect()" style="margin-right:auto;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-family:Cairo;font-size:11px;padding:4px 10px;cursor:pointer">تغيير</button>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px;text-align:right">
+        <label id="login-pw-label" style="font-size:13px;color:var(--text-label);font-weight:600">كلمة المرور</label>
+        <input type="password" id="landingPassword" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter')submitLandingLogin()"
+          style="margin-top:6px">
+      </div>
+
+      <button id="login-submit-btn" onclick="submitLandingLogin()"
+        style="width:100%;padding:13px;border-radius:10px;border:none;font-family:Cairo;font-size:15px;font-weight:700;cursor:pointer;color:#fff;background:linear-gradient(135deg,#0ea5b0,#1a56db);transition:opacity 0.2s">
+        دخول
+      </button>
+
+    </div>
+
   </div>
 </div>
 
@@ -1155,8 +1212,29 @@
         <textarea id="rahafNotes" rows="2" placeholder="تفاصيل التقصير..."></textarea>
       </div>
 
+      <!-- رفع ملف توثيق -->
+      <div class="form-group" style="margin-bottom:16px">
+        <label>توثيق الخطأ (صورة / ملف)</label>
+        <div id="rahafUploadZone"
+          onclick="document.getElementById('rahafFileInput').click()"
+          ondragover="event.preventDefault();this.style.borderColor='var(--apex-teal)'"
+          ondragleave="this.style.borderColor='var(--border)'"
+          ondrop="handleRahafDrop(event)"
+          style="border:2px dashed var(--border);background:var(--bg-input);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:border-color 0.2s">
+          <div style="font-size:24px;margin-bottom:4px" id="rahafUploadIcon">📎</div>
+          <div style="font-size:12px;color:var(--text-muted);font-family:Cairo">اضغط لرفع ملف أو اسحبه هنا</div>
+          <div style="font-size:11px;color:var(--text-muted);font-family:Cairo;margin-top:2px">صورة أو PDF</div>
+          <input type="file" id="rahafFileInput" accept="image/*,.pdf" style="display:none" onchange="handleRahafFile(this)">
+        </div>
+        <div id="rahafFilePreview" style="display:none;margin-top:8px;padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;display:none;align-items:center;gap:10px;font-family:Cairo;font-size:13px">
+          <span id="rahafFileIcon" style="font-size:20px">📄</span>
+          <span id="rahafFileName" style="flex:1;color:var(--text)">—</span>
+          <button onclick="clearRahafFile()" style="background:none;border:none;color:var(--apex-red);cursor:pointer;font-size:16px">✕</button>
+        </div>
+      </div>
+
       <div>
-        <label style="font-size:13px;color:var(--apex-muted);display:block;margin-bottom:8px">مقدار الخصم (نقاط)</label>
+        <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:8px">مقدار الخصم (نقاط)</label>
         <div class="deduct-grid">
           <button class="deduct-btn" onclick="deductRahaf(2)">2 نقطة<br><small>تكرار ١</small></button>
           <button class="deduct-btn" onclick="deductRahaf(4)">4 نقاط<br><small>تكرار ٢</small></button>
@@ -1164,6 +1242,13 @@
           <button class="deduct-btn" onclick="deductRahaf(8)">8 نقاط<br><small>إنذار شفهي</small></button>
           <button class="deduct-btn" onclick="deductRahaf(10)">10 نقاط<br><small>إنذار كتابي</small></button>
         </div>
+      </div>
+
+      <!-- زر إرسال التقرير -->
+      <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+        <button onclick="sendRahafReport()" style="width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;font-family:Cairo;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+          <span>📤</span> إرسال التقرير للمشرفة
+        </button>
       </div>
     </div>
 
@@ -1189,6 +1274,20 @@
     <div style="display:flex;gap:10px">
       <button onclick="closeViolationConfirm()" class="t-cancel-btn">إلغاء</button>
       <button onclick="confirmAndSubmit()" style="flex:1;padding:11px;border-radius:8px;border:none;background:linear-gradient(135deg,#1a56db,#0ea5b0);color:#fff;font-family:Cairo;font-size:14px;font-weight:700;cursor:pointer">✓ تأكيد التسجيل</button>
+    </div>
+  </div>
+</div>
+
+<!-- RAHAF REPORT CONFIRM MODAL -->
+<div id="rahafReportModal" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);align-items:center;justify-content:center">
+  <div class="t-modal-box" style="padding:28px;max-width:420px;width:90%;border-top:3px solid #8b5cf6;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+    <div style="font-size:36px;text-align:center;margin-bottom:12px">📤</div>
+    <div style="font-size:17px;font-weight:700;color:var(--text);font-family:Cairo;text-align:center;margin-bottom:16px">تأكيد إرسال التقرير</div>
+    <div id="rahafReportSummary" class="t-inner-box" style="font-family:Cairo;font-size:13px;line-height:2;margin-bottom:20px"></div>
+    <div style="font-size:12px;color:var(--text-muted);font-family:Cairo;text-align:center;margin-bottom:16px">سيتم إرسال التقرير مع المرفق إلى سجل التقييمات</div>
+    <div style="display:flex;gap:10px">
+      <button onclick="document.getElementById('rahafReportModal').style.display='none'" class="t-cancel-btn">إلغاء</button>
+      <button onclick="confirmRahafReport()" style="flex:1;padding:11px;border-radius:8px;border:none;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;font-family:Cairo;font-size:14px;font-weight:700;cursor:pointer">✓ تأكيد الإرسال</button>
     </div>
   </div>
 </div>
@@ -1252,7 +1351,7 @@
 // ============================================================
 const MANAGER_PASSWORD    = "T9@MG7tYxia8";
 const SUPERVISOR_PASSWORD = "Apex@sup2025"; // رمز دخول واجهة الإشراف
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyl_6Npe-LWJEf8s0j3IjH6lko5QnCj0GDS8vRST42gbC-4ieujc7XUEiTuuBphOAqI/exec"; // ← ضع رابط Web App هنا
+const GAS_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"; // ← ضع رابط Web App هنا
 
 const EMPLOYEES = {
   "مرح":    { track: "calls",    trackLabel: "مكالمات" },
@@ -1363,59 +1462,99 @@ Object.keys(EMPLOYEES).forEach(name => {
 });
 
 // ============================================================
-// AUTH
+// LANDING SCREEN — اختيار الدور ثم الدخول
 // ============================================================
-function checkSupervisorAuth() {
-  const pw = document.getElementById("supervisorPassword").value;
-  if (pw === SUPERVISOR_PASSWORD) {
-    state.supervisorUnlocked = true;
-    document.getElementById("supervisor-auth").style.display = "none";
-    switchPage("supervisor");
-    showToast("أهلاً بك في واجهة الإشراف ✓", "success");
-  } else {
-    showToast("رمز الدخول غير صحيح", "error");
-    document.getElementById("supervisorPassword").value = "";
+let _selectedRole = null;
+
+const ROLE_CONFIG = {
+  supervisor: {
+    icon: "🛡️",
+    iconBg: "linear-gradient(135deg,#0ea5b0,#1a56db)",
+    title: "واجهة الإشراف",
+    pwLabel: "رمز الدخول",
+    btnBg: "linear-gradient(135deg,#0ea5b0,#1a56db)"
+  },
+  manager: {
+    icon: "📊",
+    iconBg: "linear-gradient(135deg,#d4a843,#b8860b)",
+    title: "لوحة مدير الجودة",
+    pwLabel: "كلمة المرور",
+    btnBg: "linear-gradient(135deg,#d4a843,#b8860b)"
+  }
+};
+
+function showLoginScreen(role) {
+  _selectedRole = role;
+  const cfg = ROLE_CONFIG[role];
+  document.getElementById("role-select-screen").style.display = "none";
+  document.getElementById("login-screen").style.display      = "block";
+  document.getElementById("login-role-icon").textContent     = cfg.icon;
+  document.getElementById("login-role-icon").style.background = cfg.iconBg;
+  document.getElementById("login-role-title").textContent    = cfg.title;
+  document.getElementById("login-pw-label").textContent      = cfg.pwLabel;
+  document.getElementById("login-submit-btn").style.background = cfg.btnBg;
+  document.getElementById("landingPassword").value           = "";
+  setTimeout(() => document.getElementById("landingPassword").focus(), 100);
+}
+
+function showRoleSelect() {
+  _selectedRole = null;
+  document.getElementById("login-screen").style.display       = "none";
+  document.getElementById("role-select-screen").style.display = "block";
+  document.getElementById("landingPassword").value            = "";
+}
+
+function submitLandingLogin() {
+  const pw = document.getElementById("landingPassword").value;
+  if (_selectedRole === "supervisor") {
+    if (pw === SUPERVISOR_PASSWORD) {
+      state.supervisorUnlocked = true;
+      document.getElementById("landing-screen").style.display = "none";
+      switchPage("supervisor");
+      showToast("أهلاً بك في واجهة الإشراف ✓", "success");
+    } else {
+      showToast("رمز الدخول غير صحيح", "error");
+      document.getElementById("landingPassword").value = "";
+    }
+  } else if (_selectedRole === "manager") {
+    if (pw === MANAGER_PASSWORD) {
+      state.managerUnlocked = true;
+      document.getElementById("landing-screen").style.display = "none";
+      switchPage("manager");
+      showToast("تم الدخول بنجاح ✓", "success");
+    } else {
+      showToast("كلمة المرور غير صحيحة", "error");
+      document.getElementById("landingPassword").value = "";
+    }
   }
 }
 
-function checkManagerAuth() {
-  const pw = document.getElementById("managerPassword").value;
-  if (pw === MANAGER_PASSWORD) {
-    state.managerUnlocked = true;
-    document.getElementById("manager-auth").style.display = "none";
-    switchPage("manager");
-    refreshManagerPage();
-    showToast("تم الدخول بنجاح ✓", "success");
-  } else {
-    showToast("كلمة المرور غير صحيحة", "error");
-    document.getElementById("managerPassword").value = "";
-  }
-}
-
-function goToSupervisor() {
-  document.getElementById("manager-auth").style.display = "none";
-  switchPage("supervisor");
-}
+// ============================================================
+// AUTH (للتبديل بين الصفحات بعد الدخول)
+// ============================================================
+function checkSupervisorAuth() {}
+function checkManagerAuth()    {}
+function goToSupervisor()      { switchPage("supervisor"); }
 
 // ============================================================
 // PAGE SWITCHING
 // ============================================================
 function switchPage(page) {
   if (page === "supervisor" && !state.supervisorUnlocked) {
-    document.getElementById("supervisor-auth").style.display = "flex";
+    showLoginScreen("supervisor");
+    document.getElementById("landing-screen").style.display = "flex";
     return;
   }
   if (page === "manager" && !state.managerUnlocked) {
-    document.getElementById("manager-auth").style.display = "flex";
+    showLoginScreen("manager");
+    document.getElementById("landing-screen").style.display = "flex";
     return;
   }
-  document.getElementById("manager-auth").style.display    = "none";
-  document.getElementById("supervisor-auth").style.display = "none";
+  document.getElementById("landing-screen").style.display = "none";
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
   document.getElementById("page-" + page).classList.add("active");
   document.getElementById("tab" + (page === "supervisor" ? "Sup" : "Mgr")).classList.add("active");
-
   if (page === "supervisor") refreshSupervisorPage();
   if (page === "manager")    refreshManagerPage();
 }
@@ -1670,6 +1809,104 @@ async function confirmAndSubmit() {
 
 // ============================================================
 // DEDUCT RAHAF
+// ============================================================
+// ============================================================
+// رفع ملف توثيق تقييم رهف
+// ============================================================
+let rahafFileData = null;
+let rahafFileName = null;
+
+function handleRahafFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  processRahafFile(file);
+}
+
+function handleRahafDrop(e) {
+  e.preventDefault();
+  document.getElementById("rahafUploadZone").style.borderColor = "var(--border)";
+  const file = e.dataTransfer.files[0];
+  if (file) processRahafFile(file);
+}
+
+function processRahafFile(file) {
+  const isImage = file.type.startsWith("image/");
+  const isPDF   = file.type === "application/pdf";
+  if (!isImage && !isPDF) { showToast("يُقبل صور أو PDF فقط", "error"); return; }
+
+  rahafFileName = file.name;
+  const icon = document.getElementById("rahafUploadIcon");
+  const preview = document.getElementById("rahafFilePreview");
+  const nameEl  = document.getElementById("rahafFileName");
+  const iconEl  = document.getElementById("rahafFileIcon");
+
+  if (isImage) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      rahafFileData = e.target.result.split(",")[1];
+      icon.textContent = "✅";
+      iconEl.textContent = "🖼️";
+      nameEl.textContent = file.name;
+      preview.style.display = "flex";
+    };
+    reader.readAsDataURL(file);
+  } else {
+    rahafFileData = "pdf";
+    icon.textContent = "✅";
+    iconEl.textContent = "📄";
+    nameEl.textContent = file.name;
+    preview.style.display = "flex";
+  }
+}
+
+function clearRahafFile() {
+  rahafFileData = null;
+  rahafFileName = null;
+  document.getElementById("rahafFileInput").value = "";
+  document.getElementById("rahafUploadIcon").textContent = "📎";
+  document.getElementById("rahafFilePreview").style.display = "none";
+}
+
+function sendRahafReport() {
+  const criterion = document.getElementById("rahafCriteria").value;
+  const evalType  = document.getElementById("rahafEvalType").value;
+  const notes     = document.getElementById("rahafNotes").value;
+
+  if (!criterion) { showToast("يرجى اختيار المعيار أولاً", "error"); return; }
+
+  const today = new Date().toLocaleDateString("ar-SA", { year:"numeric", month:"long", day:"numeric" });
+
+  document.getElementById("rahafReportSummary").innerHTML = `
+    <div><span style="color:var(--text-muted)">التاريخ:</span> <strong>${today}</strong></div>
+    <div><span style="color:var(--text-muted)">المعيار:</span> <strong>${criterion}</strong></div>
+    <div><span style="color:var(--text-muted)">نوع التقييم:</span> <strong>${evalType}</strong></div>
+    ${notes ? `<div><span style="color:var(--text-muted)">الملاحظات:</span> ${notes}</div>` : ""}
+    <div><span style="color:var(--text-muted)">مرفق:</span> <strong>${rahafFileData ? `✅ ${rahafFileName}` : "لا يوجد"}</strong></div>
+  `;
+  document.getElementById("rahafReportModal").style.display = "flex";
+}
+
+async function confirmRahafReport() {
+  document.getElementById("rahafReportModal").style.display = "none";
+
+  const criterion = document.getElementById("rahafCriteria").value;
+  const evalType  = document.getElementById("rahafEvalType").value;
+  const notes     = document.getElementById("rahafNotes").value;
+
+  try {
+    let fileUrl = "";
+    if (rahafFileData && rahafFileData !== "pdf") {
+      const imgRes = await callGAS("uploadImage", { base64Data: rahafFileData, fileName: `rahaf_${Date.now()}.jpg` });
+      if (imgRes && imgRes.success) fileUrl = imgRes.url;
+    }
+    await callGAS("recordSupervisorEvaluation", { criterion, evalType, deduction: 0, notes, fileUrl, reportOnly: true });
+  } catch(e) { console.warn("GAS:", e.message); }
+
+  clearRahafFile();
+  document.getElementById("rahafNotes").value = "";
+  showToast("✅ تم إرسال التقرير وحفظه في السجل", "success");
+}
+
 // ============================================================
 async function deductRahaf(amount) {
   const criterion = document.getElementById("rahafCriteria").value;
