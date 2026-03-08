@@ -884,16 +884,16 @@
         <div style="display:flex;align-items:center;gap:16px">
           <div>
             <div style="font-size:11px;color:var(--apex-muted)">رصيد رهف الحالي</div>
-            <div style="font-size:28px;font-weight:900;color:#a78bfa" id="rahafBalanceDisplay">100</div>
+            <div style="font-size:28px;font-weight:900;color:#a78bfa" id="rahafBalanceDisplay">0</div>
           </div>
           <div style="flex:1">
             <div class="progress-bar" style="height:8px">
-              <div class="progress-fill" id="rahafBalanceBar" style="width:100%;background:var(--apex-purple)"></div>
+              <div class="progress-fill" id="rahafBalanceBar" style="width:0%;background:var(--apex-purple)"></div>
             </div>
           </div>
           <div>
             <div style="font-size:11px;color:var(--apex-muted)">الحافز</div>
-            <div style="font-size:18px;font-weight:700;color:var(--apex-green)" id="rahafBonusDisplay">500 ريال</div>
+            <div style="font-size:18px;font-weight:700;color:var(--apex-green)" id="rahafBonusDisplay">0 ريال</div>
           </div>
         </div>
       </div>
@@ -1015,7 +1015,7 @@
 // CONFIG & STATE
 // ============================================================
 const MANAGER_PASSWORD = "T9@MG7tYxia8"; // Change this
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyl_6Npe-LWJEf8s0j3IjH6lko5QnCj0GDS8vRST42gbC-4ieujc7XUEiTuuBphOAqI/exec"; // ← ضع رابط Web App هنا
+const GAS_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"; // ← ضع رابط Web App هنا
 
 const EMPLOYEES = {
   "مرح":    { track: "calls",    trackLabel: "مكالمات" },
@@ -1115,7 +1115,7 @@ let state = {
   employeeScores: {},
   violationLog: [],
   supervisorScore: 0,
-  rahafBalance: 100,
+  rahafBalance: 0,   // رهف تبدأ من 0 وتكسب (نظام كسب لا خصم)
   imageData: null
 };
 
@@ -1387,14 +1387,15 @@ async function submitViolation() {
 // ============================================================
 async function deductRahaf(amount) {
   const criterion = document.getElementById("rahafCriteria").value;
-  const evalType = document.getElementById("rahafEvalType").value;
-  const notes = document.getElementById("rahafNotes").value;
+  const evalType  = document.getElementById("rahafEvalType").value;
+  const notes     = document.getElementById("rahafNotes").value;
 
   if (!criterion) {
     showToast("يرجى اختيار المعيار أولاً", "error");
     return;
   }
 
+  // رهف تُخصم من نقاطها المكتسبة فقط — لا تنزل عن 0
   state.rahafBalance = Math.max(0, state.rahafBalance - amount);
 
   try {
@@ -1404,7 +1405,8 @@ async function deductRahaf(amount) {
   }
 
   updateRahafDisplay();
-  showToast(`تم خصم ${amount} نقطة من رهف`, "warning");
+  refreshManagerPage();
+  showToast(`تم خصم ${amount} نقطة من رهف بسبب تقصير`, "warning");
   document.getElementById("rahafNotes").value = "";
 }
 
@@ -1463,7 +1465,7 @@ function generateWeeklyReport() {
       </tbody>
     </table>
     <div style="margin-top:16px;padding:12px;background:rgba(139,92,246,0.08);border-radius:8px;border:1px solid rgba(139,92,246,0.2)">
-      <strong>رصيد المشرفة رهف:</strong> ${state.rahafBalance}/100 | نقاط التحفيز: ${state.supervisorScore}/900 | الحافز: ${state.rahafBalance * 5} ريال
+      <strong>المشرفة رهف:</strong> نقاط مكتسبة: <strong style="color:#a78bfa">${state.rahafBalance}</strong> / 900 | حافز: <strong style="color:#10b981">${state.rahafBalance * 5} ريال</strong>
     </div>
   `;
 
@@ -1530,12 +1532,18 @@ function refreshManagerPage() {
 }
 
 function updateRahafDisplay() {
-  const bal = state.rahafBalance;
-  document.getElementById("rahafBalanceDisplay").textContent = bal;
-  document.getElementById("rahafBonusDisplay").textContent = (bal * 5) + " ريال";
-  document.getElementById("rahafBalanceBar").style.width = bal + "%";
+  const pts  = state.rahafBalance;          // نقاط رهف المكتسبة (0 → 900)
+  const max  = Object.keys(EMPLOYEES).length * 100; // 900
+  const pct  = Math.min(100, (pts / max) * 100);
+  const bonus = pts * 5;
+
+  document.getElementById("rahafBalanceDisplay").textContent = pts;
+  document.getElementById("rahafBonusDisplay").textContent   = bonus + " ريال";
+  document.getElementById("rahafBalanceBar").style.width     = pct + "%";
   if (document.getElementById("statRahafBalance"))
-    document.getElementById("statRahafBalance").textContent = bal;
+    document.getElementById("statRahafBalance").textContent  = pts + " / " + max;
+  if (document.getElementById("statRahafScore"))
+    document.getElementById("statRahafScore").textContent    = pts;
 }
 
 function renderLogTable() {
@@ -1701,7 +1709,7 @@ function executeReset() {
     state.employeeScores[name] = { balance: 100, deducted: 0 };
   });
   state.supervisorScore = 0;
-  state.rahafBalance    = 100;
+  state.rahafBalance    = 0;  // رهف تبدأ من 0 كل شهر
   state.violationLog    = [];
 
   refreshManagerPage();
