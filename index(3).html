@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEXCARE - نظام الجودة</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --apex-dark: #0a0e1a;
+    --apex-navy: #111827;
+    --apex-card: #161d2e;
+    --apex-border: #1e2d4a;
+    --apex-gold: #d4a843;
+    --apex-gold-light: #f0c96a;
+    --apex-teal: #0ea5b0;
+    --apex-teal-light: #22d3ee;
+    --apex-red: #ef4444;
+    --apex-green: #10b981;
+    --apex-purple: #8b5cf6;
+    --apex-text: #e2e8f0;
+    --apex-muted: #64748b;
+    --apex-radius: 12px;
+    --apex-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--apex-dark);
+    color: var(--apex-text);
+    min-height: 100vh;
+    direction: rtl;
+  }
+
+  /* ---- TOP NAV ---- */
+  .nav {
+    background: rgba(10,14,26,0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--apex-border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .nav-logo-icon {
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, var(--apex-gold), var(--apex-teal));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 900;
+    color: #0a0e1a;
+  }
+
+  .nav-title {
+    font-size: 18px;
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--apex-gold), var(--apex-teal-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+  }
+
+  .nav-tab {
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Cairo', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    background: transparent;
+    color: var(--apex-muted);
+  }
+
+  .nav-tab.active {
+    background: var(--apex-card);
+    color: var(--apex-gold);
+    border: 1px solid var(--apex-border);
+  }
+
+  .nav-tab:hover:not(.active) {
+    color: var(--apex-text);
+    background: rgba(255,255,255,0.05);
+  }
+
+  /* ---- MANAGER AUTH ---- */
+  #manager-auth {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .auth-box {
+    background: var(--apex-card);
+    border: 1px solid var(--apex-border);
+    border-radius: 16px;
+    padding: 40px;
+    width: 360px;
+    text-align: center;
+  }
+
+  .auth-box h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--apex-gold);
+  }
+
+  .auth-box p { color: var(--apex-muted); font-size: 14px; margin-bottom: 24px; }
+
+  /* ---- MAIN LAYOUT ---- */
+  .main {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ---- CARDS ---- */
+  .card {
+    background: var(--apex-card);
+    border: 1px solid var(--apex-border);
+    border-radius: var(--apex-radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--apex-gold);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title::before {
+    content: '';
+    width: 4px;
+    height: 18px;
+    background: var(--apex-gold);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ---- FORM ELEMENTS ---- */
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 13px;
+    color: var(--apex-muted);
+    font-weight: 600;
+  }
+
+  select, input, textarea {
+    background: var(--apex-dark);
+    border: 1px solid var(--apex-border);
+    border-radius: 8px;
+    color: var(--apex-text);
+    font-family: 'Cairo', sans-serif;
+    font-size: 14px;
+    padding: 10px 14px;
+    width: 100%;
+    transition: border-color 0.2s;
+    direction: rtl;
+  }
+
+  select:focus, input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--apex-teal);
+  }
+
+  select option { background: var(--apex-navy); }
+
+  /* ---- TRACK BADGE ---- */
+  .track-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .track-calls { background: rgba(14,165,176,0.15); color: var(--apex-teal-light); border: 1px solid rgba(14,165,176,0.3); }
+  .track-messages { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
+  .track-dual { background: rgba(212,168,67,0.15); color: var(--apex-gold-light); border: 1px solid rgba(212,168,67,0.3); }
+
+  /* ---- SCORE RING ---- */
+  .score-ring-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .score-ring {
+    width: 100px;
+    height: 100px;
+    position: relative;
+  }
+
+  .score-ring svg { transform: rotate(-90deg); }
+
+  .score-ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .score-ring-label { font-size: 10px; color: var(--apex-muted); }
+
+  /* ---- EMPLOYEE GRID ---- */
+  .employees-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .employee-card {
+    background: var(--apex-dark);
+    border: 1px solid var(--apex-border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: default;
+  }
+
+  .employee-card:hover {
+    border-color: var(--apex-teal);
+    transform: translateY(-2px);
+  }
+
+  .employee-card-name {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .employee-card-bonus {
+    font-size: 13px;
+    color: var(--apex-green);
+    font-weight: 600;
+    margin-top: 8px;
+  }
+
+  /* ---- PROGRESS BAR ---- */
+  .progress-bar {
+    height: 6px;
+    background: var(--apex-border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* ---- BUTTONS ---- */
+  .btn {
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--apex-gold), #b8860b);
+    color: #0a0e1a;
+  }
+
+  .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+  .btn-danger {
+    background: rgba(239,68,68,0.15);
+    color: var(--apex-red);
+    border: 1px solid rgba(239,68,68,0.3);
+  }
+
+  .btn-danger:hover { background: rgba(239,68,68,0.25); }
+
+  .btn-teal {
+    background: rgba(14,165,176,0.15);
+    color: var(--apex-teal-light);
+    border: 1px solid rgba(14,165,176,0.3);
+  }
+
+  .btn-teal:hover { background: rgba(14,165,176,0.25); }
+
+  .btn-full { width: 100%; justify-content: center; }
+
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+  /* ---- UPLOAD ZONE ---- */
+  .upload-zone {
+    border: 2px dashed var(--apex-border);
+    border-radius: 10px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--apex-teal);
+    background: rgba(14,165,176,0.05);
+  }
+
+  .upload-zone-icon { font-size: 32px; margin-bottom: 8px; }
+  .upload-zone-text { font-size: 13px; color: var(--apex-muted); }
+
+  .upload-preview {
+    width: 100%;
+    max-height: 160px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-top: 12px;
+  }
+
+  /* ---- ALERT / TOAST ---- */
+  .toast-container {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 320px;
+    pointer-events: none;
+  }
+
+  .toast {
+    padding: 14px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    animation: toastIn 0.3s ease;
+    pointer-events: all;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    backdrop-filter: blur(10px);
+  }
+
+  .toast-success { background: rgba(16,185,129,0.9); color: white; }
+  .toast-error { background: rgba(239,68,68,0.9); color: white; }
+  .toast-warning { background: rgba(245,158,11,0.9); color: white; }
+  .toast-info { background: rgba(14,165,176,0.9); color: white; }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---- ESCALATION ALERT ---- */
+  .escalation-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    display: none;
+  }
+
+  .escalation-box {
+    background: var(--apex-card);
+    border: 2px solid var(--apex-red);
+    border-radius: 16px;
+    padding: 40px;
+    max-width: 400px;
+    text-align: center;
+    animation: shake 0.5s;
+  }
+
+  @keyframes shake {
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-8px)}
+    40%{transform:translateX(8px)}
+    60%{transform:translateX(-5px)}
+    80%{transform:translateX(5px)}
+  }
+
+  .escalation-icon { font-size: 48px; margin-bottom: 16px; }
+  .escalation-title { font-size: 22px; font-weight: 900; color: var(--apex-red); margin-bottom: 8px; }
+  .escalation-msg { color: var(--apex-muted); font-size: 14px; margin-bottom: 24px; }
+
+  /* ---- CRITERIA SELECTOR ---- */
+  .criteria-group {
+    margin-bottom: 12px;
+  }
+
+  .criteria-group-title {
+    font-size: 12px;
+    color: var(--apex-muted);
+    font-weight: 700;
+    padding: 4px 8px;
+    background: var(--apex-border);
+    border-radius: 4px;
+    margin-bottom: 4px;
+  }
+
+  /* ---- SUPERVISOR SCORE DISPLAY ---- */
+  .sup-score-bar {
+    background: var(--apex-dark);
+    border: 1px solid var(--apex-border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .sup-score-num {
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--apex-gold);
+    min-width: 80px;
+  }
+
+  .sup-score-label { font-size: 12px; color: var(--apex-muted); }
+  .sup-score-info { font-size: 13px; color: var(--apex-text); }
+
+  /* ---- DEDUCTION BUTTONS ---- */
+  .deduct-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .deduct-btn {
+    padding: 10px;
+    border-radius: 8px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--apex-border);
+    background: var(--apex-dark);
+    color: var(--apex-text);
+    text-align: center;
+    transition: all 0.2s;
+  }
+
+  .deduct-btn:hover {
+    background: rgba(239,68,68,0.15);
+    border-color: var(--apex-red);
+    color: var(--apex-red);
+  }
+
+  /* ---- WEEKLY REPORT ---- */
+  .report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .report-table th {
+    background: var(--apex-border);
+    padding: 10px 14px;
+    text-align: right;
+    font-weight: 700;
+    font-size: 13px;
+  }
+
+  .report-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--apex-border);
+  }
+
+  .report-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ---- LOG TABLE ---- */
+  .log-table-wrap {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid var(--apex-border);
+  }
+
+  .log-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    min-width: 700px;
+  }
+
+  .log-table th {
+    background: var(--apex-border);
+    padding: 8px 12px;
+    text-align: right;
+    font-size: 12px;
+    color: var(--apex-muted);
+  }
+
+  .log-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(30,45,74,0.5);
+  }
+
+  /* ---- SECTION HEADER ---- */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .section-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  /* ---- LOADING ---- */
+  .loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--apex-border);
+    border-top-color: var(--apex-gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---- DIVIDER ---- */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--apex-border);
+    margin: 20px 0;
+  }
+
+  /* ---- STAT CHIPS ---- */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-chip {
+    background: var(--apex-dark);
+    border: 1px solid var(--apex-border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .stat-chip-value { font-size: 24px; font-weight: 900; }
+  .stat-chip-label { font-size: 12px; color: var(--apex-muted); margin-top: 2px; }
+
+  /* ---- IMAGE MODAL ---- */
+  .img-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .img-modal img {
+    max-width: 90vw;
+    max-height: 85vh;
+    border-radius: 8px;
+  }
+
+  @media (max-width: 640px) {
+    .form-row { grid-template-columns: 1fr; }
+    .employees-grid { grid-template-columns: 1fr 1fr; }
+    .deduct-grid { grid-template-columns: repeat(3,1fr); }
+    .nav-title { font-size: 14px; }
+    .stat-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ESCALATION OVERLAY -->
+<div class="escalation-overlay" id="escalationOverlay">
+  <div class="escalation-box">
+    <div class="escalation-icon">⚠️</div>
+    <div class="escalation-title" id="escalationTitle">إنذار شفهي</div>
+    <div class="escalation-msg" id="escalationMsg">تكرر نفس المخالفة للمرة الرابعة</div>
+    <button class="btn btn-danger btn-full" onclick="closeEscalation()">تم الاطلاع</button>
+  </div>
+</div>
+
+<!-- MANAGER AUTH OVERLAY -->
+<div id="manager-auth">
+  <div class="auth-box">
+    <div style="font-size:36px;margin-bottom:12px">🔒</div>
+    <h3>لوحة مدير الجودة</h3>
+    <p>هذه الواجهة سرية وخاصة بمدير الجودة فقط</p>
+    <div class="form-group" style="margin-bottom:16px">
+      <label>كلمة المرور</label>
+      <input type="password" id="managerPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkManagerAuth()">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="checkManagerAuth()">دخول</button>
+    <hr class="divider">
+    <button class="btn btn-teal btn-full" onclick="goToSupervisor()" style="margin-top:0">
+      الذهاب لواجهة المشرفة →
+    </button>
+  </div>
+</div>
+
+<!-- IMAGE MODAL -->
+<div class="img-modal" id="imgModal" onclick="document.getElementById('imgModal').style.display='none'">
+  <img id="imgModalSrc" src="" alt="">
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">
+    <div class="nav-logo-icon">A</div>
+    <span class="nav-title">APEXCARE · نظام الجودة</span>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" id="tabSup" onclick="switchPage('supervisor')">واجهة المشرفة</button>
+    <button class="nav-tab" id="tabMgr" onclick="switchPage('manager')">لوحة المدير</button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ==================== SUPERVISOR PAGE ==================== -->
+  <div class="page active" id="page-supervisor">
+
+    <!-- Supervisor Score Bar -->
+    <div class="sup-score-bar">
+      <div>
+        <div class="sup-score-num" id="supScoreDisplay">0</div>
+        <div class="sup-score-label">نقاط رهف التراكمية</div>
+      </div>
+      <div style="flex:1">
+        <div class="progress-bar" style="height:8px">
+          <div class="progress-fill" id="supScoreBar" style="width:0%;background:linear-gradient(90deg,var(--apex-gold),var(--apex-teal-light))"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px">
+          <span class="sup-score-label">0</span>
+          <span class="sup-score-label">الحد الأقصى: 900</span>
+        </div>
+      </div>
+      <div>
+        <div class="sup-score-info">كل مخالفة موثقة = <strong style="color:var(--apex-gold)">+2 نقطة</strong></div>
+        <div class="sup-score-label">الحافز المستحق: <strong style="color:var(--apex-green)" id="supBonusDisplay">0</strong> ريال</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 تسجيل مخالفة تشغيلية</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>اسم الموظفة</label>
+          <select id="empSelect" onchange="onEmployeeChange()">
+            <option value="">-- اختر الموظفة --</option>
+            <option value="مرح">مرح</option>
+            <option value="هيلة">هيلة</option>
+            <option value="جنان">جنان</option>
+            <option value="أسيل">أسيل</option>
+            <option value="حور">حور</option>
+            <option value="سارة">سارة</option>
+            <option value="طيف">طيف</option>
+            <option value="روان">روان</option>
+            <option value="تهاني">تهاني</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>المسار</label>
+          <div id="trackDisplay" style="padding:10px 14px;background:var(--apex-dark);border:1px solid var(--apex-border);border-radius:8px;min-height:42px;display:flex;align-items:center">
+            <span style="color:var(--apex-muted);font-size:13px">يُحدد بعد اختيار الموظفة</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Employee Balance Display -->
+      <div id="empBalanceRow" style="display:none;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:12px;background:var(--apex-dark);border:1px solid var(--apex-border);border-radius:10px;padding:14px 18px">
+          <div>
+            <div style="font-size:11px;color:var(--apex-muted)">الرصيد الحالي</div>
+            <div style="font-size:22px;font-weight:900" id="empCurrentBalance">100</div>
+          </div>
+          <div style="flex:1">
+            <div class="progress-bar">
+              <div class="progress-fill" id="empBalanceBar" style="width:100%;background:var(--apex-green)"></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--apex-muted)">الحافز المستحق</div>
+            <div style="font-size:16px;font-weight:700;color:var(--apex-green)" id="empCurrentBonus">500 ريال</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>الفئة</label>
+          <select id="categorySelect" onchange="onCategoryChange()" disabled>
+            <option value="">-- اختر الفئة --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>المعيار</label>
+          <select id="criterionSelect" onchange="onCriterionChange()" disabled>
+            <option value="">-- اختر المعيار --</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Criterion Points Info -->
+      <div id="criterionInfo" style="display:none;margin-bottom:16px">
+        <div style="background:rgba(14,165,176,0.08);border:1px solid rgba(14,165,176,0.2);border-radius:8px;padding:12px 16px;display:flex;gap:20px;flex-wrap:wrap">
+          <div>
+            <span style="font-size:11px;color:var(--apex-muted)">نقاط المعيار: </span>
+            <strong id="infoPoints" style="color:var(--apex-teal-light)">--</strong>
+          </div>
+          <div>
+            <span style="font-size:11px;color:var(--apex-muted)">خصم هذه المخالفة: </span>
+            <strong id="infoDeduct" style="color:var(--apex-red)">--</strong>
+          </div>
+          <div>
+            <span style="font-size:11px;color:var(--apex-muted)">رقم المخالفة على هذا المعيار: </span>
+            <strong id="infoViolNum" style="color:var(--apex-gold)">--</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group full" style="margin-bottom:16px">
+        <label>صورة التوثيق (اختياري)</label>
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('imageInput').click()"
+          ondragover="event.preventDefault();this.classList.add('dragover')"
+          ondragleave="this.classList.remove('dragover')"
+          ondrop="handleDrop(event)">
+          <div class="upload-zone-icon">📷</div>
+          <div class="upload-zone-text">اضغط لرفع صورة أو اسحبها هنا<br><small>JPG, PNG (حد أقصى 5MB)</small></div>
+        </div>
+        <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="previewImage(this)">
+        <img id="imagePreview" class="upload-preview" style="display:none" alt="">
+      </div>
+
+      <div class="form-group full" style="margin-bottom:20px">
+        <label>ملاحظات إضافية</label>
+        <textarea id="notesInput" rows="2" placeholder="أي تفاصيل إضافية..."></textarea>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="submitBtn" onclick="submitViolation()">
+        <span id="submitBtnText">تسجيل المخالفة</span>
+      </button>
+    </div>
+
+    <!-- Recent Log -->
+    <div class="card">
+      <div class="card-title">📜 آخر المخالفات المسجلة</div>
+      <div class="log-table-wrap">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>التاريخ</th>
+              <th>الموظفة</th>
+              <th>الفئة</th>
+              <th>المعيار</th>
+              <th>الخصم</th>
+              <th>رقم المخالفة</th>
+              <th>صورة</th>
+            </tr>
+          </thead>
+          <tbody id="logTableBody">
+            <tr><td colspan="7" style="text-align:center;color:var(--apex-muted);padding:20px">جاري التحميل...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MANAGER PAGE ==================== -->
+  <div class="page" id="page-manager">
+
+    <div class="section-header">
+      <h2>📊 لوحة مدير الجودة</h2>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-teal" onclick="generateWeeklyReport()">📄 تقرير أسبوعي</button>
+        <button class="btn btn-danger" onclick="confirmReset()">🔄 إعادة تعيين الشهر</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-row" id="managerStats">
+      <div class="stat-chip">
+        <div class="stat-chip-value" id="statTotalBonus" style="color:var(--apex-green)">--</div>
+        <div class="stat-chip-label">إجمالي الحوافز (ريال)</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-value" id="statTopPerformer" style="color:var(--apex-gold)">--</div>
+        <div class="stat-chip-label">أفضل أداء</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-value" id="statRahafScore" style="color:var(--apex-teal-light)">--</div>
+        <div class="stat-chip-label">نقاط رهف</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-value" id="statRahafBalance" style="color:var(--apex-purple)">--</div>
+        <div class="stat-chip-label">رصيد رهف (من 100)</div>
+      </div>
+    </div>
+
+    <!-- Employee Balances -->
+    <div class="card">
+      <div class="card-title">👥 أرصدة الموظفات</div>
+      <div class="employees-grid" id="managerEmployeeGrid">
+        <div style="color:var(--apex-muted);font-size:13px">جاري التحميل...</div>
+      </div>
+    </div>
+
+    <!-- Rahaf Evaluation -->
+    <div class="card">
+      <div class="card-title">🎯 تقييم المشرفة رهف</div>
+
+      <div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);border-radius:10px;padding:16px;margin-bottom:20px">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div>
+            <div style="font-size:11px;color:var(--apex-muted)">رصيد رهف الحالي</div>
+            <div style="font-size:28px;font-weight:900;color:#a78bfa" id="rahafBalanceDisplay">100</div>
+          </div>
+          <div style="flex:1">
+            <div class="progress-bar" style="height:8px">
+              <div class="progress-fill" id="rahafBalanceBar" style="width:100%;background:var(--apex-purple)"></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--apex-muted)">الحافز</div>
+            <div style="font-size:18px;font-weight:700;color:var(--apex-green)" id="rahafBonusDisplay">500 ريال</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>المعيار / المهمة</label>
+          <select id="rahafCriteria">
+            <option value="">-- اختر المعيار --</option>
+            <option value="تقييم الرقم الموحد 7078">تقييم الرقم الموحد 7078</option>
+            <option value="المتابعة اليومية للجدول">المتابعة اليومية للجدول</option>
+            <option value="الالتزام برصد المخالفات وتوثيقها">الالتزام برصد المخالفات وتوثيقها</option>
+            <option value="متابعة المحادثات المفتوحة">متابعة المحادثات المفتوحة</option>
+            <option value="تنفيذ مهام الجرد والمتابعة">تنفيذ مهام الجرد والمتابعة</option>
+            <option value="استكمال تغطية الموظفات">استكمال تغطية الموظفات</option>
+            <option value="متابعة جودة المكالمات على 7078">متابعة جودة المكالمات على 7078</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>نوع التقييم</label>
+          <select id="rahafEvalType">
+            <option value="تقصير">تقصير</option>
+            <option value="مخالفة متكررة">مخالفة متكررة</option>
+            <option value="غياب متابعة">غياب متابعة</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px">
+        <label>ملاحظات</label>
+        <textarea id="rahafNotes" rows="2" placeholder="تفاصيل التقصير..."></textarea>
+      </div>
+
+      <div>
+        <label style="font-size:13px;color:var(--apex-muted);display:block;margin-bottom:8px">مقدار الخصم (نقاط)</label>
+        <div class="deduct-grid">
+          <button class="deduct-btn" onclick="deductRahaf(2)">2 نقطة<br><small>تكرار ١</small></button>
+          <button class="deduct-btn" onclick="deductRahaf(4)">4 نقاط<br><small>تكرار ٢</small></button>
+          <button class="deduct-btn" onclick="deductRahaf(6)">6 نقاط<br><small>تكرار ٣</small></button>
+          <button class="deduct-btn" onclick="deductRahaf(8)">8 نقاط<br><small>إنذار شفهي</small></button>
+          <button class="deduct-btn" onclick="deductRahaf(10)">10 نقاط<br><small>إنذار كتابي</small></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Report Preview -->
+    <div class="card" id="weeklyReportCard" style="display:none">
+      <div class="card-title">📄 التقرير الأسبوعي</div>
+      <div id="weeklyReportContent"></div>
+      <div style="margin-top:16px;display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="printReport()">🖨️ طباعة / PDF</button>
+        <button class="btn btn-teal" onclick="document.getElementById('weeklyReportCard').style.display='none'">إغلاق</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PRINT STYLES -->
+<style id="printStyles">
+@media print {
+  body { background: white !important; color: black !important; }
+  .nav, .nav-tabs, .sup-score-bar, .btn, .deduct-grid, .card-title::before { display: none !important; }
+  .card { border: 1px solid #ccc !important; background: white !important; color: black !important; page-break-inside: avoid; }
+  #weeklyReportCard { display: block !important; }
+  .main { padding: 0 !important; }
+  .page { display: block !important; }
+  #page-supervisor, #page-manager > *:not(#weeklyReportCard) { display: none !important; }
+}
+</style>
+
+<script>
+// ============================================================
+// CONFIG & STATE
+// ============================================================
+const MANAGER_PASSWORD = "apex2025"; // Change this
+const GAS_URL = ""; // Set your deployed Apps Script URL here
+
+const EMPLOYEES = {
+  "مرح":    { track: "calls",    trackLabel: "مكالمات" },
+  "هيلة":   { track: "calls",    trackLabel: "مكالمات" },
+  "جنان":   { track: "messages", trackLabel: "رسائل" },
+  "أسيل":   { track: "messages", trackLabel: "رسائل" },
+  "حور":    { track: "messages", trackLabel: "رسائل" },
+  "سارة":   { track: "messages", trackLabel: "رسائل" },
+  "طيف":    { track: "messages", trackLabel: "رسائل" },
+  "روان":   { track: "messages", trackLabel: "رسائل" },
+  "تهاني":  { track: "dual",     trackLabel: "مشترك" }
+};
+
+const CRITERIA = {
+  calls: {
+    "المكالمات": {
+      "الصياغة التعريفية في بداية المكالمة": 14,
+      "التحقق من وجود ملف للمراجع": 11,
+      "الرد على جميع المكالمات الواردة": 10,
+      "تقديم خدمة مكتملة حتى الإغلاق": 8,
+      "استخدام ألفاظ مهنية مناسبة": 6,
+      "إقفال المكالمة بعبارة ختامية": 6
+    },
+    "فتح الملف": {
+      "إدخال الاسم الرباعي بشكل صحيح": 7,
+      "إدخال رقم الهوية بشكل صحيح": 6,
+      "إدخال تاريخ الميلاد بشكل صحيح": 6,
+      "إدخال العنوان بشكل صحيح": 4,
+      "التحري بالدقة أثناء إدخال البيانات": 2
+    },
+    "المواعيد": {
+      "تعويض المواعيد الملغاة": 6,
+      "تأكيد المواعيد مع المراجعين": 5,
+      "تعبئة المواعيد في حال توفر موعد بديل": 5,
+      "ترتيب جدول الدكتور (مواعيد متتالية)": 4
+    }
+  },
+  messages: {
+    "الرسائل": {
+      "الرد على الرسائل خلال 10 دقائق": 14,
+      "متابعة المحادثات وعدم ترك محادثة مفتوحة": 11,
+      "التحقق من وجود ملف للمراجع": 10,
+      "التفاعل مع المراجع خلال دقيقة": 8,
+      "عبارة ختامية مهذبة في آخر رد": 6,
+      "الالتزام بالاختصارات المعتمدة": 6
+    },
+    "فتح الملف": {
+      "إدخال الاسم الرباعي بشكل صحيح": 7,
+      "إدخال رقم الهوية بشكل صحيح": 6,
+      "إدخال تاريخ الميلاد بشكل صحيح": 6,
+      "إدخال العنوان بشكل صحيح": 4,
+      "التحري بالدقة أثناء إدخال البيانات": 2
+    },
+    "المواعيد": {
+      "تعويض المواعيد الملغاة": 6,
+      "تأكيد المواعيد مع المراجعين": 5,
+      "تعبئة المواعيد في حال توفر موعد بديل": 5,
+      "ترتيب جدول الدكتور (مواعيد متتالية)": 4
+    }
+  },
+  dual: {
+    "المكالمات": {
+      "الصياغة التعريفية في بداية المكالمة": 8,
+      "التحقق من وجود ملف للمراجع": 6,
+      "الرد على جميع المكالمات الواردة": 5,
+      "تقديم خدمة مكتملة حتى الإغلاق": 5,
+      "استخدام ألفاظ مهنية مناسبة": 3,
+      "إقفال المكالمة بعبارة ختامية": 3
+    },
+    "الرسائل": {
+      "الرد على الرسائل خلال 10 دقائق": 8,
+      "متابعة المحادثات وعدم ترك محادثة مفتوحة": 5,
+      "التحقق من وجود ملف للمراجع": 5,
+      "التفاعل مع المراجع خلال دقيقة": 4,
+      "عبارة ختامية مهذبة في آخر رد": 4,
+      "الالتزام بالاختصارات المعتمدة": 4
+    },
+    "فتح الملف": {
+      "إدخال الاسم الرباعي بشكل صحيح": 7,
+      "إدخال رقم الهوية بشكل صحيح": 6,
+      "إدخال تاريخ الميلاد بشكل صحيح": 6,
+      "إدخال العنوان بشكل صحيح": 4,
+      "التحري بالدقة أثناء إدخال البيانات": 2
+    },
+    "المواعيد": {
+      "تعويض المواعيد الملغاة": 5,
+      "تأكيد المواعيد مع المراجعين": 4,
+      "تعبئة المواعيد في حال توفر موعد بديل": 3,
+      "ترتيب جدول الدكتور (مواعيد متتالية)": 3
+    }
+  }
+};
+
+// Local state (mirrors what's in Sheets)
+let state = {
+  managerUnlocked: false,
+  employeeScores: {},
+  violationLog: [],
+  supervisorScore: 0,
+  rahafBalance: 100,
+  imageData: null
+};
+
+// Init default scores
+Object.keys(EMPLOYEES).forEach(name => {
+  state.employeeScores[name] = { balance: 100, deducted: 0 };
+});
+
+// ============================================================
+// AUTH
+// ============================================================
+function checkManagerAuth() {
+  const pw = document.getElementById("managerPassword").value;
+  if (pw === MANAGER_PASSWORD) {
+    state.managerUnlocked = true;
+    document.getElementById("manager-auth").style.display = "none";
+    switchPage("manager");
+    refreshManagerPage();
+    showToast("تم الدخول بنجاح ✓", "success");
+  } else {
+    showToast("كلمة المرور غير صحيحة", "error");
+  }
+}
+
+function goToSupervisor() {
+  document.getElementById("manager-auth").style.display = "none";
+  switchPage("supervisor");
+}
+
+// ============================================================
+// PAGE SWITCHING
+// ============================================================
+function switchPage(page) {
+  if (page === "manager" && !state.managerUnlocked) {
+    document.getElementById("manager-auth").style.display = "flex";
+    return;
+  }
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("page-" + page).classList.add("active");
+  document.getElementById("tab" + (page === "supervisor" ? "Sup" : "Mgr")).classList.add("active");
+
+  if (page === "supervisor") refreshSupervisorPage();
+  if (page === "manager") refreshManagerPage();
+}
+
+// ============================================================
+// EMPLOYEE SELECTION
+// ============================================================
+function onEmployeeChange() {
+  const name = document.getElementById("empSelect").value;
+  const trackDisplay = document.getElementById("trackDisplay");
+  const catSelect = document.getElementById("categorySelect");
+  const critSelect = document.getElementById("criterionSelect");
+
+  catSelect.innerHTML = '<option value="">-- اختر الفئة --</option>';
+  catSelect.disabled = true;
+  critSelect.innerHTML = '<option value="">-- اختر المعيار --</option>';
+  critSelect.disabled = true;
+  document.getElementById("criterionInfo").style.display = "none";
+
+  if (!name) {
+    trackDisplay.innerHTML = '<span style="color:var(--apex-muted);font-size:13px">يُحدد بعد اختيار الموظفة</span>';
+    document.getElementById("empBalanceRow").style.display = "none";
+    return;
+  }
+
+  const emp = EMPLOYEES[name];
+  const trackClass = emp.track === "calls" ? "track-calls" : emp.track === "messages" ? "track-messages" : "track-dual";
+  const icon = emp.track === "calls" ? "📞" : emp.track === "messages" ? "💬" : "🔀";
+  trackDisplay.innerHTML = `<span class="track-badge ${trackClass}">${icon} ${emp.trackLabel}</span>`;
+
+  // Populate categories
+  const cats = Object.keys(CRITERIA[emp.track]);
+  cats.forEach(cat => {
+    const opt = document.createElement("option");
+    opt.value = cat;
+    opt.textContent = cat;
+    catSelect.appendChild(opt);
+  });
+  catSelect.disabled = false;
+
+  // Show balance
+  const sc = state.employeeScores[name];
+  document.getElementById("empBalanceRow").style.display = "block";
+  updateEmpBalanceDisplay(name);
+}
+
+function updateEmpBalanceDisplay(name) {
+  const sc = state.employeeScores[name];
+  document.getElementById("empCurrentBalance").textContent = sc.balance;
+  document.getElementById("empCurrentBonus").textContent = (sc.balance * 5) + " ريال";
+  const pct = sc.balance;
+  const bar = document.getElementById("empBalanceBar");
+  bar.style.width = pct + "%";
+  bar.style.background = pct >= 80 ? "var(--apex-green)" : pct >= 60 ? "var(--apex-gold)" : "var(--apex-red)";
+}
+
+function onCategoryChange() {
+  const name = document.getElementById("empSelect").value;
+  const cat = document.getElementById("categorySelect").value;
+  const critSelect = document.getElementById("criterionSelect");
+
+  critSelect.innerHTML = '<option value="">-- اختر المعيار --</option>';
+  critSelect.disabled = true;
+  document.getElementById("criterionInfo").style.display = "none";
+
+  if (!name || !cat) return;
+
+  const track = EMPLOYEES[name].track;
+  const criteria = CRITERIA[track][cat];
+  Object.entries(criteria).forEach(([crit, pts]) => {
+    const opt = document.createElement("option");
+    opt.value = crit;
+    opt.textContent = `${crit} (${pts} نقطة)`;
+    critSelect.appendChild(opt);
+  });
+  critSelect.disabled = false;
+}
+
+function onCriterionChange() {
+  const name = document.getElementById("empSelect").value;
+  const cat = document.getElementById("categorySelect").value;
+  const crit = document.getElementById("criterionSelect").value;
+  if (!name || !cat || !crit) {
+    document.getElementById("criterionInfo").style.display = "none";
+    return;
+  }
+
+  const track = EMPLOYEES[name].track;
+  const points = CRITERIA[track][cat][crit];
+  const violNum = getViolationCount(name, crit) + 1;
+  const deductPer = Math.ceil(points / 3);
+  let deduction = 0;
+  if (violNum <= 3) deduction = deductPer;
+
+  document.getElementById("infoPoints").textContent = points + " نقطة";
+  document.getElementById("infoDeduct").textContent = deduction > 0 ? deduction + " نقطة" : "لا خصم (استُنفدت النقاط)";
+  document.getElementById("infoViolNum").textContent = violNum;
+  document.getElementById("criterionInfo").style.display = "block";
+}
+
+function getViolationCount(employee, criterion) {
+  return state.violationLog.filter(v => v.employee === employee && v.criterion === criterion).length;
+}
+
+// ============================================================
+// IMAGE HANDLING
+// ============================================================
+function previewImage(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      state.imageData = e.target.result;
+      const preview = document.getElementById("imagePreview");
+      preview.src = e.target.result;
+      preview.style.display = "block";
+      document.querySelector(".upload-zone-icon").textContent = "✅";
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById("uploadZone").classList.remove("dragover");
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith("image/")) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById("imageInput").files = dt.files;
+    previewImage(document.getElementById("imageInput"));
+  }
+}
+
+// ============================================================
+// SUBMIT VIOLATION
+// ============================================================
+async function submitViolation() {
+  const name = document.getElementById("empSelect").value;
+  const cat = document.getElementById("categorySelect").value;
+  const crit = document.getElementById("criterionSelect").value;
+  const notes = document.getElementById("notesInput").value;
+
+  if (!name || !cat || !crit) {
+    showToast("يرجى تحديد الموظفة والفئة والمعيار", "error");
+    return;
+  }
+
+  const track = EMPLOYEES[name].track;
+  const points = CRITERIA[track][cat][crit];
+  const violNum = getViolationCount(name, crit) + 1;
+  const deductPer = Math.ceil(points / 3);
+  const deduction = violNum <= 3 ? deductPer : 0;
+
+  // Show loading
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  document.getElementById("submitBtnText").innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
+
+  // Local state update
+  state.employeeScores[name].balance = Math.max(0, state.employeeScores[name].balance - deduction);
+  state.employeeScores[name].deducted += deduction;
+  state.supervisorScore = Math.min(900, state.supervisorScore + 2);
+
+  const logEntry = {
+    date: new Date().toLocaleDateString("ar-SA"),
+    time: new Date().toLocaleTimeString("ar-SA"),
+    employee: name,
+    category: cat,
+    criterion: crit,
+    points,
+    deduction,
+    violNum,
+    imageUrl: state.imageData ? "مرفق" : "",
+    notes
+  };
+  state.violationLog.unshift(logEntry);
+
+  // Try GAS if URL set
+  if (GAS_URL) {
+    try {
+      const payload = { employeeName: name, criterion: crit, category: cat, notes, imageUrl: "" };
+      if (state.imageData) {
+        const imgRes = await callGAS("uploadImage", { base64Data: state.imageData, fileName: `${name}_${Date.now()}.jpg` });
+        if (imgRes.success) payload.imageUrl = imgRes.url;
+      }
+      await callGAS("recordViolation", payload);
+    } catch (e) { /* offline mode */ }
+  }
+
+  // Update UI
+  updateSupervisorScoreDisplay();
+  updateEmpBalanceDisplay(name);
+  renderLogTable();
+  refreshManagerPage();
+
+  // Check escalation
+  let escalation = null;
+  if (violNum === 4) escalation = "إنذار شفهي";
+  else if (violNum === 5) escalation = "إنذار كتابي";
+  else if (violNum > 5) escalation = "رفع للإدارة";
+
+  if (escalation) {
+    showEscalation(escalation, name, crit);
+  } else {
+    showToast(`✓ تم تسجيل المخالفة | خُصم ${deduction} نقطة | +2 لرهف`, "success");
+  }
+
+  // Reset form
+  btn.disabled = false;
+  document.getElementById("submitBtnText").textContent = "تسجيل المخالفة";
+  document.getElementById("empSelect").value = "";
+  document.getElementById("categorySelect").innerHTML = '<option value="">-- اختر الفئة --</option>';
+  document.getElementById("categorySelect").disabled = true;
+  document.getElementById("criterionSelect").innerHTML = '<option value="">-- اختر المعيار --</option>';
+  document.getElementById("criterionSelect").disabled = true;
+  document.getElementById("criterionInfo").style.display = "none";
+  document.getElementById("notesInput").value = "";
+  document.getElementById("imagePreview").style.display = "none";
+  document.getElementById("empBalanceRow").style.display = "none";
+  document.getElementById("trackDisplay").innerHTML = '<span style="color:var(--apex-muted);font-size:13px">يُحدد بعد اختيار الموظفة</span>';
+  document.querySelector(".upload-zone-icon").textContent = "📷";
+  state.imageData = null;
+}
+
+// ============================================================
+// DEDUCT RAHAF
+// ============================================================
+async function deductRahaf(amount) {
+  const criterion = document.getElementById("rahafCriteria").value;
+  const evalType = document.getElementById("rahafEvalType").value;
+  const notes = document.getElementById("rahafNotes").value;
+
+  if (!criterion) {
+    showToast("يرجى اختيار المعيار أولاً", "error");
+    return;
+  }
+
+  state.rahafBalance = Math.max(0, state.rahafBalance - amount);
+
+  if (GAS_URL) {
+    try {
+      await callGAS("recordSupervisorEvaluation", { criterion, evalType, deduction: amount, notes });
+    } catch (e) {}
+  }
+
+  updateRahafDisplay();
+  showToast(`تم خصم ${amount} نقطة من رهف`, "warning");
+  document.getElementById("rahafNotes").value = "";
+}
+
+// ============================================================
+// WEEKLY REPORT
+// ============================================================
+function generateWeeklyReport() {
+  const card = document.getElementById("weeklyReportCard");
+  const content = document.getElementById("weeklyReportContent");
+
+  const now = new Date().toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" });
+  const totalBonus = Object.entries(state.employeeScores).reduce((sum, [, sc]) => sum + sc.balance * 5, 0);
+
+  let html = `
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:22px;font-weight:900;color:var(--apex-gold)">التقرير الأسبوعي – APEXCARE</div>
+      <div style="font-size:13px;color:var(--apex-muted)">تاريخ الإصدار: ${now}</div>
+    </div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>الموظفة</th>
+          <th>المسار</th>
+          <th>الرصيد</th>
+          <th>نقاط مخصومة</th>
+          <th>الحافز (ريال)</th>
+          <th>التقييم</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  Object.entries(state.employeeScores).forEach(([name, sc]) => {
+    const track = EMPLOYEES[name].trackLabel;
+    const pct = sc.balance;
+    const rating = pct >= 90 ? "ممتاز ⭐" : pct >= 75 ? "جيد جداً" : pct >= 60 ? "جيد" : "يحتاج تحسين";
+    const color = pct >= 90 ? "var(--apex-green)" : pct >= 75 ? "var(--apex-teal-light)" : pct >= 60 ? "var(--apex-gold)" : "var(--apex-red)";
+    html += `
+      <tr>
+        <td><strong>${name}</strong></td>
+        <td>${track}</td>
+        <td style="font-weight:700;color:${color}">${sc.balance}</td>
+        <td style="color:var(--apex-red)">${sc.deducted}</td>
+        <td style="color:var(--apex-green);font-weight:700">${sc.balance * 5}</td>
+        <td>${rating}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+      <tr style="background:rgba(212,168,67,0.08)">
+        <td colspan="4" style="font-weight:700;text-align:center">إجمالي الحوافز</td>
+        <td style="font-weight:900;font-size:18px;color:var(--apex-gold)">${totalBonus} ريال</td>
+        <td></td>
+      </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:16px;padding:12px;background:rgba(139,92,246,0.08);border-radius:8px;border:1px solid rgba(139,92,246,0.2)">
+      <strong>رصيد المشرفة رهف:</strong> ${state.rahafBalance}/100 | نقاط التحفيز: ${state.supervisorScore}/900 | الحافز: ${state.rahafBalance * 5} ريال
+    </div>
+  `;
+
+  content.innerHTML = html;
+  card.style.display = "block";
+  card.scrollIntoView({ behavior: "smooth" });
+}
+
+function printReport() {
+  window.print();
+}
+
+// ============================================================
+// REFRESH UI
+// ============================================================
+function refreshSupervisorPage() {
+  updateSupervisorScoreDisplay();
+  renderLogTable();
+}
+
+function updateSupervisorScoreDisplay() {
+  document.getElementById("supScoreDisplay").textContent = state.supervisorScore;
+  document.getElementById("supBonusDisplay").textContent = (state.supervisorScore * 5);
+  document.getElementById("supScoreBar").style.width = (state.supervisorScore / 900 * 100) + "%";
+}
+
+function refreshManagerPage() {
+  // Stats
+  const totalBonus = Object.values(state.employeeScores).reduce((s, sc) => s + sc.balance * 5, 0);
+  const top = Object.entries(state.employeeScores).reduce((best, [n, sc]) => sc.balance > best[1] ? [n, sc.balance] : best, ["", 0]);
+  document.getElementById("statTotalBonus").textContent = totalBonus.toLocaleString() + " ر";
+  document.getElementById("statTopPerformer").textContent = top[0] || "--";
+  document.getElementById("statRahafScore").textContent = state.supervisorScore;
+  document.getElementById("statRahafBalance").textContent = state.rahafBalance;
+
+  // Employee grid
+  const grid = document.getElementById("managerEmployeeGrid");
+  grid.innerHTML = "";
+  Object.entries(state.employeeScores).forEach(([name, sc]) => {
+    const emp = EMPLOYEES[name];
+    const trackClass = emp.track === "calls" ? "track-calls" : emp.track === "messages" ? "track-messages" : "track-dual";
+    const icon = emp.track === "calls" ? "📞" : emp.track === "messages" ? "💬" : "🔀";
+    const pct = sc.balance;
+    const color = pct >= 80 ? "var(--apex-green)" : pct >= 60 ? "var(--apex-gold)" : "var(--apex-red)";
+    grid.innerHTML += `
+      <div class="employee-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div class="employee-card-name">${name}</div>
+          <span class="track-badge ${trackClass}" style="font-size:10px">${icon} ${emp.trackLabel}</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <span style="font-size:28px;font-weight:900;color:${color}">${sc.balance}</span>
+          <span style="font-size:12px;color:var(--apex-muted)">/100</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${pct}%;background:${color}"></div>
+        </div>
+        <div class="employee-card-bonus">${sc.balance * 5} ريال</div>
+      </div>
+    `;
+  });
+
+  updateRahafDisplay();
+}
+
+function updateRahafDisplay() {
+  const bal = state.rahafBalance;
+  document.getElementById("rahafBalanceDisplay").textContent = bal;
+  document.getElementById("rahafBonusDisplay").textContent = (bal * 5) + " ريال";
+  document.getElementById("rahafBalanceBar").style.width = bal + "%";
+  if (document.getElementById("statRahafBalance"))
+    document.getElementById("statRahafBalance").textContent = bal;
+}
+
+function renderLogTable() {
+  const tbody = document.getElementById("logTableBody");
+  if (state.violationLog.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--apex-muted);padding:20px">لا توجد مخالفات مسجلة بعد</td></tr>';
+    return;
+  }
+  tbody.innerHTML = state.violationLog.slice(0, 30).map(v => `
+    <tr>
+      <td>${v.date}</td>
+      <td><strong>${v.employee}</strong></td>
+      <td>${v.category}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${v.criterion}">${v.criterion}</td>
+      <td style="color:var(--apex-red);font-weight:700">-${v.deduction}</td>
+      <td><span style="background:rgba(212,168,67,0.15);color:var(--apex-gold);padding:2px 8px;border-radius:4px;font-size:11px">#${v.violNum}</span></td>
+      <td>${v.imageUrl ? `<span style="color:var(--apex-teal-light);cursor:pointer" onclick="showImg()">📷</span>` : '-'}</td>
+    </tr>
+  `).join("");
+}
+
+// ============================================================
+// ESCALATION
+// ============================================================
+function showEscalation(type, employee, criterion) {
+  document.getElementById("escalationTitle").textContent = `⚠️ ${type}`;
+  document.getElementById("escalationMsg").textContent = `الموظفة: ${employee} | المعيار: ${criterion}`;
+  document.getElementById("escalationOverlay").style.display = "flex";
+}
+
+function closeEscalation() {
+  document.getElementById("escalationOverlay").style.display = "none";
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, type = "info") {
+  const container = document.getElementById("toastContainer");
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
+// ============================================================
+// GAS API CALL
+// ============================================================
+async function callGAS(action, data) {
+  const res = await fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, ...data })
+  });
+  return res.json();
+}
+
+// ============================================================
+// RESET
+// ============================================================
+function confirmReset() {
+  if (!confirm("⚠️ هل أنت متأكد من إعادة تعيين جميع الأرصدة لبداية الشهر الجديد؟\n\nهذا الإجراء لا يمكن التراجع عنه.")) return;
+  Object.keys(state.employeeScores).forEach(name => {
+    state.employeeScores[name] = { balance: 100, deducted: 0 };
+  });
+  state.supervisorScore = 0;
+  state.rahafBalance = 100;
+  state.violationLog = [];
+  refreshManagerPage();
+  refreshSupervisorPage();
+  showToast("تمت إعادة التعيين بنجاح ✓", "success");
+
+  if (GAS_URL) callGAS("resetMonthlyScores", {}).catch(() => {});
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener("DOMContentLoaded", () => {
+  // Start on manager auth (manager page is default on load)
+  // supervisor is visible, manager requires auth
+  refreshSupervisorPage();
+});
+</script>
+
+</body>
+</html>
