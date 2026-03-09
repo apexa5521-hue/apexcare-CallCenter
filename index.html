@@ -923,7 +923,7 @@
     <div style="background:var(--bg-card);border-radius:12px;padding:16px 20px;margin-bottom:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <span style="font-size:12px;font-weight:700;color:var(--text-muted);font-family:Cairo">تقدمك نحو الحد الأقصى</span>
-        <span style="font-size:12px;color:#1a56db;font-weight:700;font-family:Cairo"><span id="supScoreDisplay2">0</span> / 900 نقطة</span>
+        <span style="font-size:12px;color:#1a56db;font-weight:700;font-family:Cairo"><span id="supScoreDisplay2">0</span> / <span id="maxSupScore">800</span> نقطة</span>
       </div>
       <div style="height:10px;background:var(--border);border-radius:5px;overflow:hidden">
         <div id="supScoreBar" style="height:100%;width:0%;background:linear-gradient(90deg,#1a56db,#0ea5b0);border-radius:5px;transition:width 0.8s ease"></div>
@@ -985,7 +985,6 @@
             <select id="empSelect" onchange="onEmployeeChange()" class="t-input">
               <option value="">-- اختر الموظفة --</option>
               <option value="مرح">مرح</option>
-              <option value="هيلة">هيلة</option>
               <option value="جنان">جنان</option>
               <option value="أسيل">أسيل</option>
               <option value="حور">حور</option>
@@ -1351,12 +1350,12 @@
 // ============================================================
 const MANAGER_PASSWORD    = "T9@MG7tYxia8";
 const SUPERVISOR_PASSWORD = "Apex@sup2025"; // رمز دخول واجهة الإشراف
+const MAX_SUP_SCORE = Object.keys(EMPLOYEES).length * 100; // 8 × 100 = 800
 const GAS_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"; // ← ضع رابط Web App هنا
 
 const EMPLOYEES = {
   "مرح":    { track: "calls",    trackLabel: "مكالمات" },
-  "هيلة":   { track: "calls",    trackLabel: "مكالمات" },
-  "جنان":   { track: "messages", trackLabel: "رسائل" },
+  "جنان":   { track: "dual",     trackLabel: "مشترك" },
   "أسيل":   { track: "messages", trackLabel: "رسائل" },
   "حور":    { track: "messages", trackLabel: "رسائل" },
   "سارة":   { track: "messages", trackLabel: "رسائل" },
@@ -1749,7 +1748,7 @@ async function confirmAndSubmit() {
   // تحديث محلي
   state.employeeScores[name].balance  = Math.max(0, state.employeeScores[name].balance - deduction);
   state.employeeScores[name].deducted += deduction;
-  state.supervisorScore = Math.min(900, state.supervisorScore + 2);
+  state.supervisorScore = Math.min(MAX_SUP_SCORE, state.supervisorScore + 2);
 
   const logEntry = {
     date: new Date().toLocaleDateString("ar-SA"),
@@ -1988,7 +1987,7 @@ function generateWeeklyReport() {
       </tbody>
     </table>
     <div style="margin-top:16px;padding:12px;background:rgba(139,92,246,0.08);border-radius:8px;border:1px solid rgba(139,92,246,0.2)">
-      <strong>المشرفة رهف:</strong> نقاط مكتسبة: <strong style="color:#a78bfa">${state.rahafBalance}</strong> / 900 | حافز: <strong style="color:#10b981">${state.rahafBalance * 5} ريال</strong>
+      <strong>المشرفة رهف:</strong> نقاط مكتسبة: <strong style="color:#a78bfa">${state.rahafBalance}</strong> / ${MAX_SUP_SCORE} | حافز: <strong style="color:#10b981">${state.rahafBalance * 5} ريال</strong>
     </div>
   `;
 
@@ -2061,7 +2060,7 @@ function updateSupervisorScoreDisplay() {
   if (document.getElementById("supScoreDisplay2"))
     document.getElementById("supScoreDisplay2").textContent = state.supervisorScore;
   document.getElementById("supBonusDisplay").textContent  = state.supervisorScore * 5;
-  document.getElementById("supScoreBar").style.width      = (state.supervisorScore / 900 * 100) + "%";
+  document.getElementById("supScoreBar").style.width      = (state.supervisorScore / MAX_SUP_SCORE * 100) + "%";
 }
 
 function refreshManagerPage() {
@@ -2104,8 +2103,8 @@ function refreshManagerPage() {
 }
 
 function updateRahafDisplay() {
-  const pts  = state.rahafBalance;          // نقاط رهف المكتسبة (0 → 900)
-  const max  = Object.keys(EMPLOYEES).length * 100; // 900
+  const pts  = state.rahafBalance;          // نقاط رهف المكتسبة (0 → MAX_SUP_SCORE)
+  const max  = MAX_SUP_SCORE;
   const pct  = Math.min(100, (pts / max) * 100);
   const bonus = pts * 5;
 
