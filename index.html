@@ -1791,13 +1791,8 @@ async function confirmAndSubmit() {
       imageUrl: ""
     };
     if (state.imageData) {
-      try {
-        const imgRes = await callGAS("uploadImage", { base64Data: state.imageData, fileName: `${name}_${Date.now()}.jpg` });
-        if (imgRes && imgRes.success) payload.imageUrl = imgRes.url;
-      } catch(imgErr) {
-        console.warn("فشل رفع الصورة — سيتم الحفظ بدونها:", imgErr.message);
-        payload.imageUrl = "فشل رفع الصورة";
-      }
+      // أرسل الصورة مضمّنة مع المخالفة بدل طلب منفصل (يتجنب CORS)
+      payload.imageBase64 = state.imageData;
     }
     const res = await callGAS("recordViolation", payload);
     if (res && res.success) {
