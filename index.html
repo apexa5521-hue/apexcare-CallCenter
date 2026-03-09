@@ -1822,57 +1822,52 @@ async function confirmAndSubmit() {
   };
   state.violationLog.unshift(logEntry);
 
-  // ── إرسال بـ POST مع الصورة مضمّنة ──
   try {
-    let imageBase64 = "";
+    // ── خطوة 1: ارفع الصورة أولاً بـ no-cors POST ──
+    let imageToken = "";
     if (state.imageData) {
-      showToast("⏳ جاري ضغط الصورة وحفظها...", "info");
-      const compressed = await compressToLimit(state.imageData, 500); // حد 500KB
-      // اسحب الـ base64 بدون prefix
-      imageBase64 = compressed.includes(",") ? compressed.split(",")[1] : compressed;
+      showToast("⏳ جاري رفع الصورة...", "info");
+      const compressed = await compressToLimit(state.imageData, 400);
+      const pure = compressed.includes(",") ? compressed.split(",")[1] : compressed;
+      imageToken = name + "_" + Date.now();
+
+      // أرسل الصورة بـ no-cors (لا تنتظر response)
+      fetch(GAS_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "uploadImageOnly",
+          imageBase64: pure,
+          token: imageToken,
+          fileName: imageToken + ".jpg"
+        })
+      });
+
+      // انتظر GAS يرفع الصورة ويحفظ الرابط (3 ثوانٍ)
+      showToast("⏳ جاري معالجة الصورة...", "info");
+      await new Promise(r => setTimeout(r, 3000));
     }
 
-    const payload = {
-      action: "recordViolation",
+    // ── خطوة 2: أرسل المخالفة بـ GET مع الـ token ──
+    const res = await callGAS("recordViolation", {
       supervisorName: supName,
       employeeName: name,
       criterion: crit,
       category: cat,
       notes,
-      imageBase64: imageBase64   // ← يرسل مع المخالفة مباشرة
-    };
-
-    // POST بدون انتظار CORS response — no-cors يكفي للإرسال
-    // لكن نحتاج الـ response لنعرف النتيجة — نستخدم mode افتراضي مع header text/plain
-    const res = await fetch(GAS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload)
+      imageToken: imageToken   // GAS يبحث عن الرابط المحفوظ بهذا الـ token
     });
 
-    const text = await res.text();
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    const result = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
-
-    if (result && result.success) {
-      if (result.imageUrl) state.violationLog[0].imageUrl = result.imageUrl;
-      showToast("✅ تم الحفظ في الشيت" + (result.imageUrl ? " مع الصورة 📷" : ""), "success");
+    if (res && res.success) {
+      if (res.imageUrl) state.violationLog[0].imageUrl = res.imageUrl;
+      showToast("✅ تم الحفظ في الشيت" + (res.imageUrl ? " مع الصورة 📷" : ""), "success");
     } else {
-      showToast("⚠️ " + (result && result.error ? result.error : "خطأ غير معروف"), "warning");
+      showToast("⚠️ " + (res && res.error ? res.error : "خطأ غير معروف"), "warning");
     }
   } catch(e) {
-    console.error("POST error:", e.message);
-    // fallback: أرسل بدون صورة عبر GET
-    try {
-      const r2 = await callGAS("recordViolation", {
-        supervisorName: supName, employeeName: name,
-        criterion: crit, category: cat, notes, imageUrl: ""
-      });
-      showToast(r2 && r2.success ? "✅ تم الحفظ (بدون صورة)" : "❌ فشل الإرسال: " + (r2&&r2.error||e.message),
-                r2 && r2.success ? "warning" : "error");
-    } catch(e2) {
-      showToast("❌ فشل الإرسال: " + e2.message, "error");
-    }
+    console.error("Submit error:", e.message);
+    showToast("❌ فشل الإرسال: " + e.message, "error");
   }
 
   updateSupervisorScoreDisplay();
@@ -1882,7 +1877,6 @@ async function confirmAndSubmit() {
   refreshManagerPage();
   renderSupEmployeeList();
 
-  // تصعيد
   let escalation = null;
   if (violNum === 4) escalation = "إنذار شفهي";
   else if (violNum === 5) escalation = "إنذار كتابي";
@@ -1890,7 +1884,6 @@ async function confirmAndSubmit() {
   if (escalation) showEscalation(escalation, name, crit);
   else showToast(`✓ تم تسجيل المخالفة | خُصم ${deduction} نقطة | +2 لرهف`, "success");
 
-  // تفريغ الفورم
   btn.disabled = false;
   setEl("submitBtnText","textContent", "✓ تسجيل المخالفة");
   document.getElementById("empSelect").value = "";
