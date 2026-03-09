@@ -1787,6 +1787,7 @@ async function confirmAndSubmit() {
   state.employeeScores[name].deducted += deduction;
   state.supervisorScore = Math.min(MAX_SUP_SCORE, state.supervisorScore + 2);
 
+  const localImage = state.imageData || null; // احفظ مؤقتاً قبل الإرسال
   const logEntry = {
     date: new Date().toLocaleDateString("ar-SA"),
     time: new Date().toLocaleTimeString("ar-SA"),
@@ -1795,7 +1796,7 @@ async function confirmAndSubmit() {
     category: cat,
     criterion: crit,
     points, deduction, violNum,
-    imageUrl: state.imageData ? "مرفق" : "",
+    imageUrl: localImage || "", // base64 يُعرض في popup محلياً
     notes
   };
   state.violationLog.unshift(logEntry);
@@ -1825,6 +1826,10 @@ async function confirmAndSubmit() {
     }
     const res = await callGAS("recordViolation", payload);
     if (res && res.success) {
+      // إذا رجع رابط Drive — حدّث الـ logEntry
+      if (payload.imageUrl && payload.imageUrl.startsWith("http")) {
+        state.violationLog[0].imageUrl = payload.imageUrl;
+      }
       showToast("✅ تم الحفظ في الشيت", "success");
     } else if (res && res.error) {
       showToast("⚠️ خطأ: " + res.error, "warning");
@@ -2211,17 +2216,52 @@ function renderLogTable() {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--apex-muted);padding:20px">لا توجد مخالفات مسجلة بعد</td></tr>';
     return;
   }
-  tbody.innerHTML = state.violationLog.slice(0, 30).map(v => `
-    <tr style="border-bottom:1px solid #f3f4f6">
+  tbody.innerHTML = state.violationLog.slice(0, 30).map((v,i) => `
+    <tr style="border-bottom:1px solid #1e2d4a">
       <td style="padding:9px 12px;color:var(--text-muted);font-size:12px;font-family:Cairo">${v.date}</td>
       <td style="padding:9px 12px;font-weight:700;color:var(--text);font-family:Cairo">${v.employee}</td>
       <td style="padding:9px 12px;color:var(--text-label);font-family:Cairo">${v.category}</td>
       <td style="padding:9px 12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-label);font-family:Cairo" title="${v.criterion}">${v.criterion}</td>
-      <td style="padding:9px 12px;font-weight:700;color:#dc2626;font-family:Cairo">-${v.deduction}</td>
+      <td style="padding:9px 12px;font-weight:700;color:#ef4444;font-family:Cairo">-${v.deduction}</td>
       <td style="padding:9px 12px"><span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:4px;font-size:11px;font-family:Cairo">#${v.violNum}</span></td>
-      <td style="padding:9px 12px">${v.imageUrl ? `<span style="color:#1a56db;cursor:pointer;font-size:13px">📷</span>` : '-'}</td>
+      <td style="padding:9px 12px;text-align:center">
+        ${v.imageUrl && v.imageUrl !== "فشل رفع الصورة" && v.imageUrl !== "مرفق"
+          ? `<button onclick="showImagePopup('${v.imageUrl}')"
+               style="background:none;border:1px solid #22d3ee;color:#22d3ee;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:13px;font-family:Cairo">
+               📷 عرض
+             </button>`
+          : v.imageUrl === "مرفق"
+            ? `<span style="color:#64748b;font-size:12px">📷 محلي</span>`
+            : '<span style="color:#475569">—</span>'
+        }
+      </td>
     </tr>
   `).join("");
+}
+
+function showImagePopup(url) {
+  // إذا كان رابط Drive — افتحه في تبويب جديد
+  if (url.startsWith("http")) {
+    window.open(url, "_blank");
+    return;
+  }
+  // إذا كان base64 — اعرضه في modal
+  let modal = document.getElementById("imgViewModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "imgViewModal";
+    modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px";
+    modal.onclick = () => modal.remove();
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <img src="${url}" style="max-width:90vw;max-height:80vh;border-radius:10px;box-shadow:0 0 30px rgba(0,0,0,0.5)">
+    <button onclick="document.getElementById('imgViewModal').remove()"
+      style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:8px 24px;font-family:Cairo;font-size:14px;cursor:pointer">
+      ✕ إغلاق
+    </button>
+  `;
+  modal.style.display = "flex";
 }
 
 // ============================================================
