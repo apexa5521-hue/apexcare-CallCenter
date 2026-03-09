@@ -923,7 +923,7 @@
     <div style="background:var(--bg-card);border-radius:12px;padding:16px 20px;margin-bottom:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <span style="font-size:12px;font-weight:700;color:var(--text-muted);font-family:Cairo">تقدمك نحو الحد الأقصى</span>
-        <span style="font-size:12px;color:#1a56db;font-weight:700;font-family:Cairo"><span id="supScoreDisplay2">0</span> / <span id="maxSupScore">800</span> نقطة</span>
+        <span style="font-size:12px;color:#1a56db;font-weight:700;font-family:Cairo"><span id="supScoreDisplay2">0</span> / <span id="maxSupScore">900</span> نقطة</span>
       </div>
       <div style="height:10px;background:var(--border);border-radius:5px;overflow:hidden">
         <div id="supScoreBar" style="height:100%;width:0%;background:linear-gradient(90deg,#1a56db,#0ea5b0);border-radius:5px;transition:width 0.8s ease"></div>
@@ -985,6 +985,7 @@
             <select id="empSelect" onchange="onEmployeeChange()" class="t-input">
               <option value="">-- اختر الموظفة --</option>
               <option value="مرح">مرح</option>
+              <option value="هيلة">هيلة</option>
               <option value="جنان">جنان</option>
               <option value="أسيل">أسيل</option>
               <option value="حور">حور</option>
@@ -1349,12 +1350,12 @@
 // CONFIG & STATE
 // ============================================================
 const MANAGER_PASSWORD    = "T9@MG7tYxia8";
-const SUPERVISOR_PASSWORD = "Apex@sup2025"; // رمز دخول واجهة الإشراف
-const MAX_SUP_SCORE = Object.keys(EMPLOYEES).length * 100; // 8 × 100 = 800
-const GAS_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"; // ← ضع رابط Web App هنا
+const SUPERVISOR_PASSWORD = "Apex@sup2025";
+const GAS_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
 
 const EMPLOYEES = {
   "مرح":    { track: "calls",    trackLabel: "مكالمات" },
+  "هيلة":   { track: "calls",    trackLabel: "مكالمات" },
   "جنان":   { track: "dual",     trackLabel: "مشترك" },
   "أسيل":   { track: "messages", trackLabel: "رسائل" },
   "حور":    { track: "messages", trackLabel: "رسائل" },
@@ -1363,6 +1364,13 @@ const EMPLOYEES = {
   "روان":   { track: "messages", trackLabel: "رسائل" },
   "تهاني":  { track: "dual",     trackLabel: "مشترك" }
 };
+
+const MAX_SUP_SCORE = Object.keys(EMPLOYEES).length * 100; // 9 × 100 = 900
+
+// ── مساعد آمن للوصول للعناصر ──
+const $id = id => document.getElementById(id);
+const setEl = (id, prop, val) => { const e = $id(id); if (e) e[prop] = val; };
+const setStyle = (id, prop, val) => { const e = $id(id); if (e) e.style[prop] = val; };
 
 const CRITERIA = {
   calls: {
@@ -2072,7 +2080,7 @@ function refreshManagerPage() {
   document.getElementById("statRahafBalance").textContent = state.rahafBalance;
 
   // Employee grid
-  const grid = el("managerEmployeeGrid");
+  const grid = $id("managerEmployeeGrid");
   grid.innerHTML = "";
   Object.entries(state.employeeScores).forEach(([name, sc]) => {
     const emp = EMPLOYEES[name];
@@ -2117,7 +2125,7 @@ function updateRahafDisplay() {
 }
 
 function renderLogTable() {
-  const tbody = el("logTableBody");
+  const tbody = $id("logTableBody");
   if (state.violationLog.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--apex-muted);padding:20px">لا توجد مخالفات مسجلة بعد</td></tr>';
     return;
@@ -2152,7 +2160,7 @@ function closeEscalation() {
 // TOAST
 // ============================================================
 function showToast(msg, type = "info") {
-  const container = el("toastContainer");
+  const container = $id("toastContainer");
   const toast = document.createElement("div");
   toast.className = `toast toast-${type}`;
   toast.textContent = msg;
@@ -2165,11 +2173,6 @@ function showToast(msg, type = "info") {
 // ============================================================
 // ============================================================
 // طي / فتح الأقسام
-
-// ── مساعد آمن للوصول للعناصر ──
-const el = id => document.getElementById(id);
-const setEl = (id, prop, val) => { const e = el(id); if (e) e[prop] = val; };
-const setStyle = (id, prop, val) => { const e = el(id); if (e) e.style[prop] = val; };
 
 // ============================================================
 // الوضع الليلي / النهاري
@@ -2256,7 +2259,7 @@ let quoteTimer = null;
 
 function initMotivationalQuotes() {
   const el   = document.getElementById("motivationalQuote");
-  const dots = el("quoteDots");
+  const dots = $id("quoteDots");
   if (!el || !dots) return;
 
   // أنشئ النقاط
@@ -2553,6 +2556,7 @@ function executeReset() {
 // INIT
 // ============================================================
 document.addEventListener("DOMContentLoaded", () => {
+  setEl("maxSupScore", "textContent", MAX_SUP_SCORE);
   initTheme();
   updateDateDisplays();
   setInterval(updateDateDisplays, 60000);
