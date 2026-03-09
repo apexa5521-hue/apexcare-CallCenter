@@ -1810,10 +1810,18 @@ async function confirmAndSubmit() {
       notes,
       imageUrl: ""
     };
-    // الصورة لا تُرسل مع المخالفة — تُحفظ محلياً فقط
-    // (GET request له حد للحجم لا يتسع للصور)
     if (state.imageData) {
-      payload.imageUrl = "[صورة مرفقة - محفوظة محلياً]";
+      try {
+        showToast("⏳ جاري رفع الصورة...", "info");
+        const imgUrl = await uploadImageToGAS(
+          state.imageData,
+          name + "_" + Date.now() + ".jpg"
+        );
+        if (imgUrl) payload.imageUrl = imgUrl;
+      } catch(imgErr) {
+        console.warn("فشل رفع الصورة:", imgErr.message);
+        payload.imageUrl = "فشل رفع الصورة";
+      }
     }
     const res = await callGAS("recordViolation", payload);
     if (res && res.success) {
@@ -2502,6 +2510,31 @@ function showCriteria(track) {
 }
 // Apps Script يقبل POST ويرجع JSON
 // ============================================================
+// ============================================================
+// رفع الصورة للـ Drive عبر GAS بتقسيمها chunks
+// ============================================================
+async function uploadImageToGAS(base64Data, fileName) {
+  const CHUNK_SIZE = 3000; // حجم كل chunk بالحروف
+  const pure = base64Data.includes(",") ? base64Data.split(",")[1] : base64Data;
+  const prefix = base64Data.includes(",") ? base64Data.split(",")[0] + "," : "";
+  const totalChunks = Math.ceil(pure.length / CHUNK_SIZE);
+
+  // أرسل أول chunk وابدأ الملف
+  for (let i = 0; i < totalChunks; i++) {
+    const chunk = pure.substring(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+    const res = await callGAS("uploadChunk", {
+      chunk,
+      fileName,
+      chunkIndex: i,
+      totalChunks,
+      prefix: i === 0 ? prefix : ""
+    });
+    if (!res || !res.success) throw new Error("فشل chunk " + i);
+    if (i === totalChunks - 1 && res.url) return res.url;
+  }
+  return null;
+}
+
 async function callGAS(action, data = {}) {
   if (!GAS_URL || GAS_URL.includes("YOUR_DEPLOYMENT_ID")) {
     throw new Error("GAS_URL غير مضبوط");
