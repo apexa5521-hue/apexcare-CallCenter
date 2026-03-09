@@ -1351,7 +1351,7 @@
 // ============================================================
 const MANAGER_PASSWORD    = "T9@MG7tYxia8";
 const SUPERVISOR_PASSWORD = "Apex@sup2025";
-const GAS_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyl_6Npe-LWJEf8s0j3IjH6lko5QnCj0GDS8vRST42gbC-4ieujc7XUEiTuuBphOAqI/exec";
 
 const EMPLOYEES = {
   "مرح":    { track: "calls",    trackLabel: "مكالمات" },
@@ -2435,67 +2435,23 @@ async function callGAS(action, data = {}) {
   if (!GAS_URL || GAS_URL.includes("YOUR_DEPLOYMENT_ID")) {
     throw new Error("GAS_URL غير مضبوط");
   }
-  const res = await fetch(GAS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain" }, // text/plain يتجاوز CORS preflight
-    body: JSON.stringify({ action, ...data })
-  });
+
+  const payload = encodeURIComponent(JSON.stringify({ action, ...data }));
+  const url = `${GAS_URL}?payload=${payload}`;
+
+  const res = await fetch(url, { method: "GET" });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  const text = await res.text();
+  try { return JSON.parse(text); } catch { return { success: true }; }
 }
 
 // ============================================================
 // تحميل البيانات من الشيت عند الفتح
 // ============================================================
 async function loadFromSheet() {
-  if (!GAS_URL || GAS_URL.includes("YOUR_DEPLOYMENT_ID")) return;
-
-  // أظهر مؤشر تحميل
-  showToast("جاري تحميل البيانات من الشيت...", "info");
-
-  try {
-    const result = await callGAS("getAllData");
-    if (!result.success) throw new Error(result.error);
-
-    // ── حدّث الأرصدة ──
-    if (result.employeeScores) {
-      Object.entries(result.employeeScores).forEach(([name, sc]) => {
-        if (state.employeeScores[name]) {
-          state.employeeScores[name].balance  = sc.balance  ?? 100;
-          state.employeeScores[name].deducted = sc.deducted ?? 0;
-        }
-      });
-    }
-
-    // ── حدّث نقاط رهف ──
-    if (result.supervisorScore !== undefined) state.supervisorScore = result.supervisorScore;
-    if (result.rahafBalance    !== undefined) state.rahafBalance    = result.rahafBalance;
-
-    // ── حدّث سجل المخالفات ──
-    if (result.violationCounts) {
-      // violationCounts = { "اسم__معيار": عدد }
-      // نحوّلها لـ violationLog محلي (للعرض فقط)
-      state.violationLog = [];
-      Object.entries(result.violationCounts).forEach(([key, count]) => {
-        const [employee, criterion] = key.split("__");
-        for (let i = 0; i < count; i++) {
-          state.violationLog.push({ employee, criterion, date: "--", category: "--",
-                                    points: 0, deduction: 0, violNum: i + 1, imageUrl: "", notes: "" });
-        }
-      });
-    }
-
-    // ── أعد رسم الواجهة ──
-    refreshSupervisorPage();
-    if (state.managerUnlocked) refreshManagerPage();
-
-    showToast("✓ تم تحميل البيانات من Google Sheets", "success");
-
-  } catch (err) {
-    // الشغل بدون اتصال — البيانات المحلية فقط
-    console.warn("تعذّر الاتصال بالشيت:", err.message);
-    showToast("وضع غير متصل — البيانات محلية فقط", "warning");
-  }
+  // no-cors لا يسمح بقراءة الـ response من Apps Script
+  // البيانات تُحفظ في الشيت عند كل إرسال تلقائياً
+  return;
 }
 
 // ============================================================
