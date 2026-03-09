@@ -1842,7 +1842,11 @@ async function confirmAndSubmit() {
           total,
           fileName: imageToken + ".jpg"
         });
-        if (!r || !r.success) throw new Error("فشل chunk " + i);
+        if (!r || !r.success) {
+          const errMsg = r && r.error ? r.error : "لا يوجد response";
+          console.error("chunk " + i + " failed:", errMsg, r);
+          throw new Error("فشل chunk " + i + ": " + errMsg);
+        }
         setEl("submitBtnText","textContent", `جاري الرفع ${i+1}/${total}...`);
       }
 
