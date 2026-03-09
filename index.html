@@ -1819,15 +1819,24 @@ async function confirmAndSubmit() {
     imageUrl: state.imageData || "", notes
   });
 
-  try {
-    let imageUrl = "";
-
-    if (state.imageData) {
-      showToast("⏳ جاري رفع الصورة...", "info");
+  // ── رفع الصورة أولاً (منفصل عن تسجيل المخالفة) ──
+  let imageUrl = "";
+  if (state.imageData) {
+    showToast("⏳ جاري رفع الصورة...", "info");
+    try {
       imageUrl = await uploadImageToGAS(state.imageData, name + "_" + Date.now() + ".jpg");
+      console.log("✅ imageUrl:", imageUrl);
       if (imageUrl) state.violationLog[0].imageUrl = imageUrl;
+      showToast("✅ تم رفع الصورة", "success");
+    } catch(imgErr) {
+      console.error("❌ uploadImageToGAS failed:", imgErr.message);
+      showToast("⚠️ فشل رفع الصورة: " + imgErr.message + " — سيتم الحفظ بدون صورة", "warning");
+      imageUrl = "";
     }
+  }
 
+  // ── تسجيل المخالفة ──
+  try {
     const res = await callGAS("recordViolation", {
       supervisorName: supName,
       employeeName: name,
@@ -1842,20 +1851,9 @@ async function confirmAndSubmit() {
     } else {
       showToast("⚠️ " + (res && res.error ? res.error : "خطأ"), "warning");
     }
-
   } catch(e) {
-    console.error("Submit error:", e.message);
-    // أرسل بدون صورة
-    try {
-      const r2 = await callGAS("recordViolation", {
-        supervisorName: supName, employeeName: name,
-        criterion: crit, category: cat, notes, imageUrl: ""
-      });
-      showToast(r2 && r2.success ? "✅ تم الحفظ (بدون صورة)" : "❌ " + e.message,
-                r2 && r2.success ? "warning" : "error");
-    } catch(e2) {
-      showToast("❌ " + e2.message, "error");
-    }
+    console.error("recordViolation failed:", e.message);
+    showToast("❌ فشل الحفظ: " + e.message, "error");
   }
 
   updateSupervisorScoreDisplay();
@@ -2648,15 +2646,19 @@ async function callGAS(action, data = {}) {
 
   try {
     let res;
-    // الصور كبيرة — ترسل بـ POST لتجنب حد URL
-    if (action === "uploadImage") {
+
+    if (action === "uploadChunk") {
+      // ── POST بـ form-urlencoded (simple request — لا يحتاج CORS preflight) ──
+      const body = new URLSearchParams();
+      body.set("payload", JSON.stringify({ action, ...data }));
       res = await fetch(GAS_URL, {
         method: "POST",
         signal: controller.signal,
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ action, ...data })
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: body.toString()
       });
     } else {
+      // ── GET للباقي ──
       const payload = encodeURIComponent(JSON.stringify({ action, ...data }));
       const url = `${GAS_URL}?payload=${payload}`;
       res = await fetch(url, { method: "GET", signal: controller.signal });
@@ -2665,8 +2667,8 @@ async function callGAS(action, data = {}) {
     clearTimeout(timeout);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) return JSON.parse(jsonMatch[0]);
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
     return { success: true };
   } catch(e) {
     clearTimeout(timeout);
