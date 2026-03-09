@@ -1466,8 +1466,9 @@ let state = {
   supervisorUnlocked: false,
   employeeScores: {},
   violationLog: [],
-  supervisorScore: 0,
-  rahafBalance: 0,   // رهف تبدأ من 0 وتكسب (نظام كسب لا خصم)
+  supervisorScore: 0,     // نقاط رهف المكتسبة (+2 لكل مخالفة)
+  rahafDeductions: 0,     // مجموع خصومات المدير
+  rahafBalance: 0,        // legacy — غير مستخدم في الحساب الجديد
   imageData: null
 };
 
@@ -1934,8 +1935,8 @@ async function deductRahaf(amount) {
     return;
   }
 
-  // رهف تُخصم من نقاطها المكتسبة فقط — لا تنزل عن 0
-  state.rahafBalance = Math.max(0, state.rahafBalance - amount);
+  // الخصم يُضاف لمجموع الخصومات — النقاط الصافية = مكتسبة - خصومات
+  state.rahafDeductions = Math.min(state.supervisorScore, state.rahafDeductions + amount);
 
   try {
     await callGAS("recordSupervisorEvaluation", { criterion, evalType, deduction: amount, notes });
@@ -2004,7 +2005,7 @@ function generateWeeklyReport() {
       </tbody>
     </table>
     <div style="margin-top:16px;padding:12px;background:rgba(139,92,246,0.08);border-radius:8px;border:1px solid rgba(139,92,246,0.2)">
-      <strong>المشرفة رهف:</strong> نقاط مكتسبة: <strong style="color:#a78bfa">${state.supervisorScore}</strong> / ${MAX_SUP_SCORE} | حافز: <strong style="color:#10b981">${rahafBonus(state.supervisorScore)} ريال</strong>
+      <strong>المشرفة رهف:</strong> مكتسبة: <strong style="color:#a78bfa">${state.supervisorScore}</strong> | خصومات: <strong style="color:#ef4444">-${state.rahafDeductions}</strong> | صافي: <strong style="color:#10b981">${Math.max(0,state.supervisorScore-state.rahafDeductions)}</strong> / ${MAX_SUP_SCORE} | حافز: <strong style="color:#f0c96a">${rahafBonus(Math.max(0,state.supervisorScore-state.rahafDeductions))} ريال</strong>
     </div>
   `;
 
@@ -2086,7 +2087,7 @@ function refreshManagerPage() {
   document.getElementById("statTotalBonus").textContent = totalBonus.toLocaleString() + " ر";
   document.getElementById("statTopPerformer").textContent = top[0] || "--";
   document.getElementById("statRahafScore").textContent = state.supervisorScore;
-  document.getElementById("statRahafBalance").textContent = state.rahafBalance;
+  document.getElementById("statRahafBalance").textContent = Math.max(0, state.supervisorScore - state.rahafDeductions) + " / " + MAX_SUP_SCORE;
 
   // Employee grid
   const grid = $id("managerEmployeeGrid");
@@ -2119,23 +2120,26 @@ function refreshManagerPage() {
 }
 
 function updateRahafDisplay() {
-  // رهف تكسب +2 نقطة لكل مخالفة موثقة (state.supervisorScore)
-  // كل 9 نقاط (= عدد الموظفات) = 5 ريال | الحد الأقصى = 9 × 100 = 900
-  const pts     = state.supervisorScore;          // النقاط المكتسبة
-  const max     = MAX_SUP_SCORE;                  // 900
+  // النقاط الصافية = مكتسبة - خصومات المدير
+  const earned  = state.supervisorScore;           // +2 لكل مخالفة موثقة
+  const deducted = state.rahafDeductions;          // خصومات المدير
+  const pts     = Math.max(0, earned - deducted);  // الصافي
+  const max     = MAX_SUP_SCORE;                   // 900
   const pct     = Math.min(100, (pts / max) * 100);
-  const bonus   = rahafBonus(pts);                // Math.floor(pts / 9) * 5
-  const THRESH  = Object.keys(EMPLOYEES).length; // 9
-  const toNext  = THRESH - (pts % THRESH);
-  const milestone = (pts > 0 && pts % THRESH === 0)
+  const bonus   = rahafBonus(pts);                 // Math.floor(pts / 9) * 5
+  const THRESH  = Object.keys(EMPLOYEES).length;  // 9
+  const remainder = pts % THRESH;
+  const toNext  = remainder === 0 && pts > 0 ? 0 : THRESH - remainder;
+  const milestone = (pts > 0 && remainder === 0)
     ? "✅ وصلت لمكافأة جديدة!"
     : `${toNext} نقطة للمكافأة التالية (5 ريال)`;
 
+  // عرض التفاصيل
   setEl("rahafBalanceDisplay", "textContent", pts);
   setEl("rahafBonusDisplay",   "textContent", bonus + " ريال");
   setEl("rahafMilestone",      "textContent", milestone);
   setEl("statRahafBalance",    "textContent", pts + " / " + max);
-  setEl("statRahafScore",      "textContent", pts);
+  setEl("statRahafScore",      "textContent", earned); // النقاط المكتسبة كاملة
   const bar = document.getElementById("rahafBalanceBar");
   if (bar) bar.style.width = pct + "%";
   // شريط المشرفة في صفحة الإشراف
@@ -2546,8 +2550,9 @@ function executeReset() {
   Object.keys(state.employeeScores).forEach(name => {
     state.employeeScores[name] = { balance: 100, deducted: 0 };
   });
-  state.supervisorScore = 0;
-  state.rahafBalance    = 0;  // رهف تبدأ من 0 كل شهر
+  state.supervisorScore  = 0;
+  state.rahafDeductions  = 0;  // رهف تبدأ من 0 كل شهر
+  state.rahafBalance     = 0;
   state.violationLog    = [];
 
   refreshManagerPage();
