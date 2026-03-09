@@ -798,7 +798,7 @@
 
 <!-- MANAGER AUTH OVERLAY -->
 <!-- ══ شاشة الاختيار والدخول ══ -->
-<div id="landing-screen" style="position:fixed;inset:0;z-index:600;display:flex;align-items:center;justify-content:center;background:var(--bg)">
+<div id="landing-screen" style="position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;background:var(--bg)">
 
   <!-- خلفية زخرفية -->
   <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none">
@@ -1743,7 +1743,7 @@ async function confirmAndSubmit() {
 
   const btn = document.getElementById("submitBtn");
   btn.disabled = true;
-  document.getElementById("submitBtnText").innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
+  setEl("submitBtnText","innerHTML", '<span class="loading-spinner"></span> جاري الحفظ...');
 
   // تحديث محلي
   state.employeeScores[name].balance  = Math.max(0, state.employeeScores[name].balance - deduction);
@@ -1792,7 +1792,7 @@ async function confirmAndSubmit() {
 
   // تفريغ الفورم
   btn.disabled = false;
-  document.getElementById("submitBtnText").textContent = "✓ تسجيل المخالفة";
+  setEl("submitBtnText","textContent", "✓ تسجيل المخالفة");
   document.getElementById("empSelect").value = "";
   document.getElementById("categorySelect").innerHTML = '<option value="">-- اختر الفئة --</option>';
   document.getElementById("categorySelect").disabled = true;
@@ -2056,11 +2056,10 @@ function renderSupEmployeeList() {
 }
 
 function updateSupervisorScoreDisplay() {
-  document.getElementById("supScoreDisplay").textContent  = state.supervisorScore;
-  if (document.getElementById("supScoreDisplay2"))
-    document.getElementById("supScoreDisplay2").textContent = state.supervisorScore;
-  document.getElementById("supBonusDisplay").textContent  = state.supervisorScore * 5;
-  document.getElementById("supScoreBar").style.width      = (state.supervisorScore / MAX_SUP_SCORE * 100) + "%";
+  setEl("supScoreDisplay","textContent", state.supervisorScore);
+  setEl("supScoreDisplay2","textContent", state.supervisorScore);
+  setEl("supBonusDisplay","textContent", state.supervisorScore * 5);
+  setStyle("supScoreBar","width", (state.supervisorScore / MAX_SUP_SCORE * 100) + "%");
 }
 
 function refreshManagerPage() {
@@ -2073,7 +2072,7 @@ function refreshManagerPage() {
   document.getElementById("statRahafBalance").textContent = state.rahafBalance;
 
   // Employee grid
-  const grid = document.getElementById("managerEmployeeGrid");
+  const grid = el("managerEmployeeGrid");
   grid.innerHTML = "";
   Object.entries(state.employeeScores).forEach(([name, sc]) => {
     const emp = EMPLOYEES[name];
@@ -2108,8 +2107,8 @@ function updateRahafDisplay() {
   const pct  = Math.min(100, (pts / max) * 100);
   const bonus = pts * 5;
 
-  document.getElementById("rahafBalanceDisplay").textContent = pts;
-  document.getElementById("rahafBonusDisplay").textContent   = bonus + " ريال";
+  setEl("rahafBalanceDisplay","textContent", pts);
+  setEl("rahafBonusDisplay","textContent", bonus + " ريال");
   document.getElementById("rahafBalanceBar").style.width     = pct + "%";
   if (document.getElementById("statRahafBalance"))
     document.getElementById("statRahafBalance").textContent  = pts + " / " + max;
@@ -2118,7 +2117,7 @@ function updateRahafDisplay() {
 }
 
 function renderLogTable() {
-  const tbody = document.getElementById("logTableBody");
+  const tbody = el("logTableBody");
   if (state.violationLog.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--apex-muted);padding:20px">لا توجد مخالفات مسجلة بعد</td></tr>';
     return;
@@ -2140,20 +2139,20 @@ function renderLogTable() {
 // ESCALATION
 // ============================================================
 function showEscalation(type, employee, criterion) {
-  document.getElementById("escalationTitle").textContent = `⚠️ ${type}`;
-  document.getElementById("escalationMsg").textContent = `الموظفة: ${employee} | المعيار: ${criterion}`;
-  document.getElementById("escalationOverlay").style.display = "flex";
+  setEl("escalationTitle","textContent", `⚠️ ${type}`);
+  setEl("escalationMsg","textContent", `الموظفة: ${employee} | المعيار: ${criterion}`);
+  setStyle("escalationOverlay","display","flex");
 }
 
 function closeEscalation() {
-  document.getElementById("escalationOverlay").style.display = "none";
+  setStyle("escalationOverlay","display","none");
 }
 
 // ============================================================
 // TOAST
 // ============================================================
 function showToast(msg, type = "info") {
-  const container = document.getElementById("toastContainer");
+  const container = el("toastContainer");
   const toast = document.createElement("div");
   toast.className = `toast toast-${type}`;
   toast.textContent = msg;
@@ -2166,6 +2165,12 @@ function showToast(msg, type = "info") {
 // ============================================================
 // ============================================================
 // طي / فتح الأقسام
+
+// ── مساعد آمن للوصول للعناصر ──
+const el = id => document.getElementById(id);
+const setEl = (id, prop, val) => { const e = el(id); if (e) e[prop] = val; };
+const setStyle = (id, prop, val) => { const e = el(id); if (e) e.style[prop] = val; };
+
 // ============================================================
 // الوضع الليلي / النهاري
 // ============================================================
@@ -2251,7 +2256,7 @@ let quoteTimer = null;
 
 function initMotivationalQuotes() {
   const el   = document.getElementById("motivationalQuote");
-  const dots = document.getElementById("quoteDots");
+  const dots = el("quoteDots");
   if (!el || !dots) return;
 
   // أنشئ النقاط
