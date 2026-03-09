@@ -2603,45 +2603,56 @@ function showCriteria(track) {
 // رفع الصورة للـ Drive عبر GAS بتقسيمها chunks
 // ============================================================
 async function uploadImageToGAS(base64Data, fileName) {
-  const CHUNK_SIZE = 500; // صغير جداً لضمان URL < 3000 حرف
-  const pure = base64Data.includes(",") ? base64Data.split(",")[1] : base64Data;
-  const prefix = base64Data.includes(",") ? base64Data.split(",")[0] + "," : "data:image/jpeg;base64,";
-  const totalChunks = Math.ceil(pure.length / CHUNK_SIZE);
+  // اضغط الصورة حتى تصير < 40KB لضمان URL آمن
+  const compressed = await compressToLimit(base64Data, 40);
+  const pure = compressed.includes(",") ? compressed.split(",")[1] : compressed;
+  const prefix = compressed.includes(",") ? compressed.split(",")[0] + "," : "data:image/jpeg;base64,";
 
-  for (let i = 0; i < totalChunks; i++) {
-    const chunk = pure.substring(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+  // أرسل في طلب واحد
+  const res = await callGAS("uploadChunk", {
+    chunk: pure,
+    fileName,
+    chunkIndex: 0,
+    totalChunks: 1,
+    prefix
+  });
 
-    // تحقق من حجم الـ URL قبل الإرسال
-    const testPayload = JSON.stringify({ action:"uploadChunk", chunk, fileName, chunkIndex:i, totalChunks, prefix: i===0 ? prefix : "" });
-    const testUrl = GAS_URL + "?payload=" + encodeURIComponent(testPayload);
-    if (testUrl.length > 7000) {
-      throw new Error("URL كبير جداً حتى مع chunk صغير — الصورة كبيرة جداً");
-    }
+  if (res && res.success && res.url) return res.url;
+  throw new Error(res && res.error ? res.error : "فشل رفع الصورة");
+}
 
-    let res = null;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        res = await callGAS("uploadChunk", {
-          chunk, fileName, chunkIndex: i, totalChunks,
-          prefix: i === 0 ? prefix : ""
-        });
-        if (res && res.success) break;
-      } catch(e) {
-        if (attempt === 2) throw new Error("فشل chunk " + i + ": " + e.message);
-        await new Promise(r => setTimeout(r, 1500));
+async function compressToLimit(base64Data, maxKB) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let quality = 0.5;
+      let scale = 1.0;
+      const canvas = document.createElement("canvas");
+      const MAX_DIM = 600;
+
+      let w = img.width, h = img.height;
+      if (w > MAX_DIM || h > MAX_DIM) {
+        if (w > h) { h = Math.round(h * MAX_DIM / w); w = MAX_DIM; }
+        else { w = Math.round(w * MAX_DIM / h); h = MAX_DIM; }
       }
-    }
-    if (!res || !res.success) {
-      throw new Error("خطأ في chunk " + i + ": " + (res && res.error ? res.error : "غير معروف"));
-    }
-    if (i === totalChunks - 1) {
-      if (res.url) return res.url;
-      throw new Error("لم يرجع GAS رابط الصورة");
-    }
-    // تأخير صغير بين chunks لتجنب rate limiting
-    await new Promise(r => setTimeout(r, 200));
-  }
-  return null;
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+
+      // جرّب ضغط متدرج
+      const tryCompress = (q) => {
+        const result = canvas.toDataURL("image/jpeg", q);
+        const kb = Math.round(result.length * 0.75 / 1024);
+        if (kb <= maxKB || q <= 0.05) {
+          console.log(`حجم الصورة بعد الضغط: ${kb}KB (جودة ${Math.round(q*100)}%)`);
+          resolve(result);
+        } else {
+          tryCompress(Math.max(0.05, q - 0.1));
+        }
+      };
+      tryCompress(quality);
+    };
+    img.src = base64Data;
+  });
 }
 
 
