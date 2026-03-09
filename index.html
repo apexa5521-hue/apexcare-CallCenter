@@ -1469,7 +1469,8 @@ let state = {
   supervisorScore: 0,     // نقاط رهف المكتسبة (+2 لكل مخالفة)
   rahafDeductions: 0,     // مجموع خصومات المدير
   rahafBalance: 0,        // legacy — غير مستخدم في الحساب الجديد
-  imageData: null
+  imageData: null,
+  imageTooLarge: false
 };
 
 // Init default scores
@@ -1698,15 +1699,38 @@ function previewImage(input) {
         canvas.width = w;
         canvas.height = h;
         canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-        const compressed = canvas.toDataURL("image/jpeg", 0.6); // جودة 60%
-        state.imageData = compressed;
-        const preview = document.getElementById("imagePreview");
-        preview.src = compressed;
-        preview.style.display = "block";
-        document.querySelector(".upload-zone-icon").textContent = "✅";
-        // عرض حجم الصورة
+        const compressed = canvas.toDataURL("image/jpeg", 0.6);
         const kb = Math.round(compressed.length * 0.75 / 1024);
-        console.log("حجم الصورة بعد الضغط:", kb, "KB");
+        const MAX_KB = 200; // الحد الأقصى المسموح به
+
+        if (kb > MAX_KB) {
+          // الصورة كبيرة — اضغط أكثر
+          const compressed2 = canvas.toDataURL("image/jpeg", 0.3);
+          const kb2 = Math.round(compressed2.length * 0.75 / 1024);
+          if (kb2 > MAX_KB) {
+            // مازالت كبيرة — أظهر تحذير
+            state.imageData = null;
+            state.imageTooLarge = true;
+            const preview = document.getElementById("imagePreview");
+            preview.style.display = "none";
+            document.querySelector(".upload-zone-icon").textContent = "⚠️";
+            showImageSizeWarning(kb2);
+            return;
+          }
+          state.imageData = compressed2;
+          const preview = document.getElementById("imagePreview");
+          preview.src = compressed2;
+          preview.style.display = "block";
+          document.querySelector(".upload-zone-icon").textContent = "✅";
+        } else {
+          state.imageData = compressed;
+          const preview = document.getElementById("imagePreview");
+          preview.src = compressed;
+          preview.style.display = "block";
+          document.querySelector(".upload-zone-icon").textContent = "✅";
+        }
+        state.imageTooLarge = false;
+        console.log("حجم الصورة:", kb, "KB");
       };
       img.src = e.target.result;
     };
@@ -1778,6 +1802,12 @@ async function confirmAndSubmit() {
   const { supName, name, cat, crit, notes, track, points, violNum, deduction } = _pendingViolation;
   _pendingViolation = null;
 
+  // تحقق: إذا الصورة كبيرة لا ترسل
+  if (state.imageTooLarge) {
+    showImageSizeWarning(0);
+    return;
+  }
+
   const btn = document.getElementById("submitBtn");
   btn.disabled = true;
   setEl("submitBtnText","innerHTML", '<span class="loading-spinner"></span> جاري الحفظ...');
@@ -1812,17 +1842,13 @@ async function confirmAndSubmit() {
       imageUrl: ""
     };
     if (state.imageData) {
-      try {
-        showToast("⏳ جاري رفع الصورة...", "info");
-        const imgUrl = await uploadImageToGAS(
-          state.imageData,
-          name + "_" + Date.now() + ".jpg"
-        );
-        if (imgUrl) payload.imageUrl = imgUrl;
-      } catch(imgErr) {
-        console.warn("فشل رفع الصورة:", imgErr.message);
-        payload.imageUrl = "فشل رفع الصورة";
-      }
+      showToast("⏳ جاري رفع الصورة...", "info");
+      const imgUrl = await uploadImageToGAS(
+        state.imageData,
+        name + "_" + Date.now() + ".jpg"
+      );
+      // uploadImageToGAS يرمي error إذا فشل — لا نكتب "فشل رفع الصورة" أبداً
+      payload.imageUrl = imgUrl || "";
     }
     const res = await callGAS("recordViolation", payload);
     if (res && res.success) {
@@ -1839,7 +1865,6 @@ async function confirmAndSubmit() {
     // إذا فشل الإرسال بسبب الصورة — أعد المحاولة بدون صورة
     console.warn("فشل مع الصورة، جاري المحاولة بدون صورة:", e.message);
     try {
-      payload.imageUrl = "فشل رفع الصورة";
       const res2 = await callGAS("recordViolation", payload);
       if (res2 && res2.success) {
         showToast("✅ تم الحفظ (بدون صورة)", "success");
@@ -2239,6 +2264,30 @@ function renderLogTable() {
   `).join("");
 }
 
+function showImageSizeWarning(kb) {
+  let modal = document.createElement("div");
+  modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px";
+  modal.innerHTML = `
+    <div style="background:#1a1f2e;border:1px solid #ef4444;border-radius:14px;padding:28px;max-width:380px;width:100%;font-family:Cairo;text-align:center">
+      <div style="font-size:40px;margin-bottom:12px">⚠️</div>
+      <div style="color:#ef4444;font-size:16px;font-weight:700;margin-bottom:10px">حجم الصورة كبير جداً</div>
+      <div style="color:#94a3b8;font-size:13px;margin-bottom:20px;line-height:1.7">
+        حجم الصورة (${kb} KB) يتجاوز الحد المسموح به.<br>
+        يُرجى اتباع التعليمات التالية:<br><br>
+        <span style="color:#e2e8f0">١. افتح الصورة في هاتفك<br>
+        ٢. اضغط تعديل أو Edit<br>
+        ٣. قلّل الدقة أو احفظها بحجم أصغر<br>
+        ٤. ارفعها مجدداً</span>
+      </div>
+      <button onclick="this.closest('div[style]').remove()"
+        style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:10px 30px;font-family:Cairo;font-size:14px;cursor:pointer;font-weight:700">
+        حسناً
+      </button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
 function showImagePopup(url) {
   // إذا كان رابط Drive — افتحه في تبويب جديد
   if (url.startsWith("http")) {
@@ -2554,23 +2603,36 @@ function showCriteria(track) {
 // رفع الصورة للـ Drive عبر GAS بتقسيمها chunks
 // ============================================================
 async function uploadImageToGAS(base64Data, fileName) {
-  const CHUNK_SIZE = 3000; // حجم كل chunk بالحروف
+  // الـ base64 بعد encodeURIComponent يكبر ~33% — نحافظ على URL < 6000 حرف
+  const CHUNK_SIZE = 1500;
   const pure = base64Data.includes(",") ? base64Data.split(",")[1] : base64Data;
-  const prefix = base64Data.includes(",") ? base64Data.split(",")[0] + "," : "";
+  const prefix = base64Data.includes(",") ? base64Data.split(",")[0] + "," : "data:image/jpeg;base64,";
   const totalChunks = Math.ceil(pure.length / CHUNK_SIZE);
 
-  // أرسل أول chunk وابدأ الملف
   for (let i = 0; i < totalChunks; i++) {
     const chunk = pure.substring(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-    const res = await callGAS("uploadChunk", {
-      chunk,
-      fileName,
-      chunkIndex: i,
-      totalChunks,
-      prefix: i === 0 ? prefix : ""
-    });
-    if (!res || !res.success) throw new Error("فشل chunk " + i);
-    if (i === totalChunks - 1 && res.url) return res.url;
+    let res = null;
+    // retry مرتين
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        res = await callGAS("uploadChunk", {
+          chunk,
+          fileName,
+          chunkIndex: i,
+          totalChunks,
+          prefix: i === 0 ? prefix : ""
+        });
+        if (res && res.success) break;
+      } catch(e) {
+        if (attempt === 2) throw new Error("فشل chunk " + i + " بعد 3 محاولات: " + e.message);
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+    if (!res || !res.success) throw new Error("فشل chunk " + i + ": " + (res && res.error ? res.error : "خطأ غير معروف"));
+    if (i === totalChunks - 1) {
+      if (res.url) return res.url;
+      throw new Error("لم يُرجع الـ GAS رابط الصورة");
+    }
   }
   return null;
 }
