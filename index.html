@@ -1820,60 +1820,42 @@ async function confirmAndSubmit() {
   });
 
   try {
-    // ── الخطوة 1: ارفع الصورة بـ chunks صغيرة عبر GET ──
-    let imageToken = "";
+    let imageUrl = "";
+
     if (state.imageData) {
       showToast("⏳ جاري رفع الصورة...", "info");
-
-      // اضغط لـ 5KB
-      const compressed = await compressToLimit(state.imageData, 5);
-      const pure = compressed.includes(",") ? compressed.split(",")[1] : compressed;
-      imageToken = name.replace(/\s/g,"") + "_" + Date.now();
-
-      const CHUNK = 1800;
-      const total = Math.ceil(pure.length / CHUNK);
-
-      for (let i = 0; i < total; i++) {
-        const chunk = pure.substring(i * CHUNK, (i + 1) * CHUNK);
-        const r = await callGAS("storeChunk", {
-          token: imageToken,
-          chunk,
-          index: i,
-          total,
-          fileName: imageToken + ".jpg"
-        });
-        if (!r || !r.success) {
-          const errMsg = r && r.error ? r.error : "لا يوجد response";
-          console.error("chunk " + i + " failed:", errMsg, r);
-          throw new Error("فشل chunk " + i + ": " + errMsg);
-        }
-        setEl("submitBtnText","textContent", `جاري الرفع ${i+1}/${total}...`);
-      }
-
-      showToast("✅ تم رفع الصورة", "success");
+      imageUrl = await uploadImageToGAS(state.imageData, name + "_" + Date.now() + ".jpg");
+      if (imageUrl) state.violationLog[0].imageUrl = imageUrl;
     }
 
-    // ── الخطوة 2: سجّل المخالفة مع الـ token ──
-    setEl("submitBtnText","innerHTML", '<span class="loading-spinner"></span> جاري الحفظ...');
     const res = await callGAS("recordViolation", {
       supervisorName: supName,
       employeeName: name,
       criterion: crit,
       category: cat,
       notes,
-      imageToken
+      imageUrl
     });
 
     if (res && res.success) {
-      if (res.imageUrl) state.violationLog[0].imageUrl = res.imageUrl;
-      showToast("✅ تم الحفظ في الشيت" + (res.imageUrl ? " مع الصورة 📷" : ""), "success");
+      showToast("✅ تم الحفظ في الشيت" + (imageUrl ? " مع الصورة 📷" : ""), "success");
     } else {
       showToast("⚠️ " + (res && res.error ? res.error : "خطأ"), "warning");
     }
 
   } catch(e) {
     console.error("Submit error:", e.message);
-    showToast("❌ " + e.message, "error");
+    // أرسل بدون صورة
+    try {
+      const r2 = await callGAS("recordViolation", {
+        supervisorName: supName, employeeName: name,
+        criterion: crit, category: cat, notes, imageUrl: ""
+      });
+      showToast(r2 && r2.success ? "✅ تم الحفظ (بدون صورة)" : "❌ " + e.message,
+                r2 && r2.success ? "warning" : "error");
+    } catch(e2) {
+      showToast("❌ " + e2.message, "error");
+    }
   }
 
   updateSupervisorScoreDisplay();
@@ -2599,12 +2581,13 @@ function showCriteria(track) {
 // رفع الصورة للـ Drive عبر GAS بتقسيمها chunks
 // ============================================================
 async function uploadImageToGAS(base64Data, fileName) {
-  // اضغط الصورة حتى تصير < 40KB لضمان URL آمن
-  const compressed = await compressToLimit(base64Data, 40);
-  const pure = compressed.includes(",") ? compressed.split(",")[1] : compressed;
+  // اضغط الصورة لـ 4KB (حد آمن لـ GET URL)
+  const compressed = await compressToLimit(base64Data, 4);
+  const pure   = compressed.includes(",") ? compressed.split(",")[1] : compressed;
   const prefix = compressed.includes(",") ? compressed.split(",")[0] + "," : "data:image/jpeg;base64,";
 
-  // أرسل في طلب واحد
+  console.log("uploadImageToGAS: size =", Math.round(pure.length * 0.75 / 1024), "KB");
+
   const res = await callGAS("uploadChunk", {
     chunk: pure,
     fileName,
@@ -2613,9 +2596,12 @@ async function uploadImageToGAS(base64Data, fileName) {
     prefix
   });
 
+  console.log("uploadChunk response:", res);
+
   if (res && res.success && res.url) return res.url;
   throw new Error(res && res.error ? res.error : "فشل رفع الصورة");
 }
+
 
 async function compressToLimit(base64Data, maxKB) {
   return new Promise((resolve) => {
