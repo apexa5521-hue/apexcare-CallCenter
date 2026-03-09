@@ -2603,39 +2603,47 @@ function showCriteria(track) {
 // رفع الصورة للـ Drive عبر GAS بتقسيمها chunks
 // ============================================================
 async function uploadImageToGAS(base64Data, fileName) {
-  // الـ base64 بعد encodeURIComponent يكبر ~33% — نحافظ على URL < 6000 حرف
-  const CHUNK_SIZE = 1500;
+  const CHUNK_SIZE = 500; // صغير جداً لضمان URL < 3000 حرف
   const pure = base64Data.includes(",") ? base64Data.split(",")[1] : base64Data;
   const prefix = base64Data.includes(",") ? base64Data.split(",")[0] + "," : "data:image/jpeg;base64,";
   const totalChunks = Math.ceil(pure.length / CHUNK_SIZE);
 
   for (let i = 0; i < totalChunks; i++) {
     const chunk = pure.substring(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+
+    // تحقق من حجم الـ URL قبل الإرسال
+    const testPayload = JSON.stringify({ action:"uploadChunk", chunk, fileName, chunkIndex:i, totalChunks, prefix: i===0 ? prefix : "" });
+    const testUrl = GAS_URL + "?payload=" + encodeURIComponent(testPayload);
+    if (testUrl.length > 7000) {
+      throw new Error("URL كبير جداً حتى مع chunk صغير — الصورة كبيرة جداً");
+    }
+
     let res = null;
-    // retry مرتين
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         res = await callGAS("uploadChunk", {
-          chunk,
-          fileName,
-          chunkIndex: i,
-          totalChunks,
+          chunk, fileName, chunkIndex: i, totalChunks,
           prefix: i === 0 ? prefix : ""
         });
         if (res && res.success) break;
       } catch(e) {
-        if (attempt === 2) throw new Error("فشل chunk " + i + " بعد 3 محاولات: " + e.message);
-        await new Promise(r => setTimeout(r, 1000));
+        if (attempt === 2) throw new Error("فشل chunk " + i + ": " + e.message);
+        await new Promise(r => setTimeout(r, 1500));
       }
     }
-    if (!res || !res.success) throw new Error("فشل chunk " + i + ": " + (res && res.error ? res.error : "خطأ غير معروف"));
+    if (!res || !res.success) {
+      throw new Error("خطأ في chunk " + i + ": " + (res && res.error ? res.error : "غير معروف"));
+    }
     if (i === totalChunks - 1) {
       if (res.url) return res.url;
-      throw new Error("لم يُرجع الـ GAS رابط الصورة");
+      throw new Error("لم يرجع GAS رابط الصورة");
     }
+    // تأخير صغير بين chunks لتجنب rate limiting
+    await new Promise(r => setTimeout(r, 200));
   }
   return null;
 }
+
 
 async function callGAS(action, data = {}) {
   if (!GAS_URL || GAS_URL.includes("YOUR_DEPLOYMENT_ID")) {
