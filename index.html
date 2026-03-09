@@ -1782,14 +1782,28 @@ async function confirmAndSubmit() {
 
   // إرسال للشيت
   try {
-    const payload = { supervisorName: supName, employeeName: name, criterion: crit, category: cat, notes, imageUrl: "" };
+    const payload = {
+      supervisorName: supName,
+      employeeName: name,
+      criterion: crit,
+      category: cat,
+      notes,
+      imageUrl: ""
+    };
     if (state.imageData) {
       const imgRes = await callGAS("uploadImage", { base64Data: state.imageData, fileName: `${name}_${Date.now()}.jpg` });
       if (imgRes && imgRes.success) payload.imageUrl = imgRes.url;
     }
-    await callGAS("recordViolation", payload);
+    const res = await callGAS("recordViolation", payload);
+    if (res && res.success) {
+      showToast("✅ تم الحفظ في الشيت", "success");
+    } else if (res && res.error) {
+      showToast("⚠️ خطأ من الشيت: " + res.error, "warning");
+      console.error("GAS error:", res.error);
+    }
   } catch (e) {
-    console.warn("GAS error:", e.message);
+    showToast("❌ فشل الإرسال: " + e.message, "error");
+    console.error("GAS error:", e.message);
   }
 
   updateSupervisorScoreDisplay();
@@ -2463,10 +2477,23 @@ async function callGAS(action, data = {}) {
   const payload = encodeURIComponent(JSON.stringify({ action, ...data }));
   const url = `${GAS_URL}?payload=${payload}`;
 
-  const res = await fetch(url, { method: "GET" });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const text = await res.text();
-  try { return JSON.parse(text); } catch { return { success: true }; }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000); // 15 ثانية
+
+  try {
+    const res = await fetch(url, { method: "GET", signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    // تنظيف الرد من أي نص زائد
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) return JSON.parse(jsonMatch[0]);
+    return { success: true };
+  } catch(e) {
+    clearTimeout(timeout);
+    if (e.name === "AbortError") throw new Error("انتهت مهلة الاتصال (15 ثانية)");
+    throw e;
+  }
 }
 
 // ============================================================
