@@ -1802,78 +1802,76 @@ async function confirmAndSubmit() {
   const { supName, name, cat, crit, notes, track, points, violNum, deduction } = _pendingViolation;
   _pendingViolation = null;
 
-  // تحقق: إذا الصورة كبيرة لا ترسل
-  if (state.imageTooLarge) {
-    showImageSizeWarning(0);
-    return;
-  }
-
   const btn = document.getElementById("submitBtn");
   btn.disabled = true;
   setEl("submitBtnText","innerHTML", '<span class="loading-spinner"></span> جاري الحفظ...');
 
-  // تحديث محلي
+  // تحديث محلي فوري
   state.employeeScores[name].balance  = Math.max(0, state.employeeScores[name].balance - deduction);
   state.employeeScores[name].deducted += deduction;
   state.supervisorScore = Math.min(MAX_SUP_SCORE, state.supervisorScore + 2);
 
-  const localImage = state.imageData || null; // احفظ مؤقتاً قبل الإرسال
   const logEntry = {
     date: new Date().toLocaleDateString("ar-SA"),
     time: new Date().toLocaleTimeString("ar-SA"),
-    supervisor: supName,
-    employee: name,
-    category: cat,
-    criterion: crit,
+    supervisor: supName, employee: name,
+    category: cat, criterion: crit,
     points, deduction, violNum,
-    imageUrl: localImage || "", // base64 يُعرض في popup محلياً
+    imageUrl: state.imageData || "",
     notes
   };
   state.violationLog.unshift(logEntry);
 
-  // إرسال للشيت
+  // ── إرسال بـ POST مع الصورة مضمّنة ──
   try {
+    let imageBase64 = "";
+    if (state.imageData) {
+      showToast("⏳ جاري ضغط الصورة وحفظها...", "info");
+      const compressed = await compressToLimit(state.imageData, 500); // حد 500KB
+      // اسحب الـ base64 بدون prefix
+      imageBase64 = compressed.includes(",") ? compressed.split(",")[1] : compressed;
+    }
+
     const payload = {
+      action: "recordViolation",
       supervisorName: supName,
       employeeName: name,
       criterion: crit,
       category: cat,
       notes,
-      imageUrl: ""
+      imageBase64: imageBase64   // ← يرسل مع المخالفة مباشرة
     };
-    if (state.imageData) {
-      showToast("⏳ جاري رفع الصورة...", "info");
-      const imgUrl = await uploadImageToGAS(
-        state.imageData,
-        name + "_" + Date.now() + ".jpg"
-      );
-      // uploadImageToGAS يرمي error إذا فشل — لا نكتب "فشل رفع الصورة" أبداً
-      payload.imageUrl = imgUrl || "";
+
+    // POST بدون انتظار CORS response — no-cors يكفي للإرسال
+    // لكن نحتاج الـ response لنعرف النتيجة — نستخدم mode افتراضي مع header text/plain
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+
+    const text = await res.text();
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const result = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+
+    if (result && result.success) {
+      if (result.imageUrl) state.violationLog[0].imageUrl = result.imageUrl;
+      showToast("✅ تم الحفظ في الشيت" + (result.imageUrl ? " مع الصورة 📷" : ""), "success");
+    } else {
+      showToast("⚠️ " + (result && result.error ? result.error : "خطأ غير معروف"), "warning");
     }
-    const res = await callGAS("recordViolation", payload);
-    if (res && res.success) {
-      // إذا رجع رابط Drive — حدّث الـ logEntry
-      if (payload.imageUrl && payload.imageUrl.startsWith("http")) {
-        state.violationLog[0].imageUrl = payload.imageUrl;
-      }
-      showToast("✅ تم الحفظ في الشيت", "success");
-    } else if (res && res.error) {
-      showToast("⚠️ خطأ: " + res.error, "warning");
-      console.error("GAS error:", res.error);
-    }
-  } catch (e) {
-    // إذا فشل الإرسال بسبب الصورة — أعد المحاولة بدون صورة
-    console.warn("فشل مع الصورة، جاري المحاولة بدون صورة:", e.message);
+  } catch(e) {
+    console.error("POST error:", e.message);
+    // fallback: أرسل بدون صورة عبر GET
     try {
-      const res2 = await callGAS("recordViolation", payload);
-      if (res2 && res2.success) {
-        showToast("✅ تم الحفظ (بدون صورة)", "success");
-      } else {
-        showToast("❌ فشل الإرسال: " + (res2 && res2.error ? res2.error : e.message), "error");
-      }
+      const r2 = await callGAS("recordViolation", {
+        supervisorName: supName, employeeName: name,
+        criterion: crit, category: cat, notes, imageUrl: ""
+      });
+      showToast(r2 && r2.success ? "✅ تم الحفظ (بدون صورة)" : "❌ فشل الإرسال: " + (r2&&r2.error||e.message),
+                r2 && r2.success ? "warning" : "error");
     } catch(e2) {
       showToast("❌ فشل الإرسال: " + e2.message, "error");
-      console.error("GAS error:", e2.message);
     }
   }
 
@@ -1889,7 +1887,6 @@ async function confirmAndSubmit() {
   if (violNum === 4) escalation = "إنذار شفهي";
   else if (violNum === 5) escalation = "إنذار كتابي";
   else if (violNum > 5)  escalation = "رفع للإدارة";
-
   if (escalation) showEscalation(escalation, name, crit);
   else showToast(`✓ تم تسجيل المخالفة | خُصم ${deduction} نقطة | +2 لرهف`, "success");
 
