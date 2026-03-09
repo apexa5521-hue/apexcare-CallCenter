@@ -143,10 +143,10 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
-  return HtmlService.createHtmlOutputFromFile("index")
-    .setTitle("APEXCARE - نظام الجودة")
-    .addMetaTag("viewport", "width=device-width, initial-scale=1")
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  // رد بسيط للتأكد من أن الـ API يعمل
+  return ContentService
+    .createTextOutput(JSON.stringify({ success: true, message: "APEXCARE API يعمل ✅" }))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 // ============================================================
