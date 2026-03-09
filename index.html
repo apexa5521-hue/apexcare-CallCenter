@@ -1130,6 +1130,9 @@
       <div style="display:flex;gap:8px">
         <button class="btn btn-teal" onclick="generateWeeklyReport()">📄 تقرير أسبوعي</button>
         <button class="btn btn-danger" onclick="confirmReset()">🔄 إعادة تعيين الشهر</button>
+        <button onclick="testConnection()" style="padding:8px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg-card);color:var(--text);font-family:Cairo;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px">
+          <span id="testConnIcon">🔌</span> اختبار الاتصال
+        </button>
       </div>
     </div>
 
@@ -2452,6 +2455,31 @@ async function loadFromSheet() {
   // no-cors لا يسمح بقراءة الـ response من Apps Script
   // البيانات تُحفظ في الشيت عند كل إرسال تلقائياً
   return;
+}
+
+// ============================================================
+// اختبار الاتصال بالشيت
+// ============================================================
+async function testConnection() {
+  const icon = document.getElementById("testConnIcon");
+  if (icon) icon.textContent = "⏳";
+  showToast("جاري اختبار الاتصال...", "info");
+  try {
+    const res = await fetch(GAS_URL, { method: "GET" });
+    const text = await res.text();
+    const json = JSON.parse(text);
+    if (json.success) {
+      showToast("✅ الاتصال بالشيت يعمل بنجاح", "success");
+      if (icon) icon.textContent = "✅";
+    } else {
+      showToast("⚠️ الشيت رد لكن فيه خطأ: " + json.error, "warning");
+      if (icon) icon.textContent = "⚠️";
+    }
+  } catch (err) {
+    showToast("❌ تعذّر الاتصال: " + err.message, "error");
+    if (icon) icon.textContent = "❌";
+  }
+  setTimeout(() => { if (icon) icon.textContent = "🔌"; }, 4000);
 }
 
 // ============================================================
