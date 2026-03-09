@@ -1366,6 +1366,8 @@ const EMPLOYEES = {
 };
 
 const MAX_SUP_SCORE = Object.keys(EMPLOYEES).length * 100; // 9 × 100 = 900
+const rahafBonus = pts => Math.floor(pts / 9) * 5; // كل 9 نقاط = 5 ريال
+
 
 // ── مساعد آمن للوصول للعناصر ──
 const $id = id => document.getElementById(id);
@@ -1995,7 +1997,7 @@ function generateWeeklyReport() {
       </tbody>
     </table>
     <div style="margin-top:16px;padding:12px;background:rgba(139,92,246,0.08);border-radius:8px;border:1px solid rgba(139,92,246,0.2)">
-      <strong>المشرفة رهف:</strong> نقاط مكتسبة: <strong style="color:#a78bfa">${state.rahafBalance}</strong> / ${MAX_SUP_SCORE} | حافز: <strong style="color:#10b981">${state.rahafBalance * 5} ريال</strong>
+      <strong>المشرفة رهف:</strong> نقاط مكتسبة: <strong style="color:#a78bfa">${state.rahafBalance}</strong> / ${MAX_SUP_SCORE} | حافز: <strong style="color:#10b981">${rahafBonus(state.rahafBalance)} ريال</strong>
     </div>
   `;
 
@@ -2066,7 +2068,7 @@ function renderSupEmployeeList() {
 function updateSupervisorScoreDisplay() {
   setEl("supScoreDisplay","textContent", state.supervisorScore);
   setEl("supScoreDisplay2","textContent", state.supervisorScore);
-  setEl("supBonusDisplay","textContent", state.supervisorScore * 5);
+  setEl("supBonusDisplay","textContent", rahafBonus(state.supervisorScore) + " ريال");
   setStyle("supScoreBar","width", (state.supervisorScore / MAX_SUP_SCORE * 100) + "%");
 }
 
@@ -2113,7 +2115,7 @@ function updateRahafDisplay() {
   const pts  = state.rahafBalance;          // نقاط رهف المكتسبة (0 → MAX_SUP_SCORE)
   const max  = MAX_SUP_SCORE;
   const pct  = Math.min(100, (pts / max) * 100);
-  const bonus = pts * 5;
+  const bonus = rahafBonus(pts);
 
   setEl("rahafBalanceDisplay","textContent", pts);
   setEl("rahafBonusDisplay","textContent", bonus + " ريال");
