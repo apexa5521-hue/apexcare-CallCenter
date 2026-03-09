@@ -1791,19 +1791,36 @@ async function confirmAndSubmit() {
       imageUrl: ""
     };
     if (state.imageData) {
-      const imgRes = await callGAS("uploadImage", { base64Data: state.imageData, fileName: `${name}_${Date.now()}.jpg` });
-      if (imgRes && imgRes.success) payload.imageUrl = imgRes.url;
+      try {
+        const imgRes = await callGAS("uploadImage", { base64Data: state.imageData, fileName: `${name}_${Date.now()}.jpg` });
+        if (imgRes && imgRes.success) payload.imageUrl = imgRes.url;
+      } catch(imgErr) {
+        console.warn("فشل رفع الصورة — سيتم الحفظ بدونها:", imgErr.message);
+        payload.imageUrl = "فشل رفع الصورة";
+      }
     }
     const res = await callGAS("recordViolation", payload);
     if (res && res.success) {
       showToast("✅ تم الحفظ في الشيت", "success");
     } else if (res && res.error) {
-      showToast("⚠️ خطأ من الشيت: " + res.error, "warning");
+      showToast("⚠️ خطأ: " + res.error, "warning");
       console.error("GAS error:", res.error);
     }
   } catch (e) {
-    showToast("❌ فشل الإرسال: " + e.message, "error");
-    console.error("GAS error:", e.message);
+    // إذا فشل الإرسال بسبب الصورة — أعد المحاولة بدون صورة
+    console.warn("فشل مع الصورة، جاري المحاولة بدون صورة:", e.message);
+    try {
+      payload.imageUrl = "فشل رفع الصورة";
+      const res2 = await callGAS("recordViolation", payload);
+      if (res2 && res2.success) {
+        showToast("✅ تم الحفظ (بدون صورة)", "success");
+      } else {
+        showToast("❌ فشل الإرسال: " + (res2 && res2.error ? res2.error : e.message), "error");
+      }
+    } catch(e2) {
+      showToast("❌ فشل الإرسال: " + e2.message, "error");
+      console.error("GAS error:", e2.message);
+    }
   }
 
   updateSupervisorScoreDisplay();
@@ -2474,24 +2491,34 @@ async function callGAS(action, data = {}) {
     throw new Error("GAS_URL غير مضبوط");
   }
 
-  const payload = encodeURIComponent(JSON.stringify({ action, ...data }));
-  const url = `${GAS_URL}?payload=${payload}`;
-
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000); // 15 ثانية
+  const timeout = setTimeout(() => controller.abort(), 30000);
 
   try {
-    const res = await fetch(url, { method: "GET", signal: controller.signal });
+    let res;
+    // الصور كبيرة — ترسل بـ POST لتجنب حد URL
+    if (action === "uploadImage") {
+      res = await fetch(GAS_URL, {
+        method: "POST",
+        signal: controller.signal,
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ action, ...data })
+      });
+    } else {
+      const payload = encodeURIComponent(JSON.stringify({ action, ...data }));
+      const url = `${GAS_URL}?payload=${payload}`;
+      res = await fetch(url, { method: "GET", signal: controller.signal });
+    }
+
     clearTimeout(timeout);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
-    // تنظيف الرد من أي نص زائد
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
     return { success: true };
   } catch(e) {
     clearTimeout(timeout);
-    if (e.name === "AbortError") throw new Error("انتهت مهلة الاتصال (15 ثانية)");
+    if (e.name === "AbortError") throw new Error("انتهت مهلة الاتصال (30 ثانية)");
     throw e;
   }
 }
