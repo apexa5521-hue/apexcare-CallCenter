@@ -19,7 +19,7 @@ const SHEETS = {
 const EMPLOYEES = {
   "مرح":    { track: "calls" },
   "هيلة":   { track: "calls" },
-  "جنان":   { track: "messages" },
+  "جنان":   { track: "dual" },
   "أسيل":   { track: "messages" },
   "حور":    { track: "messages" },
   "سارة":   { track: "messages" },
@@ -119,17 +119,67 @@ const SUPERVISOR_CRITERIA = {
   "متابعة جودة المكالمات (اتصال يومي على 7078)": null
 };
 
+// كل 9 نقاط للمشرفة = 5 ريال
+function rahafBonus(pts) {
+  return Math.floor(pts / 9) * 5;
+}
+
 // ============================================================
-// doGet - Serve the HTML interface
+// doGet - يستقبل جميع الطلبات عبر payload parameter
 // ============================================================
 function doGet(e) {
-  const page = e.parameter.page || "supervisor";
-  const template = HtmlService.createTemplateFromFile("index");
-  template.page = page;
-  return template.evaluate()
+  const params = (e && e.parameter) ? e.parameter : {};
+
+  if (params.payload) {
+    let result;
+    try {
+      const data = JSON.parse(decodeURIComponent(params.payload));
+      result = handleAction(data);
+    } catch (err) {
+      result = { success: false, error: err.toString() };
+    }
+    return ContentService
+      .createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  return HtmlService.createHtmlOutputFromFile("index")
     .setTitle("APEXCARE - نظام الجودة")
     .addMetaTag("viewport", "width=device-width, initial-scale=1")
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// ============================================================
+// doPost - احتياطي
+// ============================================================
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const result = handleAction(data);
+    return ContentService
+      .createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: false, error: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// ============================================================
+// handleAction - مشترك بين doGet و doPost
+// ============================================================
+function handleAction(data) {
+  switch (data.action) {
+    case "recordViolation":            return recordViolation(data);
+    case "recordSupervisorEvaluation": return recordSupervisorEvaluation(data);
+    case "uploadImage":                return uploadImage(data.base64Data, data.fileName);
+    case "resetMonthlyScores":         return resetMonthlyScores();
+    case "getAllData":                  return getAllData();
+    case "getWeeklyReport":            return getWeeklyReport();
+    case "initSheets":                 return initSheets();
+    default: return { success: false, error: "action غير معروف: " + data.action };
+  }
 }
 
 // ============================================================
@@ -164,10 +214,20 @@ function initSheets() {
   let sup = ss.getSheetByName(SHEETS.SUPERVISOR);
   if (!sup) {
     sup = ss.insertSheet(SHEETS.SUPERVISOR);
+    sup.setRightToLeft(true);
     sup.appendRow(["التاريخ", "المعيار", "نوع التقييم", "الخصم/الكسب", "رصيد رهف", "ملاحظات"]);
-    sup.getRange(1, 1, 1, 6).setBackground("#1a1a2e").setFontColor("#ffffff").setFontWeight("bold");
-    // Init rahaf score row
-    sup.appendRow(["إجمالي", "رصيد المشرفة", "رهف", 0, 0, new Date()]);
+    sup.getRange(1, 1, 1, 6).setBackground("#1a1a2e").setFontColor("#ffffff").setFontWeight("bold")
+       .setHorizontalAlignment("center");
+    // عرض الأعمدة
+    sup.setColumnWidth(1, 120); // التاريخ
+    sup.setColumnWidth(2, 280); // المعيار
+    sup.setColumnWidth(3, 140); // نوع التقييم
+    sup.setColumnWidth(4, 120); // الخصم/الكسب
+    sup.setColumnWidth(5, 120); // رصيد رهف
+    sup.setColumnWidth(6, 200); // ملاحظات
+    // صف البيانات الأولي
+    sup.appendRow(["إجمالي", "رصيد المشرفة", "رهف", 0, 0, ""]);
+    sup.getRange(2, 1, 1, 6).setHorizontalAlignment("center");
   }
   
   return { success: true, message: "تم تهيئة الشيتات بنجاح" };
@@ -213,13 +273,13 @@ function getAllData() {
   // Get supervisor score
   const supSheet = ss.getSheetByName(SHEETS.SUPERVISOR);
   let supervisorScore = 0;
-  let rahafBalance = 100;
+  let rahafBalance = 0;
   if (supSheet && supSheet.getLastRow() > 1) {
     const supData = supSheet.getRange(2, 1, supSheet.getLastRow() - 1, 6).getValues();
     supData.forEach(row => {
       if (row[0] === "إجمالي") {
         supervisorScore = row[3] || 0;
-        rahafBalance = row[4] || 100;
+        rahafBalance = row[4] || 0;
       }
     });
   }
@@ -352,7 +412,7 @@ function updateSupervisorScore(points) {
     if (data[i][0] === "إجمالي") {
       const rowNum = i + 2;
       const currentScore = supSheet.getRange(rowNum, 4).getValue() || 0;
-      const maxScore = Object.keys(EMPLOYEES).length * 100; // 900
+      const maxScore = Object.keys(EMPLOYEES).length * 100; // 9 × 100 = 900
       const newScore = Math.min(maxScore, currentScore + points);
       supSheet.getRange(rowNum, 4).setValue(newScore);
       supSheet.getRange(rowNum, 6).setValue(new Date());
@@ -388,7 +448,7 @@ function recordSupervisorEvaluation(data) {
     for (let i = 0; i < supData.length; i++) {
       if (supData[i][0] === "إجمالي") {
         const rowNum = i + 2;
-        const currentBalance = supSheet.getRange(rowNum, 5).getValue() || 100;
+        const currentBalance = supSheet.getRange(rowNum, 5).getValue() || 0;
         const newBalance = Math.max(0, currentBalance - deduction);
         supSheet.getRange(rowNum, 5).setValue(newBalance);
         supSheet.getRange(rowNum, 6).setValue(now);
@@ -507,10 +567,562 @@ function resetMonthlyScores() {
     supData.forEach((row, i) => {
       if (row[0] === "إجمالي") {
         supSheet.getRange(i + 2, 4).setValue(0);
-        supSheet.getRange(i + 2, 5).setValue(100);
+        supSheet.getRange(i + 2, 5).setValue(0); // رهف تبدأ من 0 كل شهر
       }
     });
   }
   
   return { success: true, message: "تم إعادة تعيين الأرصدة الشهرية" };
+}
+
+// ============================================================
+// إصلاح شريحة تقييم_المشرفة — شغّلها مرة واحدة فقط
+// ============================================================
+function fixSupervisorSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sup = ss.getSheetByName(SHEETS.SUPERVISOR);
+
+  // احذف القديمة وأنشئ جديدة نظيفة
+  if (sup) ss.deleteSheet(sup);
+  sup = ss.insertSheet(SHEETS.SUPERVISOR);
+  sup.setRightToLeft(true);
+
+  // ── عرض الأعمدة ──
+  sup.setColumnWidth(1, 120); // التاريخ
+  sup.setColumnWidth(2, 280); // المعيار
+  sup.setColumnWidth(3, 140); // نوع التقييم
+  sup.setColumnWidth(4, 120); // الخصم/الكسب
+  sup.setColumnWidth(5, 120); // رصيد رهف
+  sup.setColumnWidth(6, 200); // ملاحظات
+
+  // ── رأس الجدول ──
+  sup.setRowHeight(1, 36);
+  const headers = ["التاريخ", "المعيار", "نوع التقييم", "الخصم/الكسب", "رصيد رهف", "ملاحظات"];
+  const headerColors = ["#D4A843", "#22D3EE", "#A78BFA", "#EF4444", "#10B981", "#64748B"];
+  headers.forEach((h, i) => {
+    const cell = sup.getRange(1, i + 1);
+    cell.setValue(h);
+    cell.setBackground("#111827");
+    cell.setFontColor(headerColors[i]);
+    cell.setFontSize(11);
+    cell.setFontWeight("bold");
+    cell.setFontFamily("Cairo");
+    cell.setHorizontalAlignment("center");
+    cell.setVerticalAlignment("middle");
+    cell.setBorder(false, false, true, false, false, false, "#D4A843",
+                   SpreadsheetApp.BorderStyle.MEDIUM);
+  });
+
+  // ── صف رصيد رهف الأولي ──
+  sup.setRowHeight(2, 28);
+  const initData = ["إجمالي", "رصيد المشرفة", "رهف", 0, 0, "يُحدَّث تلقائياً من واجهة المدير"];
+  initData.forEach((val, i) => {
+    const cell = sup.getRange(2, i + 1);
+    cell.setValue(val);
+    cell.setBackground("#161D2E");
+    cell.setFontColor(i === 4 ? "#A78BFA" : i === 3 ? "#D4A843" : "#E2E8F0");
+    cell.setFontSize(11);
+    cell.setFontWeight(i === 4 ? "bold" : "normal");
+    cell.setFontFamily("Cairo");
+    cell.setHorizontalAlignment("center");
+    cell.setVerticalAlignment("middle");
+  });
+
+  // تجميد الصف الأول
+  sup.setFrozenRows(1);
+  sup.setTabColor("#8B5CF6");
+  sup.setHiddenGridlines(false);
+
+  SpreadsheetApp.flush();
+  return { success: true, message: "✅ تم إصلاح شريحة تقييم_المشرفة" };
+}
+
+// ============================================================
+// SETUP DASHBOARD — ينشئ جميع الشرائح بالتنسيق الكامل
+// شغّل هذه الدالة مرة واحدة بعد initSheets()
+// ============================================================
+function setupDashboard() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // ── تأكد من وجود الشيتات الأساسية أولاً ──
+  initSheets();
+
+  // ── إنشاء / إعادة بناء شريحة لوحة الأداء ──
+  _buildDashboardSheet(ss);
+
+  // ── إنشاء / إعادة بناء شريحة تذكير المعايير ──
+  _buildCriteriaSheet(ss);
+
+  // ── ترتيب الشرائح ──
+  _reorderSheets(ss);
+
+  SpreadsheetApp.flush();
+  return { success: true, message: "✅ تم إنشاء لوحة الأداء وشريحة المعايير بنجاح" };
+}
+
+// ────────────────────────────────────────────────────────────
+// لوحة الأداء الرئيسية
+// ────────────────────────────────────────────────────────────
+function _buildDashboardSheet(ss) {
+  const SHEET_NAME = "📊 لوحة الأداء";
+
+  // احذف القديمة إن وُجدت وأنشئ جديدة
+  let old = ss.getSheetByName(SHEET_NAME);
+  if (old) ss.deleteSheet(old);
+  const ws = ss.insertSheet(SHEET_NAME);
+  ws.setRightToLeft(true);
+
+  // ── أبعاد الأعمدة ──
+  ws.setColumnWidth(1, 30);   // هامش
+  ws.setColumnWidth(2, 170);  // اسم
+  ws.setColumnWidth(3, 120);  // مسار
+  ws.setColumnWidth(4, 100);  // رصيد
+  ws.setColumnWidth(5, 110);  // مخصوم
+  ws.setColumnWidth(6, 120);  // حافز
+  ws.setColumnWidth(7, 160);  // شريط
+  ws.setColumnWidth(8, 130);  // تقييم
+  ws.setColumnWidth(9, 110);  // حالة
+  ws.setColumnWidth(10, 30);  // هامش
+
+  // إخفاء خطوط الشبكة
+  ws.setHiddenGridlines(true);
+
+  // ── تلوين خلفية كاملة ──
+  ws.getRange(1, 1, 60, 10).setBackground("#0A0E1A");
+
+  // ── صف العنوان (row 2) ──
+  ws.setRowHeight(1, 12);
+  ws.setRowHeight(2, 65);
+  ws.setRowHeight(3, 12);
+
+  const headerRange = ws.getRange(2, 2, 1, 8);
+  headerRange.merge();
+  headerRange.setValue("🏆  لوحة أداء مركز الاتصال  |  APEXCARE");
+  headerRange.setBackground("#111827");
+  headerRange.setFontColor("#F0C96A");
+  headerRange.setFontSize(20);
+  headerRange.setFontWeight("bold");
+  headerRange.setFontFamily("Cairo");
+  headerRange.setHorizontalAlignment("center");
+  headerRange.setVerticalAlignment("middle");
+
+  // ── صف الوصف (row 4) ──
+  ws.setRowHeight(4, 30);
+  const subRange = ws.getRange(4, 2, 1, 8);
+  subRange.merge();
+  subRange.setValue("نظام نقاط التحفيز الشهري — كل نقطة = 5 ريال  ✨");
+  subRange.setBackground("#0A0E1A");
+  subRange.setFontColor("#64748B");
+  subRange.setFontSize(11);
+  subRange.setFontFamily("Cairo");
+  subRange.setHorizontalAlignment("center");
+  subRange.setVerticalAlignment("middle");
+
+  ws.setRowHeight(5, 10);
+
+  // ── رؤوس الأعمدة (row 6) ──
+  ws.setRowHeight(6, 36);
+  const colHeaders = ["#", "اسم الموظفة", "المسار", "الرصيد\n(من 100)",
+                      "المخصوم", "الحافز (ريال)", "شريط الأداء", "التقييم", "الحالة"];
+  colHeaders.forEach((h, i) => {
+    const cell = ws.getRange(6, i + 2);
+    cell.setValue(h);
+    cell.setBackground("#111827");
+    cell.setFontColor("#D4A843");
+    cell.setFontSize(10);
+    cell.setFontWeight("bold");
+    cell.setFontFamily("Cairo");
+    cell.setHorizontalAlignment("center");
+    cell.setVerticalAlignment("middle");
+    cell.setWrap(true);
+    cell.setBorder(false, false, true, false, false, false, "#D4A843", SpreadsheetApp.BorderStyle.MEDIUM);
+  });
+
+  // ── بيانات الموظفات ──
+  const employees = [
+    ["مرح",   "📞 مكالمات"],
+    ["هيلة",  "📞 مكالمات"],
+    ["تهاني", "🔀 مشترك"],
+    ["جنان",  "🔀 مشترك"],
+    ["أسيل",  "💬 رسائل"],
+    ["حور",   "💬 رسائل"],
+    ["سارة",  "💬 رسائل"],
+    ["طيف",   "💬 رسائل"],
+    ["روان",  "💬 رسائل"],
+  ];
+
+  const rankIcons  = ["🥇", "🥈", "🥉", "4", "5", "6", "7", "8", "9"];
+  const rankColors = ["#FFD700", "#C0C0C0", "#CD7F32", "#E2E8F0", "#E2E8F0", "#E2E8F0", "#E2E8F0", "#E2E8F0", "#E2E8F0"];
+  const rowBgs     = ["#1A1500", "#141414", "#140E00", "#161D2E", "#111827", "#161D2E", "#111827", "#161D2E", "#111827"];
+  const START_ROW  = 7;
+  const SCORES_REF = "الأرصدة"; // اسم شيت الأرصدة
+
+  employees.forEach(([name, track], idx) => {
+    const row   = START_ROW + idx;
+    const bg    = rowBgs[idx];
+    const rclr  = rankColors[idx];
+
+    ws.setRowHeight(row, 32);
+
+    // تلوين الصف
+    ws.getRange(row, 1, 1, 10).setBackground(bg);
+
+    // col 2: اسم + رتبة
+    const nameCell = ws.getRange(row, 2);
+    nameCell.setValue(`${rankIcons[idx]}  ${name}`);
+    nameCell.setBackground(bg).setFontColor(rclr).setFontSize(12)
+            .setFontWeight("bold").setFontFamily("Cairo")
+            .setHorizontalAlignment("right").setVerticalAlignment("middle");
+
+    // col 3: المسار
+    const tClr = track.includes("مكالمات") ? "#22D3EE" :
+                 track.includes("رسائل")   ? "#A78BFA" : "#F0C96A";
+    ws.getRange(row, 3).setValue(track).setBackground(bg).setFontColor(tClr)
+      .setFontSize(10).setFontFamily("Cairo")
+      .setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+    // col 4: الرصيد — formula من شيت الأرصدة
+    const balCell = ws.getRange(row, 4);
+    balCell.setFormula(`=IFERROR(VLOOKUP("${name}",الأرصدة!$A:$C,3,0),100)`);
+    balCell.setBackground(bg).setFontColor("#10B981").setFontSize(14)
+           .setFontWeight("bold").setFontFamily("Cairo")
+           .setHorizontalAlignment("center").setVerticalAlignment("middle")
+           .setNumberFormat("0");
+
+    // col 5: المخصوم
+    const dedCell = ws.getRange(row, 5);
+    dedCell.setFormula(`=IFERROR(VLOOKUP("${name}",الأرصدة!$A:$D,4,0),0)`);
+    dedCell.setBackground(bg).setFontColor("#EF4444").setFontSize(11)
+           .setFontFamily("Cairo")
+           .setHorizontalAlignment("center").setVerticalAlignment("middle")
+           .setNumberFormat("0");
+
+    // col 6: الحافز
+    const bonCell = ws.getRange(row, 6);
+    bonCell.setFormula(`=D${row}*5`);
+    bonCell.setBackground(bg).setFontColor("#F0C96A").setFontSize(12)
+           .setFontWeight("bold").setFontFamily("Cairo")
+           .setHorizontalAlignment("center").setVerticalAlignment("middle")
+           .setNumberFormat('"﷼ "#,##0');
+
+    // col 7: شريط بصري
+    const barCell = ws.getRange(row, 7);
+    barCell.setFormula(`=REPT("█",ROUND(D${row}/10,0))&REPT("░",10-ROUND(D${row}/10,0))`);
+    const barClr = idx < 3 ? "#10B981" : idx < 6 ? "#0EA5B0" : "#F59E0B";
+    barCell.setBackground(bg).setFontColor(barClr).setFontSize(11)
+           .setFontFamily("Courier New")
+           .setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+    // col 8: التقييم
+    const ratCell = ws.getRange(row, 8);
+    ratCell.setFormula(`=IF(D${row}>=90,"⭐ ممتاز",IF(D${row}>=75,"✅ جيد جداً",IF(D${row}>=60,"👍 جيد","⚠️ يحتاج تحسين")))`);
+    ratCell.setBackground(bg).setFontColor("#E2E8F0").setFontSize(10)
+           .setFontFamily("Cairo")
+           .setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+    // col 9: الحالة
+    const stCell = ws.getRange(row, 9);
+    stCell.setFormula(`=IF(D${row}>=80,"✅ آمن",IF(D${row}>=60,"⡷ تنبيه","🚨 خطر"))`);
+    stCell.setBackground(bg).setFontColor("#E2E8F0").setFontSize(10)
+          .setFontFamily("Cairo")
+          .setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+    // حد سفلي خفيف
+    ws.getRange(row, 2, 1, 8)
+      .setBorder(false, false, true, false, false, false, "#1E2D4A", SpreadsheetApp.BorderStyle.SOLID);
+  });
+
+  const LAST_DATA_ROW = START_ROW + employees.length - 1;
+
+  // ── صف الإجماليات ──
+  ws.setRowHeight(LAST_DATA_ROW + 1, 10);
+  const totRow = LAST_DATA_ROW + 2;
+  ws.setRowHeight(totRow, 38);
+  ws.getRange(totRow, 1, 1, 10).setBackground("#0A0E1A");
+
+  const totLabel = ws.getRange(totRow, 2, 1, 2);
+  totLabel.merge().setValue("📊 الإجماليات");
+  totLabel.setBackground("#111827").setFontColor("#D4A843").setFontSize(11)
+          .setFontWeight("bold").setFontFamily("Cairo")
+          .setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+  const avgCell = ws.getRange(totRow, 4);
+  avgCell.setFormula(`=AVERAGE(D${START_ROW}:D${LAST_DATA_ROW})`);
+  avgCell.setBackground("#111827").setFontColor("#10B981").setFontSize(13)
+         .setFontWeight("bold").setFontFamily("Cairo")
+         .setHorizontalAlignment("center").setVerticalAlignment("middle")
+         .setNumberFormat("0.0")
+         .setBorder(true, false, false, false, false, false, "#D4A843", SpreadsheetApp.BorderStyle.MEDIUM);
+
+  const totBonus = ws.getRange(totRow, 6);
+  totBonus.setFormula(`=SUM(F${START_ROW}:F${LAST_DATA_ROW})`);
+  totBonus.setBackground("#111827").setFontColor("#F0C96A").setFontSize(14)
+          .setFontWeight("bold").setFontFamily("Cairo")
+          .setHorizontalAlignment("center").setVerticalAlignment("middle")
+          .setNumberFormat('"﷼ "#,##0')
+          .setBorder(true, false, false, false, false, false, "#D4A843", SpreadsheetApp.BorderStyle.MEDIUM);
+
+  const topCell = ws.getRange(totRow, 7, 1, 3);
+  topCell.merge();
+  topCell.setFormula(`=CONCATENATE("🏆 أعلى أداء: ",INDEX(B${START_ROW}:B${LAST_DATA_ROW},MATCH(MAX(D${START_ROW}:D${LAST_DATA_ROW}),D${START_ROW}:D${LAST_DATA_ROW},0)))`);
+  topCell.setBackground("#111827").setFontColor("#F0C96A").setFontSize(11)
+         .setFontWeight("bold").setFontFamily("Cairo")
+         .setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+  // ── قسم المشرفة رهف ──
+  const supTitle = totRow + 2;
+  ws.setRowHeight(supTitle, 36);
+  ws.getRange(supTitle, 1, 1, 10).setBackground("#0A0E1A");
+
+  const supHeader = ws.getRange(supTitle, 2, 1, 8);
+  supHeader.merge().setValue("👑  المشرفة رهف — نقاط المتابعة والإشراف");
+  supHeader.setBackground("#111827").setFontColor("#F0C96A").setFontSize(13)
+           .setFontWeight("bold").setFontFamily("Cairo")
+           .setHorizontalAlignment("center").setVerticalAlignment("middle")
+           .setBorder(false, false, true, false, false, false, "#8B5CF6", SpreadsheetApp.BorderStyle.MEDIUM);
+
+  const supData = supTitle + 1;
+  ws.setRowHeight(supData, 32);
+  ws.getRange(supData, 1, 1, 10).setBackground("#161D2E");
+
+  ws.getRange(supData, 2).setValue("رهف").setBackground("#161D2E")
+    .setFontColor("#A78BFA").setFontSize(13).setFontWeight("bold")
+    .setFontFamily("Cairo").setHorizontalAlignment("right").setVerticalAlignment("middle");
+
+  ws.getRange(supData, 3).setValue("🎯 مشرفة").setBackground("#161D2E")
+    .setFontColor("#8B5CF6").setFontSize(10).setFontFamily("Cairo")
+    .setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+  const rBalCell = ws.getRange(supData, 4);
+  rBalCell.setFormula(`=IFERROR(VLOOKUP("إجمالي",تقييم_المشرفة!$A:$E,5,0),0)`);
+  rBalCell.setBackground("#161D2E").setFontColor("#A78BFA").setFontSize(14)
+          .setFontWeight("bold").setFontFamily("Cairo")
+          .setHorizontalAlignment("center").setVerticalAlignment("middle")
+          .setNumberFormat("0");
+
+  const rPtsCell = ws.getRange(supData, 5);
+  rPtsCell.setFormula(`=IFERROR(VLOOKUP("إجمالي",تقييم_المشرفة!$A:$D,4,0),0)`);
+  rPtsCell.setBackground("#161D2E").setFontColor("#D4A843").setFontSize(12)
+          .setFontFamily("Cairo")
+          .setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+  const rBonCell = ws.getRange(supData, 6);
+  rBonCell.setFormula(`=D${supData}*5`);
+  rBonCell.setBackground("#161D2E").setFontColor("#F0C96A").setFontSize(13)
+          .setFontWeight("bold").setFontFamily("Cairo")
+          .setHorizontalAlignment("center").setVerticalAlignment("middle")
+          .setNumberFormat('"﷼ "#,##0');
+
+  const rBarCell = ws.getRange(supData, 7);
+  rBarCell.setFormula(`=REPT("█",ROUND(D${supData}/10,0))&REPT("░",10-ROUND(D${supData}/10,0))`);
+  rBarCell.setBackground("#161D2E").setFontColor("#8B5CF6").setFontSize(11)
+          .setFontFamily("Courier New")
+          .setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+  // ── Conditional Formatting على عمود الرصيد ──
+  const balRange = ws.getRange(`D${START_ROW}:D${LAST_DATA_ROW}`);
+  const rule = SpreadsheetApp.newConditionalFormatRule()
+    .setGradientMaxpointWithValue("#10B981", SpreadsheetApp.InterpolationType.NUMBER, "100")
+    .setGradientMidpointWithValue("#F59E0B", SpreadsheetApp.InterpolationType.NUMBER, "70")
+    .setGradientMinpointWithValue("#EF4444", SpreadsheetApp.InterpolationType.NUMBER, "0")
+    .setRanges([balRange])
+    .build();
+  ws.setConditionalFormatRules([rule]);
+
+  // تجميد الصفوف فقط (الأعمدة تتعارض مع الخلايا المدمجة)
+  ws.setFrozenRows(6);
+
+  // إخفاء الأعمدة الهامشية
+  ws.hideColumn(ws.getRange("A:A"));
+  ws.hideColumn(ws.getRange("J:J"));
+
+  // لون التبويب
+  ws.setTabColor("#D4A843");
+}
+
+// ────────────────────────────────────────────────────────────
+// شريحة تذكير المعايير التشجيعية
+// ────────────────────────────────────────────────────────────
+function _buildCriteriaSheet(ss) {
+  const SHEET_NAME = "💡 تذكير المعايير";
+
+  let old = ss.getSheetByName(SHEET_NAME);
+  if (old) ss.deleteSheet(old);
+  const ws = ss.insertSheet(SHEET_NAME);
+  ws.setRightToLeft(true);
+  ws.setHiddenGridlines(true);
+
+  ws.setColumnWidth(1, 20);
+  ws.setColumnWidth(2, 45);
+  ws.setColumnWidth(3, 380);
+  ws.setColumnWidth(4, 90);
+  ws.setColumnWidth(5, 20);
+
+  // خلفية
+  ws.getRange(1, 1, 130, 5).setBackground("#0A0E1A");
+
+  // ── العنوان الرئيسي ──
+  ws.setRowHeight(1, 12);
+  ws.setRowHeight(2, 60);
+  const title = ws.getRange(2, 2, 1, 3);
+  title.merge().setValue("💡  تذكير بمعايير الجودة — طريقك للـ 100 نقطة!");
+  title.setBackground("#111827").setFontColor("#F0C96A").setFontSize(18)
+       .setFontWeight("bold").setFontFamily("Cairo")
+       .setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+  ws.setRowHeight(3, 30);
+  const sub = ws.getRange(3, 2, 1, 3);
+  sub.merge().setValue("كل نقطة تحافظ عليها = 5 ريال في جيبك 💰  |  الاحتراف عادة وليس صدفة ⭐");
+  sub.setBackground("#0A0E1A").setFontColor("#22D3EE").setFontSize(11)
+     .setFontFamily("Cairo")
+     .setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+  const sections = [
+    {
+      title: "📞 المكالمات — 55 نقطة",
+      headerBg: "#0EA5B0", textColor: "#22D3EE", rowBg: "#061A1C",
+      items: [
+        ["الصياغة التعريفية عند بداية كل مكالمة",          14, "«حياك الله، معك نورة من عيادات أبكس كير، كيف أقدر أخدمك؟» 🎤"],
+        ["التحقق من ملف المراجع برقم الجوال فوراً",          11, "ابحث قبل أن تسأل — احترم وقت المراجع ⏱️"],
+        ["الرد على جميع المكالمات خلال أوقات العمل",         10, "كل مكالمة فائتة = فرصة ضائعة للعيادة 📵"],
+        ["تقديم خدمة مكتملة حتى الإغلاق",                   8,  "لا تترك المراجع يتساءل — أغلق الطلب بوضوح 🎯"],
+        ["استخدام ألفاظ مهنية (تفضلي، أبشري، سمي)",         6,  "اللغة المهنية تعكس صورة العيادة 🌟"],
+        ["إقفال المكالمة بعبارة ختامية مهذبة",               6,  "«شكراً لتواصلك معنا، نتمنى لك يوماً سعيداً» 🌸"],
+      ]
+    },
+    {
+      title: "💬 الرسائل — 55 نقطة",
+      headerBg: "#8B5CF6", textColor: "#A78BFA", rowBg: "#0E0618",
+      items: [
+        ["الرد على الرسائل خلال 10 دقائق كحد أقصى",         14, "السرعة في الرد = رضا المريض = سمعة العيادة ⚡"],
+        ["متابعة المحادثات وعدم تركها مفتوحة",               11, "محادثة مفتوحة = مراجع غير مخدوم — تابع دائماً 👁️"],
+        ["التحقق من ملف المراجع فور فتح المحادثة",           10, "ابدأ بالبحث برقم الجوال — قبل أي سؤال 🔍"],
+        ["التفاعل مع المراجع خلال دقيقة من الفتح",           8,  "أظهر حضورك — المراجع ينتظرك الآن 💬"],
+        ["إنهاء المحادثة بعبارة ختامية مهذبة",               6,  "الختام الجميل يُكمل تجربة المراجع 🌺"],
+        ["الالتزام بالاختصارات المعتمدة في الرسائل",          6,  "التوحيد في اللغة يعكس احترافية الفريق 📋"],
+      ]
+    },
+    {
+      title: "📁 فتح الملف — 25 نقطة",
+      headerBg: "#B45309", textColor: "#F59E0B", rowBg: "#1A1000",
+      items: [
+        ["إدخال الاسم الرباعي بشكل صحيح",                    7, "الاسم الكامل أساس كل شيء — لا تتساهل في الدقة 📝"],
+        ["إدخال رقم الهوية بشكل صحيح",                       6, "تحقق مرتين قبل الحفظ — الخطأ يكلف وقتاً 🔢"],
+        ["إدخال تاريخ الميلاد بشكل صحيح",                    6, "بيانات دقيقة = ملف طبي موثوق 📅"],
+        ["إدخال العنوان بشكل صحيح",                           4, "العنوان الصحيح يسهّل التواصل مستقبلاً 🗺️"],
+        ["التحري بالدقة أثناء إدخال جميع البيانات",           2, "الدقة عادة — اجعلها جزءاً من شخصيتك ✨"],
+      ]
+    },
+    {
+      title: "📅 المواعيد — 20 نقطة",
+      headerBg: "#047857", textColor: "#10B981", rowBg: "#031A0E",
+      items: [
+        ["تعويض المواعيد الملغاة عند توفر بديل",              6, "كل موعد ملغى فرصة لمراجع آخر — لا تتركها 🔄"],
+        ["تأكيد المواعيد مع المراجعين",                       5, "التأكيد يقلل الغياب ويحترم وقت الطبيب ☑️"],
+        ["تعبئة المواعيد عند توفر بديل",                      5, "الجدول الممتلئ = عيادة ناجحة 📈"],
+        ["ترتيب جدول الدكتور (مواعيد متتالية)",               4, "الجدول المنظم يعكس كفاءتك الإدارية 🗓️"],
+      ]
+    }
+  ];
+
+  let curRow = 5;
+
+  sections.forEach(sec => {
+    curRow++; // فراغ
+    ws.setRowHeight(curRow, 8);
+    curRow++;
+
+    // عنوان القسم
+    ws.setRowHeight(curRow, 38);
+    const secHeader = ws.getRange(curRow, 2, 1, 3);
+    secHeader.merge().setValue(sec.title);
+    secHeader.setBackground(sec.headerBg).setFontColor("#FFFFFF")
+             .setFontSize(13).setFontWeight("bold").setFontFamily("Cairo")
+             .setHorizontalAlignment("right").setVerticalAlignment("middle");
+    curRow++;
+
+    // رؤوس أعمدة القسم
+    ws.setRowHeight(curRow, 26);
+    ws.getRange(curRow, 2).setValue("#").setBackground("#111827")
+      .setFontColor("#64748B").setFontSize(9).setFontWeight("bold")
+      .setFontFamily("Cairo").setHorizontalAlignment("center").setVerticalAlignment("middle");
+    ws.getRange(curRow, 3).setValue("المعيار").setBackground("#111827")
+      .setFontColor("#D4A843").setFontSize(10).setFontWeight("bold")
+      .setFontFamily("Cairo").setHorizontalAlignment("right").setVerticalAlignment("middle");
+    ws.getRange(curRow, 4).setValue("النقاط").setBackground("#111827")
+      .setFontColor("#22D3EE").setFontSize(10).setFontWeight("bold")
+      .setFontFamily("Cairo").setHorizontalAlignment("center").setVerticalAlignment("middle");
+    curRow++;
+
+    sec.items.forEach(([criterion, pts, tip], idx) => {
+      // صف المعيار
+      ws.setRowHeight(curRow, 26);
+      ws.getRange(curRow, 1, 1, 5).setBackground(sec.rowBg);
+      ws.getRange(curRow, 2).setValue(`${idx + 1}`).setBackground(sec.rowBg)
+        .setFontColor(sec.textColor).setFontSize(10).setFontWeight("bold")
+        .setFontFamily("Cairo").setHorizontalAlignment("center").setVerticalAlignment("middle");
+      ws.getRange(curRow, 3).setValue(`  ✅ ${criterion}`).setBackground(sec.rowBg)
+        .setFontColor("#E2E8F0").setFontSize(10).setFontFamily("Cairo")
+        .setHorizontalAlignment("right").setVerticalAlignment("middle");
+      ws.getRange(curRow, 4).setValue(pts).setBackground(sec.rowBg)
+        .setFontColor("#F0C96A").setFontSize(12).setFontWeight("bold")
+        .setFontFamily("Cairo").setHorizontalAlignment("center").setVerticalAlignment("middle");
+      ws.getRange(curRow, 2, 1, 3)
+        .setBorder(false, false, true, false, false, false, "#1E2D4A", SpreadsheetApp.BorderStyle.SOLID);
+      curRow++;
+
+      // صف التلميح
+      ws.setRowHeight(curRow, 20);
+      ws.getRange(curRow, 1, 1, 5).setBackground("#0A0E1A");
+      const tipCell = ws.getRange(curRow, 3, 1, 2);
+      tipCell.merge().setValue(`    💡 ${tip}`).setBackground("#0A0E1A")
+             .setFontColor("#64748B").setFontSize(9).setFontFamily("Cairo")
+             .setHorizontalAlignment("right").setVerticalAlignment("middle")
+             .setFontStyle("italic");
+      curRow++;
+    });
+  });
+
+  // ── بانر تحفيزي ختامي ──
+  curRow += 2;
+  ws.setRowHeight(curRow, 50);
+  const motivBanner = ws.getRange(curRow, 2, 1, 3);
+  motivBanner.merge();
+  motivBanner.setValue("🌟  أنتِ قادرة على الـ 100 نقطة!  كل التزام بمعيار = استثمار في راتبك ومستقبلك  🌟");
+  motivBanner.setBackground("#D4A843").setFontColor("#0A0E1A")
+             .setFontSize(13).setFontWeight("bold").setFontFamily("Cairo")
+             .setHorizontalAlignment("center").setVerticalAlignment("middle")
+             .setWrap(true);
+  curRow++;
+
+  ws.setRowHeight(curRow, 34);
+  const subBanner = ws.getRange(curRow, 2, 1, 3);
+  subBanner.merge().setValue("الاحتراف ليس خياراً — هو هويتك في APEXCARE  💎");
+  subBanner.setBackground("#111827").setFontColor("#22D3EE")
+           .setFontSize(11).setFontFamily("Cairo")
+           .setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+  // إخفاء الأعمدة الهامشية
+  ws.hideColumn(ws.getRange("A:A"));
+  ws.hideColumn(ws.getRange("E:E"));
+
+  ws.setTabColor("#0EA5B0");
+}
+
+// ────────────────────────────────────────────────────────────
+// ترتيب الشرائح
+// ────────────────────────────────────────────────────────────
+function _reorderSheets(ss) {
+  const order = [
+    "📊 لوحة الأداء",
+    "💡 تذكير المعايير",
+    SHEETS.SCORES,
+    SHEETS.SUPERVISOR,
+    SHEETS.LOG
+  ];
+
+  order.forEach((name, idx) => {
+    const sheet = ss.getSheetByName(name);
+    if (sheet) ss.setActiveSheet(sheet) && ss.moveActiveSheet(idx + 1);
+  });
 }
