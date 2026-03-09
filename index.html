@@ -1806,68 +1806,70 @@ async function confirmAndSubmit() {
   btn.disabled = true;
   setEl("submitBtnText","innerHTML", '<span class="loading-spinner"></span> جاري الحفظ...');
 
-  // تحديث محلي فوري
   state.employeeScores[name].balance  = Math.max(0, state.employeeScores[name].balance - deduction);
   state.employeeScores[name].deducted += deduction;
   state.supervisorScore = Math.min(MAX_SUP_SCORE, state.supervisorScore + 2);
 
-  const logEntry = {
+  state.violationLog.unshift({
     date: new Date().toLocaleDateString("ar-SA"),
     time: new Date().toLocaleTimeString("ar-SA"),
     supervisor: supName, employee: name,
     category: cat, criterion: crit,
     points, deduction, violNum,
-    imageUrl: state.imageData || "",
-    notes
-  };
-  state.violationLog.unshift(logEntry);
+    imageUrl: state.imageData || "", notes
+  });
 
   try {
-    // ── خطوة 1: ارفع الصورة أولاً بـ no-cors POST ──
+    // ── الخطوة 1: ارفع الصورة بـ chunks صغيرة عبر GET ──
     let imageToken = "";
     if (state.imageData) {
       showToast("⏳ جاري رفع الصورة...", "info");
-      const compressed = await compressToLimit(state.imageData, 400);
+
+      // اضغط لـ 5KB
+      const compressed = await compressToLimit(state.imageData, 5);
       const pure = compressed.includes(",") ? compressed.split(",")[1] : compressed;
-      imageToken = name + "_" + Date.now();
+      imageToken = name.replace(/\s/g,"") + "_" + Date.now();
 
-      // أرسل الصورة بـ no-cors (لا تنتظر response)
-      fetch(GAS_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({
-          action: "uploadImageOnly",
-          imageBase64: pure,
+      const CHUNK = 1800;
+      const total = Math.ceil(pure.length / CHUNK);
+
+      for (let i = 0; i < total; i++) {
+        const chunk = pure.substring(i * CHUNK, (i + 1) * CHUNK);
+        const r = await callGAS("storeChunk", {
           token: imageToken,
+          chunk,
+          index: i,
+          total,
           fileName: imageToken + ".jpg"
-        })
-      });
+        });
+        if (!r || !r.success) throw new Error("فشل chunk " + i);
+        setEl("submitBtnText","textContent", `جاري الرفع ${i+1}/${total}...`);
+      }
 
-      // انتظر GAS يرفع الصورة ويحفظ الرابط (3 ثوانٍ)
-      showToast("⏳ جاري معالجة الصورة...", "info");
-      await new Promise(r => setTimeout(r, 3000));
+      showToast("✅ تم رفع الصورة", "success");
     }
 
-    // ── خطوة 2: أرسل المخالفة بـ GET مع الـ token ──
+    // ── الخطوة 2: سجّل المخالفة مع الـ token ──
+    setEl("submitBtnText","innerHTML", '<span class="loading-spinner"></span> جاري الحفظ...');
     const res = await callGAS("recordViolation", {
       supervisorName: supName,
       employeeName: name,
       criterion: crit,
       category: cat,
       notes,
-      imageToken: imageToken   // GAS يبحث عن الرابط المحفوظ بهذا الـ token
+      imageToken
     });
 
     if (res && res.success) {
       if (res.imageUrl) state.violationLog[0].imageUrl = res.imageUrl;
       showToast("✅ تم الحفظ في الشيت" + (res.imageUrl ? " مع الصورة 📷" : ""), "success");
     } else {
-      showToast("⚠️ " + (res && res.error ? res.error : "خطأ غير معروف"), "warning");
+      showToast("⚠️ " + (res && res.error ? res.error : "خطأ"), "warning");
     }
+
   } catch(e) {
     console.error("Submit error:", e.message);
-    showToast("❌ فشل الإرسال: " + e.message, "error");
+    showToast("❌ " + e.message, "error");
   }
 
   updateSupervisorScoreDisplay();
