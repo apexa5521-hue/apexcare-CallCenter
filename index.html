@@ -2579,37 +2579,29 @@ function showCriteria(track) {
 // رفع الصورة للـ Drive عبر GAS بتقسيمها chunks
 // ============================================================
 async function uploadImageToGAS(base64Data, fileName) {
-  // اضغط حتى نضمن URL < 7000 حرف
-  // overhead الـ payload بدون chunk = ~250 حرف
-  // إذاً base64 يجب < (7000-250) / 1.03 = 6553 حرف = ~4.9KB
-  const MAX_KB = 4;
+  // اضغط الصورة
+  const compressed = await compressToLimit(base64Data, 100);
+  const pure = compressed.includes(",") ? compressed.split(",")[1] : compressed;
+  console.log("رفع الصورة: حجم base64 =", pure.length, "حرف");
 
-  const compressed = await compressToLimit(base64Data, MAX_KB);
-  const pure   = compressed.includes(",") ? compressed.split(",")[1] : compressed;
-  const prefix = "data:image/jpeg;base64,";
+  // ارفع لـ Imgur (مجاني، يدعم CORS)
+  const formData = new FormData();
+  formData.append("image", pure);
+  formData.append("type", "base64");
 
-  // تحقق نهائي من الحجم
-  const kb = Math.round(pure.length * 0.75 / 1024);
-  console.log("uploadImageToGAS: الحجم النهائي =", kb, "KB | base64 chars =", pure.length);
-
-  if (pure.length > 6500) {
-    throw new Error("الصورة لا تزال كبيرة بعد الضغط (" + kb + "KB). جرّب صورة أوضح.");
-  }
-
-  const safeFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
-
-  const res = await callGAS("uploadChunk", {
-    chunk: pure,
-    fileName: safeFileName,
-    chunkIndex: 0,
-    totalChunks: 1,
-    prefix
+  const res = await fetch("https://api.imgur.com/3/image", {
+    method: "POST",
+    headers: { "Authorization": "Client-ID 546c25a59c58ad7" },
+    body: formData
   });
 
-  console.log("uploadChunk response:", res);
+  if (!res.ok) throw new Error("Imgur HTTP " + res.status);
+  const json = await res.json();
+  if (!json.success) throw new Error("Imgur رفض الصورة");
 
-  if (res && res.success && res.url) return res.url;
-  throw new Error(res && res.error ? res.error : "فشل رفع الصورة");
+  const url = json.data.link;
+  console.log("✅ Imgur URL:", url);
+  return url;
 }
 
 
@@ -2658,25 +2650,21 @@ async function callGAS(action, data = {}) {
   if (!GAS_URL || GAS_URL.includes("YOUR_DEPLOYMENT_ID")) {
     throw new Error("GAS_URL غير مضبوط");
   }
-
   return new Promise((resolve, reject) => {
-    const cbName = "_cb_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+    const cbName = "_cb" + Date.now() + Math.random().toString(36).slice(2);
     const payload = encodeURIComponent(JSON.stringify({ action, ...data }));
     const url = GAS_URL + "?payload=" + payload + "&callback=" + cbName;
-
     const timer = setTimeout(() => {
       delete window[cbName];
       if (script.parentNode) script.parentNode.removeChild(script);
       reject(new Error("انتهت مهلة الاتصال"));
     }, 30000);
-
     window[cbName] = (result) => {
       clearTimeout(timer);
       delete window[cbName];
       if (script.parentNode) script.parentNode.removeChild(script);
       resolve(result);
     };
-
     const script = document.createElement("script");
     script.onerror = () => {
       clearTimeout(timer);
@@ -2688,9 +2676,6 @@ async function callGAS(action, data = {}) {
   });
 }
 
-// ============================================================
-// تحميل البيانات من الشيت عند الفتح
-// ============================================================
 async function loadFromSheet() {
   // no-cors لا يسمح بقراءة الـ response من Apps Script
   // البيانات تُحفظ في الشيت عند كل إرسال تلقائياً
