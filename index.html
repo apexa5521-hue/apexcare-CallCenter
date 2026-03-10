@@ -933,22 +933,7 @@
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
 
-      <!-- ── أرصدة الموظفات (قابل للطي) ── -->
-      <div style="background:var(--bg-card);border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1;overflow:hidden">
-        <button onclick="toggleSection('empSection','empChevron')" style="width:100%;background:none;border:none;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:Cairo">
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="width:4px;height:18px;background:#1a56db;border-radius:2px;display:inline-block"></span>
-            <span style="font-size:15px;font-weight:700;color:var(--text)">أرصدة الموظفات — هذا الشهر</span>
-          </div>
-          <span id="empChevron" style="font-size:18px;color:var(--text-muted);transition:transform 0.3s">▾</span>
-        </button>
-        <div id="empSection" style="padding:0 20px 20px">
-          <div id="supEmployeeList" style="display:flex;flex-direction:column;gap:10px">
-            <!-- تُملأ من JS -->
-          </div>
-        </div>
-      </div>
-
+      
       <!-- ── تذكير بمعايير الجودة (قابل للطي) ── -->
       <div style="background:var(--bg-card);border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1;overflow:hidden">
         <button onclick="toggleSection('criteriaSection','criteriaChevron')" style="width:100%;background:none;border:none;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:Cairo">
@@ -985,8 +970,7 @@
             <select id="empSelect" onchange="onEmployeeChange()" class="t-input">
               <option value="">-- اختر الموظفة --</option>
               <option value="مرح">مرح</option>
-              <option value="هيلة">هيلة</option>
-              <option value="جنان">جنان</option>
+<option value="جنان">جنان</option>
               <option value="أسيل">أسيل</option>
               <option value="حور">حور</option>
               <option value="سارة">سارة</option>
@@ -1360,7 +1344,6 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwtb6A1aKzE3LJwc2IB_UoB
 
 const EMPLOYEES = {
   "مرح":    { track: "calls",    trackLabel: "مكالمات" },
-  "هيلة":   { track: "calls",    trackLabel: "مكالمات" },
   "جنان":   { track: "dual",     trackLabel: "مشترك" },
   "أسيل":   { track: "messages", trackLabel: "رسائل" },
   "حور":    { track: "messages", trackLabel: "رسائل" },
