@@ -923,12 +923,12 @@
     <div style="background:var(--bg-card);border-radius:12px;padding:16px 20px;margin-bottom:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <span style="font-size:12px;font-weight:700;color:var(--text-muted);font-family:Cairo">تقدمك نحو الحد الأقصى</span>
-        <span style="font-size:12px;color:#1a56db;font-weight:700;font-family:Cairo"><span id="supScoreDisplay2">0</span> / <span id="maxSupScore">900</span> نقطة</span>
+        <span style="font-size:12px;color:#1a56db;font-weight:700;font-family:Cairo"><span id="supScoreDisplay2">0</span> / <span id="maxSupScore">800</span> نقطة</span>
       </div>
       <div style="height:10px;background:var(--border);border-radius:5px;overflow:hidden">
         <div id="supScoreBar" style="height:100%;width:0%;background:linear-gradient(90deg,#1a56db,#0ea5b0);border-radius:5px;transition:width 0.8s ease"></div>
       </div>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:6px;font-family:Cairo">كل مخالفة موثّقة = <strong style="color:#1a56db">+2 نقطة</strong> &nbsp;|&nbsp; كل <strong style="color:#10b981">9 نقاط</strong> = <strong style="color:var(--apex-gold)">5 ريال</strong> &nbsp;|&nbsp; الحد الأقصى <strong style="color:#a78bfa">900 نقطة</strong></div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px;font-family:Cairo">كل مخالفة موثّقة = <strong style="color:#1a56db">+2 نقطة</strong> &nbsp;|&nbsp; كل <strong style="color:#10b981">9 نقاط</strong> = <strong style="color:var(--apex-gold)">5 ريال</strong> &nbsp;|&nbsp; الحد الأقصى <strong style="color:#a78bfa">800 نقطة</strong></div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
@@ -1135,7 +1135,7 @@
       </div>
       <div class="stat-chip">
         <div class="stat-chip-value" id="statRahafBalance" style="color:var(--apex-purple)">--</div>
-        <div class="stat-chip-label">رصيد رهف (من 900)</div>
+        <div class="stat-chip-label">رصيد رهف (من 800)</div>
       </div>
     </div>
 
@@ -1353,7 +1353,7 @@ const EMPLOYEES = {
   "تهاني":  { track: "dual",     trackLabel: "مشترك" }
 };
 
-const MAX_SUP_SCORE = Object.keys(EMPLOYEES).length * 100; // 9 × 100 = 900
+const MAX_SUP_SCORE = Object.keys(EMPLOYEES).length * 100; // 8 × 100 = 800
 const rahafBonus = pts => Math.floor(pts / 9) * 5; // كل 9 نقاط = 5 ريال
 
 
@@ -2150,7 +2150,7 @@ function updateRahafDisplay() {
   const earned  = state.supervisorScore;           // +2 لكل مخالفة موثقة
   const deducted = state.rahafDeductions;          // خصومات المدير
   const pts     = Math.max(0, earned - deducted);  // الصافي
-  const max     = MAX_SUP_SCORE;                   // 900
+  const max     = MAX_SUP_SCORE;                   // 800
   const pct     = Math.min(100, (pts / max) * 100);
   const bonus   = rahafBonus(pts);                 // Math.floor(pts / 9) * 5
   const THRESH  = Object.keys(EMPLOYEES).length;  // 9
