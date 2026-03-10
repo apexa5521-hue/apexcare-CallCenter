@@ -2579,24 +2579,20 @@ function showCriteria(track) {
 // رفع الصورة للـ Drive عبر GAS بتقسيمها chunks
 // ============================================================
 async function uploadImageToGAS(base64Data, fileName) {
-  // اضغط لـ 50KB (جودة مقبولة)
   const compressed = await compressToLimit(base64Data, 50);
   const pure   = compressed.includes(",") ? compressed.split(",")[1] : compressed;
   const kb     = (pure.length * 0.75 / 1024).toFixed(1);
   console.log(`📷 حجم الصورة: ${kb}KB`);
 
-  // token عشوائي لربط الصورة بالمخالفة
   const token = "img_" + Date.now() + "_" + Math.random().toString(36).slice(2,7);
-
-  // أرسل الصورة بـ POST no-cors (لا نقرأ الـ response)
-  const body = JSON.stringify({
+  const body  = JSON.stringify({
     action: "saveImageFromPost",
     token,
     chunk: pure,
     fileName: "viol_" + Date.now() + ".jpg"
   });
 
-  console.log("📤 إرسال الصورة بـ POST no-cors...");
+  console.log("📤 POST no-cors | body size:", body.length, "chars");
   await fetch(GAS_URL, {
     method: "POST",
     mode: "no-cors",
@@ -2604,16 +2600,20 @@ async function uploadImageToGAS(base64Data, fileName) {
     body
   });
 
-  // انتظر GAS يعالج الصورة
-  await new Promise(r => setTimeout(r, 3000));
+  // polling: جرّب كل 3 ثوان حتى 5 مرات (15 ثانية)
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    await new Promise(r => setTimeout(r, 3000));
+    console.log(`🔍 polling attempt ${attempt}/5 for token: ${token}`);
+    try {
+      const res = await callGAS("getImageByToken", { token });
+      console.log("📦 getImageByToken:", JSON.stringify(res));
+      if (res && res.url) return res.url;
+    } catch(e) {
+      console.warn("polling error:", e.message);
+    }
+  }
 
-  // استعلم عن الرابط بـ JSONP
-  console.log("🔍 استعلام عن رابط الصورة...");
-  const res = await callGAS("getImageByToken", { token });
-  console.log("📦 getImageByToken:", JSON.stringify(res));
-
-  if (res && res.url) return res.url;
-  throw new Error("لم يُرجع GAS رابط الصورة");
+  throw new Error("لم يُرجع GAS رابط الصورة بعد 5 محاولات");
 }
 
 
