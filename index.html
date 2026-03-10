@@ -1357,7 +1357,7 @@
 // ============================================================
 const MANAGER_PASSWORD    = "T9@MG7tYxia8";
 const SUPERVISOR_PASSWORD = "Apex@sup2025";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzhHix2JeWgL8ysbJWnVr7Qq2pyjmJm9PJuR0NTzDPnAn1_xXNvakneUaBmY2T1W7SS/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyreStxptbEaJvLP9vJ3uqA_LMo1h9fj6j7qSxf6epWWqzPwrrevPA7pj2TGBS34B9b/exec";
 
 const EMPLOYEES = {
   "مرح":    { track: "calls",    trackLabel: "مكالمات" },
@@ -2579,41 +2579,39 @@ function showCriteria(track) {
 // رفع الصورة للـ Drive عبر GAS بتقسيمها chunks
 // ============================================================
 async function uploadImageToGAS(base64Data, fileName) {
-  const compressed = await compressToLimit(base64Data, 50);
-  const pure   = compressed.includes(",") ? compressed.split(",")[1] : compressed;
-  const kb     = (pure.length * 0.75 / 1024).toFixed(1);
-  console.log(`📷 حجم الصورة: ${kb}KB`);
+  // اضغط لـ 20KB
+  const compressed = await compressToLimit(base64Data, 20);
+  const pure = compressed.includes(",") ? compressed.split(",")[1] : compressed;
+  const kb   = (pure.length * 0.75 / 1024).toFixed(1);
+  console.log(`📷 حجم الصورة: ${kb}KB | ${pure.length} chars`);
 
-  const token = "img_" + Date.now() + "_" + Math.random().toString(36).slice(2,7);
-  const body  = JSON.stringify({
-    action: "saveImageFromPost",
-    token,
-    chunk: pure,
-    fileName: "viol_" + Date.now() + ".jpg"
-  });
+  const token      = "img_" + Date.now();
+  const CHUNK_SIZE = 4000;
+  const chunks     = [];
+  for (let i = 0; i < pure.length; i += CHUNK_SIZE) {
+    chunks.push(pure.substring(i, i + CHUNK_SIZE));
+  }
+  console.log(`📦 عدد الـ chunks: ${chunks.length}`);
 
-  console.log("📤 POST no-cors | body size:", body.length, "chars");
-  await fetch(GAS_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "text/plain" },
-    body
-  });
-
-  // polling: جرّب كل 3 ثوان حتى 5 مرات (15 ثانية)
-  for (let attempt = 1; attempt <= 5; attempt++) {
-    await new Promise(r => setTimeout(r, 3000));
-    console.log(`🔍 polling attempt ${attempt}/5 for token: ${token}`);
-    try {
-      const res = await callGAS("getImageByToken", { token });
-      console.log("📦 getImageByToken:", JSON.stringify(res));
-      if (res && res.url) return res.url;
-    } catch(e) {
-      console.warn("polling error:", e.message);
-    }
+  // أرسل كل chunk بـ JSONP
+  for (let i = 0; i < chunks.length; i++) {
+    const res = await callGAS("storeChunk", {
+      token,
+      chunk:    chunks[i],
+      index:    i,
+      total:    chunks.length,
+      fileName: "viol_" + token + ".jpg"
+    });
+    console.log(`✅ chunk ${i+1}/${chunks.length}:`, res && res.success ? "OK" : JSON.stringify(res));
+    if (!res || !res.success) throw new Error(`فشل chunk ${i}: ` + (res && res.error ? res.error : "خطأ"));
   }
 
-  throw new Error("لم يُرجع GAS رابط الصورة بعد 5 محاولات");
+  // آخر chunk → GAS يجمّع ويرفع لـ Drive ويرجع URL
+  const last = await callGAS("assembleAndUpload", { token, total: chunks.length });
+  console.log("🏁 assembleAndUpload:", JSON.stringify(last));
+
+  if (last && last.url) return last.url;
+  throw new Error(last && last.error ? last.error : "فشل تجميع الصورة");
 }
 
 
@@ -2659,49 +2657,43 @@ async function compressToLimit(base64Data, maxKB) {
 
 
 async function callGAS(action, data = {}, _retry = 0) {
-  if (!GAS_URL || GAS_URL.includes("YOUR_DEPLOYMENT_ID")) {
-    throw new Error("GAS_URL غير مضبوط");
-  }
+  if (!GAS_URL || GAS_URL.includes("YOUR_DEPLOYMENT_ID")) throw new Error("GAS_URL غير مضبوط");
 
   return new Promise((resolve, reject) => {
     const cbName = "_cb" + Date.now() + Math.random().toString(36).slice(2);
-
     let url;
-    if (action === "uploadChunk") {
-      const encodedChunk  = encodeURIComponent(data.chunk);
-      const encodedFile   = encodeURIComponent(data.fileName);
-      const encodedPrefix = encodeURIComponent(data.prefix || "data:image/jpeg;base64,");
+
+    if (action === "storeChunk") {
+      // params منفصلة لتجنب double-encoding لـ base64
       url = GAS_URL
-        + "?action=uploadChunk"
-        + "&chunk="       + encodedChunk
-        + "&fileName="    + encodedFile
-        + "&chunkIndex=0&totalChunks=1"
-        + "&prefix="      + encodedPrefix
-        + "&callback="    + cbName;
+        + "?action=storeChunk"
+        + "&token="  + encodeURIComponent(data.token)
+        + "&chunk="  + encodeURIComponent(data.chunk)
+        + "&index="  + data.index
+        + "&total="  + data.total
+        + "&callback=" + cbName;
     } else {
       const payload = encodeURIComponent(JSON.stringify({ action, ...data }));
       url = GAS_URL + "?payload=" + payload + "&callback=" + cbName;
     }
 
-    console.log("🌐 callGAS:", action, "| URL:", url.length, "chars");
+    console.log("🌐 callGAS:", action, "| URL:", url.length);
 
     const timer = setTimeout(() => {
       delete window[cbName];
       if (script.parentNode) script.parentNode.removeChild(script);
-      // retry مرة واحدة عند timeout
-      if (_retry < 1) {
-        console.warn("⏱ timeout — retry", action);
+      if (_retry < 2) {
+        console.warn("⏱ timeout retry", _retry + 1, action);
         callGAS(action, data, _retry + 1).then(resolve).catch(reject);
       } else {
         reject(new Error("انتهت مهلة الاتصال"));
       }
-    }, 20000);
+    }, 25000);
 
     window[cbName] = (result) => {
       clearTimeout(timer);
       delete window[cbName];
       if (script.parentNode) script.parentNode.removeChild(script);
-      console.log("✅ GAS:", action, JSON.stringify(result).substring(0,100));
       resolve(result);
     };
 
@@ -2710,10 +2702,9 @@ async function callGAS(action, data = {}, _retry = 0) {
       clearTimeout(timer);
       delete window[cbName];
       if (script.parentNode) script.parentNode.removeChild(script);
-      // retry مرة واحدة عند script error
-      if (_retry < 1) {
-        console.warn("❌ script error — retry", action);
-        setTimeout(() => callGAS(action, data, _retry + 1).then(resolve).catch(reject), 1000);
+      if (_retry < 2) {
+        console.warn("❌ onerror retry", _retry + 1, action);
+        setTimeout(() => callGAS(action, data, _retry + 1).then(resolve).catch(reject), 1500);
       } else {
         reject(new Error("فشل الاتصال بـ GAS"));
       }
