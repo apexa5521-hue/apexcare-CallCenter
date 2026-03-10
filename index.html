@@ -2659,32 +2659,33 @@ async function callGAS(action, data = {}) {
     throw new Error("GAS_URL غير مضبوط");
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30000);
-
-  try {
+  return new Promise((resolve, reject) => {
+    const cbName = "_cb_" + Date.now() + "_" + Math.random().toString(36).slice(2);
     const payload = encodeURIComponent(JSON.stringify({ action, ...data }));
-    const url = `${GAS_URL}?payload=${payload}`;
+    const url = GAS_URL + "?payload=" + payload + "&callback=" + cbName;
 
-    // تحقق من حجم URL
-    if (url.length > 7500) {
-      clearTimeout(timeout);
-      throw new Error("URL كبير جداً: " + url.length + " حرف");
-    }
+    const timer = setTimeout(() => {
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      reject(new Error("انتهت مهلة الاتصال"));
+    }, 30000);
 
-    const res = await fetch(url, { method: "GET", signal: controller.signal });
-    clearTimeout(timeout);
+    window[cbName] = (result) => {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      resolve(result);
+    };
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-    const match = text.match(/\{[\s\S]*\}/);
-    if (match) return JSON.parse(match[0]);
-    return { success: true };
-  } catch(e) {
-    clearTimeout(timeout);
-    if (e.name === "AbortError") throw new Error("انتهت مهلة الاتصال");
-    throw e;
-  }
+    const script = document.createElement("script");
+    script.onerror = () => {
+      clearTimeout(timer);
+      delete window[cbName];
+      reject(new Error("فشل الاتصال بـ GAS"));
+    };
+    script.src = url;
+    document.head.appendChild(script);
+  });
 }
 
 // ============================================================
