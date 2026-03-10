@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>صفحة الأداء — APEXCARE</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold:   #d4a843;
+    --teal:   #0ea5b0;
+    --bg:     #040d1a;
+    --card:   #071428;
+    --border: #0e2040;
+    --text:   #e2e8f0;
+    --muted:  #64748b;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Cairo', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── خلفية متحركة ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 80% 10%, rgba(14,165,176,0.08), transparent),
+      radial-gradient(ellipse 50% 60% at 10% 90%, rgba(212,168,67,0.07), transparent);
+    pointer-events: none;
+  }
+
+  /* ── Header ── */
+  .header {
+    position: relative; z-index: 1;
+    padding: 32px 40px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-logo {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .logo-icon {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, var(--gold), var(--teal));
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 900; color: #040d1a;
+  }
+  .logo-text { font-size: 20px; font-weight: 900; }
+  .logo-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .header-time {
+    text-align: center;
+    font-size: 13px; color: var(--muted);
+  }
+  .header-time .clock {
+    font-size: 28px; font-weight: 700;
+    color: var(--teal); letter-spacing: 2px;
+  }
+  .header-stats {
+    display: flex; gap: 20px; text-align: center;
+  }
+  .stat-box {
+    padding: 10px 18px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .stat-box .val { font-size: 22px; font-weight: 900; color: var(--gold); }
+  .stat-box .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* ── Grid ── */
+  .grid {
+    position: relative; z-index: 1;
+    padding: 28px 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 18px;
+  }
+
+  /* ── بطاقة الموظفة ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: fadeUp 0.5s ease both;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(14,165,176,0.15);
+  }
+  /* ترتيب الأول يبرز */
+  .card.rank-1 { border-color: var(--gold); box-shadow: 0 0 20px rgba(212,168,67,0.2); }
+  .card.rank-2 { border-color: #94a3b8; }
+  .card.rank-3 { border-color: #b45309; }
+
+  .card-rank {
+    position: absolute; top: 16px; left: 16px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 900;
+  }
+  .rank-1 .card-rank { background: var(--gold); color: #040d1a; }
+  .rank-2 .card-rank { background: #94a3b8; color: #040d1a; }
+  .rank-3 .card-rank { background: #b45309; color: #fff; }
+  .card-rank.other   { background: var(--border); color: var(--muted); font-size: 12px; }
+
+  .card-top {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 16px; padding-right: 4px;
+  }
+  .card-avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 900; flex-shrink: 0;
+  }
+  .card-name  { font-size: 17px; font-weight: 700; }
+  .card-track {
+    display: inline-block;
+    font-size: 11px; color: var(--muted);
+    background: var(--border);
+    border-radius: 20px; padding: 2px 10px; margin-top: 3px;
+  }
+
+  /* ── شريط الأداء ── */
+  .progress-wrap { margin-bottom: 14px; }
+  .progress-labels {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--muted); margin-bottom: 5px;
+  }
+  .progress-bar {
+    height: 10px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* ── الإحصائيات ── */
+  .stats-row {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px; margin-bottom: 14px;
+  }
+  .stat-cell {
+    background: var(--bg);
+    border-radius: 10px; padding: 10px 8px; text-align: center;
+    border: 1px solid var(--border);
+  }
+  .stat-cell .n { font-size: 20px; font-weight: 900; }
+  .stat-cell .l { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* ── تقييم وحالة ── */
+  .badges { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .badge {
+    padding: 4px 12px; border-radius: 99px;
+    font-size: 12px; font-weight: 700;
+  }
+
+  /* ── ألوان التقييم ── */
+  .exc  { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid #10b981; }
+  .good { background: rgba(14,165,176,0.15); color: var(--teal); border: 1px solid var(--teal); }
+  .avg  { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid #f59e0b; }
+  .low  { background: rgba(239,68,68,0.15);  color: #ef4444; border: 1px solid #ef4444; }
+
+  /* ── تحميل ── */
+  .loading {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-height: 60vh; gap: 16px;
+  }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--teal);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  /* ── تحديث تلقائي ── */
+  .refresh-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 3px; background: var(--border);
+    z-index: 100;
+  }
+  .refresh-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--gold));
+    border-radius: 99px;
+    transition: width linear;
+  }
+  .refresh-info {
+    position: fixed; bottom: 10px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px; color: var(--muted);
+    z-index: 100;
+  }
+
+  @keyframes spin    { to { transform: rotate(360deg); } }
+  @keyframes fadeUp  { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="header">
+  <div class="header-logo">
+    <div class="logo-icon">A</div>
+    <div>
+      <div class="logo-text">APEXCARE</div>
+      <div class="logo-sub">لوحة أداء مركز الاتصال</div>
+    </div>
+  </div>
+  <div class="header-time">
+    <div class="clock" id="clock">--:--:--</div>
+    <div id="dateDisplay" style="margin-top:4px"></div>
+  </div>
+  <div class="header-stats">
+    <div class="stat-box">
+      <div class="val" id="totalEmployees">—</div>
+      <div class="lbl">موظفة</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" id="avgScore" style="color:var(--teal)">—</div>
+      <div class="lbl">متوسط الرصيد</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" id="totalDeducted" style="color:#ef4444">—</div>
+      <div class="lbl">إجمالي الخصومات</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── محتوى ── -->
+<div id="loadingDiv" class="loading">
+  <div class="spinner"></div>
+  <div style="color:var(--muted);font-size:14px">جاري تحميل بيانات الأداء...</div>
+</div>
+
+<div id="grid" class="grid" style="display:none"></div>
+
+<!-- ── شريط التحديث ── -->
+<div class="refresh-bar"><div class="refresh-fill" id="refreshFill" style="width:100%"></div></div>
+<div class="refresh-info" id="refreshInfo">يتجدد كل 60 ثانية</div>
+
+<script>
+// ══════════════════════════════════════════
+// CONFIG — غيّر هذا فقط
+// ══════════════════════════════════════════
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwtb6A1aKzE3LJwc2IB_UoBpEojARFz8OnVPd4e0z_x8OY_ux3FWVpmoJbRrRGbP5Wi/exec";
+const REFRESH_SECONDS = 60;
+
+// ══════════════════════════════════════════
+// بيانات المسارات
+// ══════════════════════════════════════════
+const TRACK_LABELS = {
+  calls:    "📞 مكالمات",
+  messages: "💬 رسائل",
+  dual:     "🔀 مشترك"
+};
+
+const EMPLOYEES_TRACK = {
+  "مرح":   "calls",
+  "جنان":  "dual",
+  "أسيل":  "messages",
+  "حور":   "messages",
+  "سارة":  "messages",
+  "طيف":   "messages",
+  "روان":  "messages",
+  "تهاني": "dual"
+};
+
+const AVATAR_COLORS = [
+  ["#1a56db","#0ea5b0"], ["#7c3aed","#a855f7"], ["#065f46","#10b981"],
+  ["#92400e","#f59e0b"], ["#831843","#ec4899"], ["#1e3a5f","#3b82f6"],
+  ["#3d1a00","#f97316"], ["#14532d","#22c55e"]
+];
+
+// ══════════════════════════════════════════
+// تقييم بناءً على الرصيد
+// ══════════════════════════════════════════
+function getRating(balance) {
+  if (balance >= 95) return { label: "ممتاز ⭐",   cls: "exc",  status: "نشطة ✅",    barColor: "#10b981" };
+  if (balance >= 85) return { label: "جيد جداً",   cls: "good", status: "جيدة 👍",    barColor: "#0ea5b0" };
+  if (balance >= 70) return { label: "جيد",         cls: "avg",  status: "مقبولة ⚠️", barColor: "#f59e0b" };
+  return                    { label: "يحتاج تحسين", cls: "low",  status: "تحت المراقبة 🔴", barColor: "#ef4444" };
+}
+
+// ══════════════════════════════════════════
+// JSONP — جلب البيانات
+// ══════════════════════════════════════════
+function fetchData() {
+  return new Promise((resolve, reject) => {
+    const cb  = "_lb" + Date.now();
+    const url = GAS_URL + "?payload=" + encodeURIComponent(JSON.stringify({ action: "getAllData" })) + "&callback=" + cb;
+    const timer = setTimeout(() => {
+      delete window[cb];
+      reject(new Error("انتهت المهلة"));
+    }, 20000);
+    window[cb] = (data) => {
+      clearTimeout(timer);
+      delete window[cb];
+      resolve(data);
+    };
+    const s = document.createElement("script");
+    s.onerror = () => { clearTimeout(timer); delete window[cb]; reject(new Error("فشل الاتصال")); };
+    s.src = url;
+    document.head.appendChild(s);
+  });
+}
+
+// ══════════════════════════════════════════
+// بناء البطاقات
+// ══════════════════════════════════════════
+function buildCards(data) {
+  const scores = data.employeeScores || {};
+
+  // ابنِ قائمة الموظفات مع أرصدتهن
+  const list = Object.entries(EMPLOYEES_TRACK).map(([name, track]) => {
+    const s       = scores[name] || {};
+    const balance = typeof s.balance  === "number" ? s.balance  : 100;
+    const deducted= typeof s.deducted === "number" ? s.deducted : 0;
+    return { name, track, balance, deducted };
+  });
+
+  // رتّب تنازلياً بالرصيد
+  list.sort((a, b) => b.balance - a.balance);
+
+  // ── Header stats ──
+  document.getElementById("totalEmployees").textContent = list.length;
+  const avg = Math.round(list.reduce((s,e) => s + e.balance, 0) / list.length);
+  document.getElementById("avgScore").textContent = avg;
+  document.getElementById("totalDeducted").textContent = list.reduce((s,e) => s + e.deducted, 0);
+
+  // ── بناء الـ grid ──
+  const grid = document.getElementById("grid");
+  grid.innerHTML = list.map((emp, idx) => {
+    const rank    = idx + 1;
+    const rating  = getRating(emp.balance);
+    const pct     = Math.max(0, Math.min(100, emp.balance));
+    const colors  = AVATAR_COLORS[idx % AVATAR_COLORS.length];
+    const rankCls = rank === 1 ? "rank-1" : rank === 2 ? "rank-2" : rank === 3 ? "rank-3" : "";
+    const rankLbl = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : rank;
+    const rankBadgeCls = rank <= 3 ? "" : "other";
+
+    return `
+    <div class="card ${rankCls}" style="animation-delay:${idx * 0.06}s">
+      <div class="card-rank ${rankBadgeCls}">${rankLbl}</div>
+
+      <div class="card-top">
+        <div class="card-avatar" style="background:linear-gradient(135deg,${colors[0]},${colors[1]})">
+          ${emp.name.charAt(0)}
+        </div>
+        <div>
+          <div class="card-name">${emp.name}</div>
+          <span class="card-track">${TRACK_LABELS[emp.track] || emp.track}</span>
+        </div>
+      </div>
+
+      <!-- شريط الأداء -->
+      <div class="progress-wrap">
+        <div class="progress-labels">
+          <span>الأداء</span>
+          <span style="color:${rating.barColor};font-weight:700">${pct}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:0%;background:linear-gradient(90deg,${colors[0]},${colors[1]})"
+               data-target="${pct}"></div>
+        </div>
+      </div>
+
+      <!-- إحصائيات -->
+      <div class="stats-row">
+        <div class="stat-cell">
+          <div class="n" style="color:${rating.barColor}">${emp.balance}</div>
+          <div class="l">الرصيد</div>
+        </div>
+        <div class="stat-cell">
+          <div class="n" style="color:#ef4444">-${emp.deducted}</div>
+          <div class="l">النقاط المفقودة</div>
+        </div>
+        <div class="stat-cell">
+          <div class="n" style="color:var(--muted)">100</div>
+          <div class="l">الحد الأقصى</div>
+        </div>
+      </div>
+
+      <!-- تقييم وحالة -->
+      <div class="badges">
+        <span class="badge ${rating.cls}">${rating.label}</span>
+        <span class="badge" style="background:var(--border);color:var(--muted)">${rating.status}</span>
+      </div>
+    </div>`;
+  }).join("");
+
+  // حرّك أشرطة الأداء بعد الرسم
+  setTimeout(() => {
+    document.querySelectorAll(".progress-fill").forEach(bar => {
+      bar.style.width = bar.dataset.target + "%";
+    });
+  }, 100);
+
+  document.getElementById("loadingDiv").style.display = "none";
+  document.getElementById("grid").style.display = "grid";
+}
+
+// ══════════════════════════════════════════
+// تحديث تلقائي
+// ══════════════════════════════════════════
+let refreshTimer = null;
+let countdown    = REFRESH_SECONDS;
+
+async function loadAndRender() {
+  try {
+    const data = await fetchData();
+    if (data && data.success) {
+      buildCards(data);
+      document.getElementById("refreshInfo").textContent =
+        "آخر تحديث: " + new Date().toLocaleTimeString("ar-SA");
+    }
+  } catch(e) {
+    console.error("Leaderboard fetch error:", e.message);
+    document.getElementById("refreshInfo").textContent = "⚠️ " + e.message;
+  }
+}
+
+function startRefreshBar() {
+  clearInterval(refreshTimer);
+  countdown = REFRESH_SECONDS;
+  const fill = document.getElementById("refreshFill");
+  refreshTimer = setInterval(() => {
+    countdown--;
+    fill.style.width = (countdown / REFRESH_SECONDS * 100) + "%";
+    if (countdown <= 0) {
+      countdown = REFRESH_SECONDS;
+      fill.style.width = "100%";
+      loadAndRender();
+    }
+  }, 1000);
+}
+
+// ══════════════════════════════════════════
+// ساعة + تاريخ
+// ══════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  document.getElementById("clock").textContent = now.toLocaleTimeString("ar-SA");
+  document.getElementById("dateDisplay").textContent =
+    now.toLocaleDateString("ar-SA", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+}
+
+// ══════════════════════════════════════════
+// Init
+// ══════════════════════════════════════════
+updateClock();
+setInterval(updateClock, 1000);
+loadAndRender();
+startRefreshBar();
+</script>
+</body>
+</html>
