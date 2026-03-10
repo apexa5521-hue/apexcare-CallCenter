@@ -2579,31 +2579,37 @@ function showCriteria(track) {
 // رفع الصورة للـ Drive عبر GAS بتقسيمها chunks
 // ============================================================
 async function uploadImageToGAS(base64Data, fileName) {
-  const compressed = await compressToLimit(base64Data, 4);
-  const pure = compressed.includes(",") ? compressed.split(",")[1] : compressed;
-  const kb = (pure.length * 0.75 / 1024).toFixed(1);
-  console.log("📷 حجم الصورة:", kb, "KB | chars:", pure.length);
+  // جرّب بأحجام متناقصة حتى ينجح الرفع
+  const sizes = [2, 1.5, 1];
+  let lastError = "";
 
-  const safeFileName = "viol_" + Date.now() + ".jpg";
-  const testUrl = GAS_URL + "?payload=" + encodeURIComponent(JSON.stringify({
-    action:"uploadChunk", chunk:pure, fileName:safeFileName,
-    chunkIndex:0, totalChunks:1, prefix:"data:image/jpeg;base64,"
-  })) + "&callback=test";
-  console.log("📏 URL length:", testUrl.length);
+  for (const maxKB of sizes) {
+    try {
+      const compressed = await compressToLimit(base64Data, maxKB);
+      const pure = compressed.includes(",") ? compressed.split(",")[1] : compressed;
+      const kb = (pure.length * 0.75 / 1024).toFixed(1);
+      console.log(`📷 محاولة رفع: ${kb}KB (مستهدف ${maxKB}KB)`);
 
-  // أرسل لـ GAS عبر JSONP → GAS يرفع لـ Google Drive
-  const res = await callGAS("uploadChunk", {
-    chunk: pure,
-    fileName: safeFileName,
-    chunkIndex: 0,
-    totalChunks: 1,
-    prefix: "data:image/jpeg;base64,"
-  });
+      const safeFileName = "viol_" + Date.now() + ".jpg";
+      const res = await callGAS("uploadChunk", {
+        chunk: pure,
+        fileName: safeFileName,
+        chunkIndex: 0,
+        totalChunks: 1,
+        prefix: "data:image/jpeg;base64,"
+      });
 
-  console.log("📦 GAS response:", JSON.stringify(res));
-
-  if (res && res.success && res.url) return res.url;
-  throw new Error(res && res.error ? res.error : "فشل الرفع لـ Drive");
+      if (res && res.success && res.url) {
+        console.log("✅ Drive URL:", res.url);
+        return res.url;
+      }
+      lastError = res && res.error ? res.error : "لا يوجد URL في الرد";
+    } catch(e) {
+      lastError = e.message;
+      console.warn(`⚠️ فشل بـ ${maxKB}KB:`, lastError);
+    }
+  }
+  throw new Error("فشل رفع الصورة بعد كل المحاولات: " + lastError);
 }
 
 
@@ -2648,7 +2654,7 @@ async function compressToLimit(base64Data, maxKB) {
 }
 
 
-async function callGAS(action, data = {}) {
+async function callGAS(action, data = {}, _retry = 0) {
   if (!GAS_URL || GAS_URL.includes("YOUR_DEPLOYMENT_ID")) {
     throw new Error("GAS_URL غير مضبوط");
   }
@@ -2658,14 +2664,13 @@ async function callGAS(action, data = {}) {
 
     let url;
     if (action === "uploadChunk") {
-      // شفّر chunk يدوياً لضمان + → %2B
-      const encodedChunk    = encodeURIComponent(data.chunk);
-      const encodedFileName = encodeURIComponent(data.fileName);
-      const encodedPrefix   = encodeURIComponent(data.prefix || "data:image/jpeg;base64,");
+      const encodedChunk  = encodeURIComponent(data.chunk);
+      const encodedFile   = encodeURIComponent(data.fileName);
+      const encodedPrefix = encodeURIComponent(data.prefix || "data:image/jpeg;base64,");
       url = GAS_URL
         + "?action=uploadChunk"
         + "&chunk="       + encodedChunk
-        + "&fileName="    + encodedFileName
+        + "&fileName="    + encodedFile
         + "&chunkIndex=0&totalChunks=1"
         + "&prefix="      + encodedPrefix
         + "&callback="    + cbName;
@@ -2679,14 +2684,20 @@ async function callGAS(action, data = {}) {
     const timer = setTimeout(() => {
       delete window[cbName];
       if (script.parentNode) script.parentNode.removeChild(script);
-      reject(new Error("انتهت مهلة الاتصال"));
-    }, 30000);
+      // retry مرة واحدة عند timeout
+      if (_retry < 1) {
+        console.warn("⏱ timeout — retry", action);
+        callGAS(action, data, _retry + 1).then(resolve).catch(reject);
+      } else {
+        reject(new Error("انتهت مهلة الاتصال"));
+      }
+    }, 20000);
 
     window[cbName] = (result) => {
       clearTimeout(timer);
       delete window[cbName];
       if (script.parentNode) script.parentNode.removeChild(script);
-      console.log("✅ GAS response:", action, JSON.stringify(result).substring(0,120));
+      console.log("✅ GAS:", action, JSON.stringify(result).substring(0,100));
       resolve(result);
     };
 
@@ -2695,8 +2706,13 @@ async function callGAS(action, data = {}) {
       clearTimeout(timer);
       delete window[cbName];
       if (script.parentNode) script.parentNode.removeChild(script);
-      console.error("❌ script.onerror:", action);
-      reject(new Error("فشل الاتصال بـ GAS"));
+      // retry مرة واحدة عند script error
+      if (_retry < 1) {
+        console.warn("❌ script error — retry", action);
+        setTimeout(() => callGAS(action, data, _retry + 1).then(resolve).catch(reject), 1000);
+      } else {
+        reject(new Error("فشل الاتصال بـ GAS"));
+      }
     };
     script.src = url;
     document.head.appendChild(script);
