@@ -2579,29 +2579,25 @@ function showCriteria(track) {
 // رفع الصورة للـ Drive عبر GAS بتقسيمها chunks
 // ============================================================
 async function uploadImageToGAS(base64Data, fileName) {
-  // اضغط الصورة
-  const compressed = await compressToLimit(base64Data, 100);
-  const pure = compressed.includes(",") ? compressed.split(",")[1] : compressed;
-  console.log("رفع الصورة: حجم base64 =", pure.length, "حرف");
+  // اضغط لـ 4KB (آمن في JSONP GET URL)
+  const compressed = await compressToLimit(base64Data, 4);
+  const pure   = compressed.includes(",") ? compressed.split(",")[1] : compressed;
 
-  // ارفع لـ Imgur (مجاني، يدعم CORS)
-  const formData = new FormData();
-  formData.append("image", pure);
-  formData.append("type", "base64");
+  const kb = (pure.length * 0.75 / 1024).toFixed(1);
+  console.log(`uploadImage: ${kb}KB | ${pure.length} chars`);
 
-  const res = await fetch("https://api.imgur.com/3/image", {
-    method: "POST",
-    headers: { "Authorization": "Client-ID 546c25a59c58ad7" },
-    body: formData
+  // أرسل لـ GAS عبر JSONP → GAS يرفع لـ Drive
+  const safeFileName = "viol_" + Date.now() + ".jpg";
+  const res = await callGAS("uploadChunk", {
+    chunk: pure,
+    fileName: safeFileName,
+    chunkIndex: 0,
+    totalChunks: 1,
+    prefix: "data:image/jpeg;base64,"
   });
 
-  if (!res.ok) throw new Error("Imgur HTTP " + res.status);
-  const json = await res.json();
-  if (!json.success) throw new Error("Imgur رفض الصورة");
-
-  const url = json.data.link;
-  console.log("✅ Imgur URL:", url);
-  return url;
+  if (res && res.success && res.url) return res.url;
+  throw new Error(res && res.error ? res.error : "فشل الرفع لـ Drive");
 }
 
 
