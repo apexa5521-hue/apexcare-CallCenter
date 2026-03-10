@@ -2550,10 +2550,7 @@ async function callGAS(action, data = {}, _retry = 0) {
     script.src = url;
     document.head.appendChild(script);
   });
-}) {
-  if (!GAS_URL || GAS_URL.includes("YOUR_DEPLOYMENT_ID")) {
-    throw new Error("GAS_URL غير مضبوط");
-  }
+
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30000);
