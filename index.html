@@ -1357,7 +1357,7 @@
 // ============================================================
 const MANAGER_PASSWORD    = "T9@MG7tYxia8";
 const SUPERVISOR_PASSWORD = "Apex@sup2025";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyreStxptbEaJvLP9vJ3uqA_LMo1h9fj6j7qSxf6epWWqzPwrrevPA7pj2TGBS34B9b/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzhHix2JeWgL8ysbJWnVr7Qq2pyjmJm9PJuR0NTzDPnAn1_xXNvakneUaBmY2T1W7SS/exec";
 
 const EMPLOYEES = {
   "مرح":    { track: "calls",    trackLabel: "مكالمات" },
@@ -2579,39 +2579,34 @@ function showCriteria(track) {
 // رفع الصورة للـ Drive عبر GAS بتقسيمها chunks
 // ============================================================
 async function uploadImageToGAS(base64Data, fileName) {
-  // اضغط لـ 20KB
   const compressed = await compressToLimit(base64Data, 20);
-  const pure = compressed.includes(",") ? compressed.split(",")[1] : compressed;
-  const kb   = (pure.length * 0.75 / 1024).toFixed(1);
+  const pure  = compressed.includes(",") ? compressed.split(",")[1] : compressed;
+  const kb    = (pure.length * 0.75 / 1024).toFixed(1);
   console.log(`📷 حجم الصورة: ${kb}KB | ${pure.length} chars`);
 
   const token      = "img_" + Date.now();
   const CHUNK_SIZE = 4000;
   const chunks     = [];
-  for (let i = 0; i < pure.length; i += CHUNK_SIZE) {
-    chunks.push(pure.substring(i, i + CHUNK_SIZE));
-  }
-  console.log(`📦 عدد الـ chunks: ${chunks.length}`);
+  for (let i = 0; i < pure.length; i += CHUNK_SIZE) chunks.push(pure.substring(i, i + CHUNK_SIZE));
+  const total = chunks.length;
+  console.log(`📦 chunks: ${total}`);
 
-  // أرسل كل chunk بـ JSONP
-  for (let i = 0; i < chunks.length; i++) {
-    const res = await callGAS("storeChunk", {
+  let lastRes;
+  for (let i = 0; i < total; i++) {
+    lastRes = await callGAS("storeChunk", {
       token,
       chunk:    chunks[i],
       index:    i,
-      total:    chunks.length,
+      total,
       fileName: "viol_" + token + ".jpg"
     });
-    console.log(`✅ chunk ${i+1}/${chunks.length}:`, res && res.success ? "OK" : JSON.stringify(res));
-    if (!res || !res.success) throw new Error(`فشل chunk ${i}: ` + (res && res.error ? res.error : "خطأ"));
+    console.log(`chunk ${i+1}/${total}:`, lastRes && lastRes.success ? "✅" : "❌ " + (lastRes && lastRes.error));
+    if (!lastRes || !lastRes.success) throw new Error(`فشل chunk ${i}: ` + (lastRes && lastRes.error || "خطأ"));
   }
 
-  // آخر chunk → GAS يجمّع ويرفع لـ Drive ويرجع URL
-  const last = await callGAS("assembleAndUpload", { token, total: chunks.length });
-  console.log("🏁 assembleAndUpload:", JSON.stringify(last));
-
-  if (last && last.url) return last.url;
-  throw new Error(last && last.error ? last.error : "فشل تجميع الصورة");
+  // آخر chunk يرجع url
+  if (lastRes && lastRes.url) return lastRes.url;
+  throw new Error("لم يُرجع GAS رابط الصورة");
 }
 
 
