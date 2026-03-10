@@ -2579,37 +2579,41 @@ function showCriteria(track) {
 // رفع الصورة للـ Drive عبر GAS بتقسيمها chunks
 // ============================================================
 async function uploadImageToGAS(base64Data, fileName) {
-  // جرّب بأحجام متناقصة حتى ينجح الرفع
-  const sizes = [2, 1.5, 1];
-  let lastError = "";
+  // اضغط لـ 50KB (جودة مقبولة)
+  const compressed = await compressToLimit(base64Data, 50);
+  const pure   = compressed.includes(",") ? compressed.split(",")[1] : compressed;
+  const kb     = (pure.length * 0.75 / 1024).toFixed(1);
+  console.log(`📷 حجم الصورة: ${kb}KB`);
 
-  for (const maxKB of sizes) {
-    try {
-      const compressed = await compressToLimit(base64Data, maxKB);
-      const pure = compressed.includes(",") ? compressed.split(",")[1] : compressed;
-      const kb = (pure.length * 0.75 / 1024).toFixed(1);
-      console.log(`📷 محاولة رفع: ${kb}KB (مستهدف ${maxKB}KB)`);
+  // token عشوائي لربط الصورة بالمخالفة
+  const token = "img_" + Date.now() + "_" + Math.random().toString(36).slice(2,7);
 
-      const safeFileName = "viol_" + Date.now() + ".jpg";
-      const res = await callGAS("uploadChunk", {
-        chunk: pure,
-        fileName: safeFileName,
-        chunkIndex: 0,
-        totalChunks: 1,
-        prefix: "data:image/jpeg;base64,"
-      });
+  // أرسل الصورة بـ POST no-cors (لا نقرأ الـ response)
+  const body = JSON.stringify({
+    action: "saveImageFromPost",
+    token,
+    chunk: pure,
+    fileName: "viol_" + Date.now() + ".jpg"
+  });
 
-      if (res && res.success && res.url) {
-        console.log("✅ Drive URL:", res.url);
-        return res.url;
-      }
-      lastError = res && res.error ? res.error : "لا يوجد URL في الرد";
-    } catch(e) {
-      lastError = e.message;
-      console.warn(`⚠️ فشل بـ ${maxKB}KB:`, lastError);
-    }
-  }
-  throw new Error("فشل رفع الصورة بعد كل المحاولات: " + lastError);
+  console.log("📤 إرسال الصورة بـ POST no-cors...");
+  await fetch(GAS_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "text/plain" },
+    body
+  });
+
+  // انتظر GAS يعالج الصورة
+  await new Promise(r => setTimeout(r, 3000));
+
+  // استعلم عن الرابط بـ JSONP
+  console.log("🔍 استعلام عن رابط الصورة...");
+  const res = await callGAS("getImageByToken", { token });
+  console.log("📦 getImageByToken:", JSON.stringify(res));
+
+  if (res && res.url) return res.url;
+  throw new Error("لم يُرجع GAS رابط الصورة");
 }
 
 
