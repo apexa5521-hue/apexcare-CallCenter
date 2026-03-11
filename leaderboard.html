@@ -353,8 +353,16 @@ function render(data) {
   document.getElementById("kpiAvg").textContent   = Math.round(list.reduce((s,e)=>s+e.balance,0)/list.length);
   document.getElementById("kpiLost").textContent  = list.reduce((s,e)=>s+e.deducted,0);
 
+  // حساب الرتبة مع التعادل
+  let prevBalance = null, prevRank = 0;
+  list.forEach((emp, idx) => {
+    if (emp.balance !== prevBalance) { prevRank = idx + 1; }
+    emp.rank = prevRank;
+    prevBalance = emp.balance;
+  });
+
   document.getElementById("grid").innerHTML = list.map((emp,idx)=>{
-    const rank=idx+1, r=rate(emp.balance), pct=Math.max(0,Math.min(100,emp.balance));
+    const rank=emp.rank, r=rate(emp.balance), pct=Math.max(0,Math.min(100,emp.balance));
     const pal=PALS[idx%PALS.length];
     const rCls=rank===1?"r1":rank===2?"r2":rank===3?"r3":"rn";
     const rEmoji=rank===1?"🥇":rank===2?"🥈":rank===3?"🥉":rank;
