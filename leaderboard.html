@@ -343,9 +343,12 @@ function fetchData(retry=0) {
 }
 
 function render(data) {
+  console.log("✅ data received:", JSON.stringify(data).slice(0,300));
   const scores = data.employeeScores||{};
+  console.log("scores keys:", Object.keys(scores));
   const list = Object.entries(EMPLOYEES).map(([name,track])=>{
-    const s=scores[name]||{};
+    const s=scores[name] || scores[name.trim()] || {};
+    if(!scores[name]) console.warn("⚠️ no score for:", name, "available:", Object.keys(scores));
     return {name,track,balance:typeof s.balance==="number"?s.balance:100,deducted:typeof s.deducted==="number"?s.deducted:0};
   }).sort((a,b)=>b.balance-a.balance);
 
