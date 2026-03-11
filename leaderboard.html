@@ -3,476 +3,438 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>صفحة الأداء — APEXCARE</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<title>لوحة الأداء — APEXCARE</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --gold:   #d4a843;
-    --teal:   #0ea5b0;
-    --bg:     #040d1a;
-    --card:   #071428;
-    --border: #0e2040;
-    --text:   #e2e8f0;
-    --muted:  #64748b;
-  }
+:root {
+  --gold:   #c9a84c;
+  --gold2:  #f0d080;
+  --teal:   #00c9b1;
+  --bg:     #080c14;
+  --card:   #0f1826;
+  --card2:  #131f30;
+  --border: rgba(255,255,255,0.06);
+  --bord2:  rgba(255,255,255,0.1);
+  --text:   #e8edf5;
+  --muted:  #4a5a72;
+  --muted2: #7a8fa8;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:var(--bg);font-family:'Cairo','Tajawal',sans-serif;color:var(--text);overflow-x:hidden}
 
-  * { margin:0; padding:0; box-sizing:border-box; }
+.bg-layer{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 50% at 100% 0%,  rgba(201,168,76,0.07) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 60% at 0%  100%, rgba(0,201,177,0.05)  0%,transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50%  50%, rgba(26,110,245,0.04) 0%,transparent 70%)}
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);
+  background-size:60px 60px}
 
-  body {
-    background: var(--bg);
-    font-family: 'Cairo', sans-serif;
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+/* ══ HEADER ══ */
+.header{position:relative;z-index:10;display:grid;grid-template-columns:auto 1fr auto;
+  align-items:center;gap:32px;padding:20px 40px;
+  border-bottom:1px solid var(--border);backdrop-filter:blur(20px);
+  background:rgba(8,12,20,0.85)}
+.logo-wrap{display:flex;align-items:center;gap:14px}
+.logo-icon{width:46px;height:46px;background:linear-gradient(135deg,var(--gold),#a07830);
+  border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:900;color:#080c14;box-shadow:0 0 20px rgba(201,168,76,0.3)}
+.logo-name{font-size:18px;font-weight:900;letter-spacing:1px}
+.logo-sub{font-size:11px;color:var(--muted2);margin-top:1px}
+.header-kpis{display:flex;gap:12px;justify-content:center}
+.kpi{padding:8px 22px;background:var(--card);border:1px solid var(--bord2);border-radius:10px;text-align:center;min-width:110px}
+.kpi-val{font-size:22px;font-weight:900;background:linear-gradient(135deg,var(--gold2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.kpi-val.teal{background:linear-gradient(135deg,var(--teal),#00a090);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.kpi-val.red{background:linear-gradient(135deg,#ff6b6b,#e03030);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.kpi-lbl{font-size:10px;color:var(--muted2);margin-top:2px}
+.clock-wrap{text-align:left}
+.clock{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;
+  background:linear-gradient(135deg,var(--teal),#00a090);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:2px}
+.date-str{font-size:11px;color:var(--muted2);margin-top:3px}
 
-  /* ── خلفية متحركة ── */
-  body::before {
-    content: '';
-    position: fixed; inset: 0; z-index: 0;
-    background:
-      radial-gradient(ellipse 60% 40% at 80% 10%, rgba(14,165,176,0.08), transparent),
-      radial-gradient(ellipse 50% 60% at 10% 90%, rgba(212,168,67,0.07), transparent);
-    pointer-events: none;
-  }
+/* شريط ذهبي */
+.ticker{position:relative;z-index:9;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold) 20%,var(--teal) 50%,var(--gold) 80%,transparent);
+  animation:shimmer 3s ease-in-out infinite}
+@keyframes shimmer{0%,100%{opacity:.4}50%{opacity:1}}
 
-  /* ── Header ── */
-  .header {
-    position: relative; z-index: 1;
-    padding: 32px 40px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-  }
-  .header-logo {
-    display: flex; align-items: center; gap: 14px;
-  }
-  .logo-icon {
-    width: 52px; height: 52px;
-    background: linear-gradient(135deg, var(--gold), var(--teal));
-    border-radius: 14px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px; font-weight: 900; color: #040d1a;
-  }
-  .logo-text { font-size: 20px; font-weight: 900; }
-  .logo-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .header-time {
-    text-align: center;
-    font-size: 13px; color: var(--muted);
-  }
-  .header-time .clock {
-    font-size: 28px; font-weight: 700;
-    color: var(--teal); letter-spacing: 2px;
-  }
-  .header-stats {
-    display: flex; gap: 20px; text-align: center;
-  }
-  .stat-box {
-    padding: 10px 18px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-  }
-  .stat-box .val { font-size: 22px; font-weight: 900; color: var(--gold); }
-  .stat-box .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+/* عنوان القسم */
+.section-title{position:relative;z-index:1;padding:22px 36px 0;display:flex;align-items:center;gap:12px}
+.section-line{flex:1;height:1px;background:linear-gradient(90deg,var(--bord2),transparent)}
+.section-label{font-size:11px;color:var(--muted2);letter-spacing:2px}
 
-  /* ── Grid ── */
-  .grid {
-    position: relative; z-index: 1;
-    padding: 28px 40px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 18px;
-  }
+/* ══ GRID ══ */
+.main{position:relative;z-index:1;padding:20px 36px 60px;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px}
 
-  /* ── بطاقة الموظفة ── */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.2s, box-shadow 0.2s;
-    animation: fadeUp 0.5s ease both;
-  }
-  .card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 30px rgba(14,165,176,0.15);
-  }
-  /* ترتيب الأول يبرز */
-  .card.rank-1 { border-color: var(--gold); box-shadow: 0 0 20px rgba(212,168,67,0.2); }
-  .card.rank-2 { border-color: #94a3b8; }
-  .card.rank-3 { border-color: #b45309; }
+/* ══ CARD ══ */
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;
+  padding:22px 22px 18px;position:relative;overflow:hidden;
+  transition:transform .3s,box-shadow .3s,border-color .3s;
+  animation:riseUp .6s cubic-bezier(.16,1,.3,1) both}
+.card::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.03),transparent 60%);
+  border-radius:inherit;pointer-events:none}
+.card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.5)}
 
-  .card-rank {
-    position: absolute; top: 16px; left: 16px;
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 900;
-  }
-  .rank-1 .card-rank { background: var(--gold); color: #040d1a; }
-  .rank-2 .card-rank { background: #94a3b8; color: #040d1a; }
-  .rank-3 .card-rank { background: #b45309; color: #fff; }
-  .card-rank.other   { background: var(--border); color: var(--muted); font-size: 12px; }
+.card.r1{border-color:rgba(201,168,76,.4);
+  background:linear-gradient(135deg,#14200f 0%,#0f1826 60%);
+  box-shadow:0 0 30px rgba(201,168,76,.12),inset 0 1px 0 rgba(201,168,76,.15)}
+.card.r1:hover{box-shadow:0 12px 40px rgba(201,168,76,.2)}
+.card.r2{border-color:rgba(160,175,200,.3);box-shadow:inset 0 1px 0 rgba(200,210,230,.08)}
+.card.r3{border-color:rgba(180,120,60,.3);box-shadow:inset 0 1px 0 rgba(180,120,60,.1)}
 
-  .card-top {
-    display: flex; align-items: center; gap: 14px;
-    margin-bottom: 16px; padding-right: 4px;
-  }
-  .card-avatar {
-    width: 48px; height: 48px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px; font-weight: 900; flex-shrink: 0;
-  }
-  .card-name  { font-size: 17px; font-weight: 700; }
-  .card-track {
-    display: inline-block;
-    font-size: 11px; color: var(--muted);
-    background: var(--border);
-    border-radius: 20px; padding: 2px 10px; margin-top: 3px;
-  }
+.crown{position:absolute;top:-2px;right:22px;font-size:28px;
+  filter:drop-shadow(0 0 8px rgba(201,168,76,.8));
+  animation:floatCrown 3s ease-in-out infinite}
+@keyframes floatCrown{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-6px) rotate(5deg)}}
 
-  /* ── شريط الأداء ── */
-  .progress-wrap { margin-bottom: 14px; }
-  .progress-labels {
-    display: flex; justify-content: space-between;
-    font-size: 12px; color: var(--muted); margin-bottom: 5px;
-  }
-  .progress-bar {
-    height: 10px;
-    background: var(--border);
-    border-radius: 99px;
-    overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%;
-    border-radius: 99px;
-    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
+.rank-badge{position:absolute;top:18px;left:18px;width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900}
+.r1 .rank-badge{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#080c14;box-shadow:0 0 12px rgba(201,168,76,.5)}
+.r2 .rank-badge{background:linear-gradient(135deg,#c8d2e0,#98a8c0);color:#080c14}
+.r3 .rank-badge{background:linear-gradient(135deg,#d4924a,#a05828);color:#fff}
+.rn .rank-badge{background:var(--card2);color:var(--muted2);font-size:11px;border:1px solid var(--bord2)}
 
-  /* ── الإحصائيات ── */
-  .stats-row {
-    display: grid; grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px; margin-bottom: 14px;
-  }
-  .stat-cell {
-    background: var(--bg);
-    border-radius: 10px; padding: 10px 8px; text-align: center;
-    border: 1px solid var(--border);
-  }
-  .stat-cell .n { font-size: 20px; font-weight: 900; }
-  .stat-cell .l { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.card-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.avatar{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:900;flex-shrink:0;position:relative}
+.avatar::after{content:'';position:absolute;inset:0;border-radius:inherit;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.15),inset 0 -1px 0 rgba(0,0,0,.2)}
+.emp-name{font-size:17px;font-weight:700}
+.track{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted2);
+  background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:20px;padding:2px 9px;margin-top:5px}
 
-  /* ── تقييم وحالة ── */
-  .badges { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .badge {
-    padding: 4px 12px; border-radius: 99px;
-    font-size: 12px; font-weight: 700;
-  }
+/* شريط أداء */
+.bar-wrap{margin-bottom:16px}
+.bar-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted2);margin-bottom:6px}
+.bar-bg{height:8px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;width:0%;transition:width 1.4s cubic-bezier(.34,1.56,.64,1);position:relative}
+.bar-fill::after{content:'';position:absolute;top:0;right:0;width:6px;height:100%;
+  background:rgba(255,255,255,.35);border-radius:99px;filter:blur(2px)}
 
-  /* ── ألوان التقييم ── */
-  .exc  { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid #10b981; }
-  .good { background: rgba(14,165,176,0.15); color: var(--teal); border: 1px solid var(--teal); }
-  .avg  { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid #f59e0b; }
-  .low  { background: rgba(239,68,68,0.15);  color: #ef4444; border: 1px solid #ef4444; }
+/* إحصائيات */
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.stat{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:9px 6px;text-align:center}
+.stat-n{font-size:19px;font-weight:900;line-height:1}
+.stat-l{font-size:9px;color:var(--muted2);margin-top:3px}
 
-  /* ── تحميل ── */
-  .loading {
-    position: relative; z-index: 1;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    min-height: 60vh; gap: 16px;
-  }
-  .spinner {
-    width: 48px; height: 48px;
-    border: 3px solid var(--border);
-    border-top-color: var(--teal);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
+/* تاقات */
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{padding:3px 11px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid}
+.tag-exc {color:#10d9a0;border-color:rgba(16,217,160,.35);background:rgba(16,217,160,.08)}
+.tag-good{color:#00c9b1;border-color:rgba(0,201,177,.35);background:rgba(0,201,177,.08)}
+.tag-avg {color:#f0a040;border-color:rgba(240,160,64,.35);background:rgba(240,160,64,.08)}
+.tag-low {color:#ff6b6b;border-color:rgba(255,107,107,.35);background:rgba(255,107,107,.08)}
+.tag-st  {color:var(--muted2);border-color:var(--border);background:rgba(255,255,255,.03);font-weight:400}
 
-  /* ── تحديث تلقائي ── */
-  .refresh-bar {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    height: 3px; background: var(--border);
-    z-index: 100;
-  }
-  .refresh-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--teal), var(--gold));
-    border-radius: 99px;
-    transition: width linear;
-  }
-  .refresh-info {
-    position: fixed; bottom: 10px; left: 50%;
-    transform: translateX(-50%);
-    font-size: 11px; color: var(--muted);
-    z-index: 100;
-  }
+/* refresh */
+.refresh-bar{position:fixed;bottom:0;left:0;right:0;z-index:100;height:2px;background:rgba(255,255,255,.04)}
+.rfill{height:100%;background:linear-gradient(90deg,var(--teal),var(--gold));transition:width 1s linear;border-radius:0 99px 99px 0}
+.rinfo{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--muted);z-index:101;letter-spacing:.5px}
 
-  @keyframes spin    { to { transform: rotate(360deg); } }
-  @keyframes fadeUp  { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+/* loading */
+.loading-wrap{position:relative;z-index:1;min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.loader{width:56px;height:56px;border:2px solid var(--bord2);border-top-color:var(--gold);border-right-color:var(--teal);border-radius:50%;animation:spin .9s linear infinite}
+.load-txt{font-size:13px;color:var(--muted2);letter-spacing:.5px}
+
+@keyframes riseUp{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
+<div class="bg-layer"></div>
+<div class="bg-grid"></div>
 
-<!-- ── Header ── -->
 <div class="header">
-  <div class="header-logo">
+  <div class="logo-wrap">
     <div class="logo-icon">A</div>
     <div>
-      <div class="logo-text">APEXCARE</div>
+      <div class="logo-name">APEXCARE</div>
       <div class="logo-sub">لوحة أداء مركز الاتصال</div>
     </div>
   </div>
-  <div class="header-time">
+  <div class="header-kpis">
+    <div class="kpi"><div class="kpi-val" id="kpiCount">—</div><div class="kpi-lbl">عدد الموظفات</div></div>
+    <div class="kpi"><div class="kpi-val teal" id="kpiAvg">—</div><div class="kpi-lbl">متوسط الرصيد</div></div>
+    <div class="kpi"><div class="kpi-val red" id="kpiLost">—</div><div class="kpi-lbl">إجمالي النقاط المفقودة</div></div>
+  </div>
+  <div class="clock-wrap">
     <div class="clock" id="clock">--:--:--</div>
-    <div id="dateDisplay" style="margin-top:4px"></div>
-  </div>
-  <div class="header-stats">
-    <div class="stat-box">
-      <div class="val" id="totalEmployees">—</div>
-      <div class="lbl">موظفة</div>
-    </div>
-    <div class="stat-box">
-      <div class="val" id="avgScore" style="color:var(--teal)">—</div>
-      <div class="lbl">متوسط الرصيد</div>
-    </div>
-    <div class="stat-box">
-      <div class="val" id="totalDeducted" style="color:#ef4444">—</div>
-      <div class="lbl">إجمالي الخصومات</div>
-    </div>
+    <div class="date-str" id="dateStr"></div>
   </div>
 </div>
 
-<!-- ── محتوى ── -->
-<div id="loadingDiv" class="loading">
-  <div class="spinner"></div>
-  <div style="color:var(--muted);font-size:14px">جاري تحميل بيانات الأداء...</div>
+<div class="ticker"></div>
+
+<!-- ══ شريط المعايير المتحرك ══ -->
+<div style="position:relative;z-index:9;overflow:hidden;background:rgba(201,168,76,0.06);border-top:1px solid rgba(201,168,76,0.15);border-bottom:1px solid rgba(201,168,76,0.15);padding:10px 0">
+  <div id="tickerTrack" style="display:flex;gap:0;white-space:nowrap;will-change:transform"></div>
 </div>
 
-<div id="grid" class="grid" style="display:none"></div>
+<!-- ══ معيار اليوم + جملة تحفيزية ══ -->
+<div style="position:relative;z-index:1;display:grid;grid-template-columns:1fr 2fr;gap:14px;padding:18px 36px 0">
 
-<!-- ── شريط التحديث ── -->
-<div class="refresh-bar"><div class="refresh-fill" id="refreshFill" style="width:100%"></div></div>
-<div class="refresh-info" id="refreshInfo">يتجدد كل 60 ثانية</div>
+  <!-- بطاقة معيار اليوم -->
+  <div style="background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(0,201,177,0.05));border:1px solid rgba(201,168,76,0.2);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:16px;overflow:hidden;position:relative">
+    <div style="font-size:32px" id="tipIcon">⭐</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:10px;color:var(--muted2);letter-spacing:1.5px;margin-bottom:4px">معيار للانتباه</div>
+      <div style="font-size:15px;font-weight:700;color:var(--text);line-height:1.3" id="tipTitle">—</div>
+      <div style="font-size:11px;color:var(--muted2);margin-top:5px" id="tipDesc">—</div>
+    </div>
+    <div id="tipCounter" style="position:absolute;top:10px;left:14px;display:flex;gap:3px"></div>
+  </div>
+
+  <!-- جملة تحفيزية -->
+  <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:14px;padding:16px 24px;display:flex;align-items:center;gap:18px;overflow:hidden">
+    <div style="font-size:28px;flex-shrink:0" id="motivIcon">💡</div>
+    <div style="flex:1">
+      <div style="font-size:10px;color:var(--muted2);letter-spacing:1.5px;margin-bottom:6px">تذكّر دائماً</div>
+      <div style="font-size:15px;font-weight:600;color:var(--text);line-height:1.5;transition:opacity .4s" id="motivText">—</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section-title" style="margin-top:18px">
+  <div class="section-label">ترتيب الأداء الشهري</div>
+  <div class="section-line"></div>
+</div>
+
+<div id="loadingWrap" class="loading-wrap">
+  <div class="loader"></div>
+  <div class="load-txt">جاري تحميل بيانات الأداء...</div>
+</div>
+
+<div id="grid" class="main" style="display:none"></div>
+
+<div class="refresh-bar"><div class="rfill" id="rfill" style="width:100%"></div></div>
+<div class="rinfo" id="rinfo">يتجدد تلقائياً</div>
 
 <script>
-// ══════════════════════════════════════════
-// CONFIG — غيّر هذا فقط
-// ══════════════════════════════════════════
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwtb6A1aKzE3LJwc2IB_UoBpEojARFz8OnVPd4e0z_x8OY_ux3FWVpmoJbRrRGbP5Wi/exec";
+const GAS_URL         = "https://script.google.com/macros/s/AKfycbwtb6A1aKzE3LJwc2IB_UoBpEojARFz8OnVPd4e0z_x8OY_ux3FWVpmoJbRrRGbP5Wi/exec";
 const REFRESH_SECONDS = 60;
 
-// ══════════════════════════════════════════
-// بيانات المسارات
-// ══════════════════════════════════════════
-const TRACK_LABELS = {
-  calls:    "📞 مكالمات",
-  messages: "💬 رسائل",
-  dual:     "🔀 مشترك"
-};
-
-const EMPLOYEES_TRACK = {
-  "مرح":   "calls",
-  "جنان":  "dual",
-  "أسيل":  "messages",
-  "حور":   "messages",
-  "سارة":  "messages",
-  "طيف":   "messages",
-  "روان":  "messages",
-  "تهاني": "dual"
-};
-
-const AVATAR_COLORS = [
-  ["#1a56db","#0ea5b0"], ["#7c3aed","#a855f7"], ["#065f46","#10b981"],
-  ["#92400e","#f59e0b"], ["#831843","#ec4899"], ["#1e3a5f","#3b82f6"],
-  ["#3d1a00","#f97316"], ["#14532d","#22c55e"]
+const TICKER_ITEMS = [
+  "📞 الصياغة التعريفية في بداية المكالمة",
+  "✅ التحقق من وجود ملف للمراجع",
+  "📵 الرد على جميع المكالمات الواردة",
+  "🎯 تقديم خدمة مكتملة حتى الإغلاق",
+  "🤝 استخدام ألفاظ مهنية مناسبة",
+  "👋 إقفال المكالمة بعبارة ختامية",
+  "💬 الرد على الرسائل خلال 10 دقائق",
+  "🔍 متابعة المحادثات المفتوحة",
+  "⚡ التفاعل مع المراجع خلال دقيقة",
+  "📝 الالتزام بالاختصارات المعتمدة",
+  "🗂️ إدخال الاسم الرباعي بشكل صحيح",
+  "🪪 إدخال رقم الهوية بشكل صحيح",
+  "📅 إدخال تاريخ الميلاد بشكل صحيح",
+  "🗺️ إدخال العنوان بشكل صحيح",
+  "🔄 تعويض المواعيد الملغاة",
+  "📲 تأكيد المواعيد مع المراجعين",
+  "🗓️ تعبئة المواعيد عند توفر بديل",
+  "📋 ترتيب جدول الدكتور بشكل متتالٍ",
 ];
 
-// ══════════════════════════════════════════
-// تقييم بناءً على الرصيد
-// ══════════════════════════════════════════
-function getRating(balance) {
-  if (balance >= 95) return { label: "ممتاز ⭐",   cls: "exc",  status: "نشطة ✅",    barColor: "#10b981" };
-  if (balance >= 85) return { label: "جيد جداً",   cls: "good", status: "جيدة 👍",    barColor: "#0ea5b0" };
-  if (balance >= 70) return { label: "جيد",         cls: "avg",  status: "مقبولة ⚠️", barColor: "#f59e0b" };
-  return                    { label: "يحتاج تحسين", cls: "low",  status: "تحت المراقبة 🔴", barColor: "#ef4444" };
+const TIPS = [
+  { icon:"📞", title:"الصياغة التعريفية",       desc:"ابدئي كل مكالمة بالتعريف الكامل بالعيادة واسمك" },
+  { icon:"📵", title:"لا تتركي مكالمة دون رد",  desc:"كل مكالمة فائتة قد تكون مريضة تبحث عن موعد" },
+  { icon:"⏱️", title:"الرد خلال 10 دقائق",      desc:"الرد السريع على الرسائل يعكس احترافية العيادة" },
+  { icon:"🗂️", title:"دقة فتح الملف",            desc:"الاسم الرباعي الصحيح يمنع أخطاء المواعيد مستقبلاً" },
+  { icon:"🔄", title:"تعويض الملغيات فوراً",     desc:"الموعد الملغى = فرصة لمراجع آخر — لا تتركيه فارغاً" },
+  { icon:"💬", title:"إغلاق المحادثات",          desc:"محادثة مفتوحة بلا رد تُشعر المراجع بالإهمال" },
+  { icon:"🤝", title:"الألفاظ المهنية",           desc:"كلمة واحدة لطيفة تحوّل تجربة المريض بالكامل" },
+  { icon:"📲", title:"تأكيد المواعيد",            desc:"تأكيد الموعد يقلل الغياب ويحافظ على جدول الدكتور" },
+];
+
+const MOTIV = [
+  { icon:"💰", text:"رصيدك الكامل = 500 ريال في نهاية الشهر — كل نقطة تُحسب" },
+  { icon:"🎯", text:"الأداء يُقاس بالأرقام لا بالانطباعات — الشاشة لا تكذب" },
+  { icon:"⭐", text:"الموظفة الأولى تُحدَّد بالبيانات الحقيقية لا بالحضور" },
+  { icon:"🔥", text:"كل مخالفة تُوثَّق بدقة = نقطتان للمشرفة — فريق واحد" },
+  { icon:"💡", text:"الانتباه للمعايير اليوم يحمي رصيدك طوال الشهر" },
+  { icon:"🏆", text:"المركز الأول ليس حظاً — هو نتيجة كل مكالمة والتزام" },
+  { icon:"✨", text:"الاحترافية عادة تُبنى يومياً — ابدئي الآن" },
+  { icon:"🤝", text:"نجاح الفريق يبدأ بالتزام كل واحدة منكن بمعاييرها" },
+];
+
+function initTicker() {
+  const track = document.getElementById("tickerTrack");
+  const content = [...TICKER_ITEMS, ...TICKER_ITEMS].map(t =>
+    `<span style="display:inline-block;padding:0 40px;font-size:12px;color:rgba(201,168,76,0.9);font-weight:600;letter-spacing:0.3px">${t}<span style="margin-right:30px;color:rgba(201,168,76,0.3)">◆</span></span>`
+  ).join("");
+  track.innerHTML = content;
+  let pos = 0;
+  function animate() {
+    pos -= 0.55;
+    const half = track.scrollWidth / 2;
+    if (Math.abs(pos) >= half) pos = 0;
+    track.style.transform = `translateX(${pos}px)`;
+    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
 }
 
-// ══════════════════════════════════════════
-// JSONP — جلب البيانات
-// ══════════════════════════════════════════
-function fetchData() {
-  return new Promise((resolve, reject) => {
-    const cb  = "_lb" + Date.now();
-    const url = GAS_URL + "?payload=" + encodeURIComponent(JSON.stringify({ action: "getAllData" })) + "&callback=" + cb;
-    const timer = setTimeout(() => {
-      delete window[cb];
-      reject(new Error("انتهت المهلة"));
-    }, 20000);
-    window[cb] = (data) => {
-      clearTimeout(timer);
-      delete window[cb];
-      resolve(data);
+let tipIdx = 0;
+function rotateTip() {
+  const tip = TIPS[tipIdx % TIPS.length];
+  document.getElementById("tipIcon").textContent  = tip.icon;
+  document.getElementById("tipTitle").textContent = tip.title;
+  document.getElementById("tipDesc").textContent  = tip.desc;
+  const counter = document.getElementById("tipCounter");
+  counter.innerHTML = TIPS.map((_,i) =>
+    `<span style="width:5px;height:5px;border-radius:50%;background:${i===tipIdx%TIPS.length?'var(--gold)':'rgba(255,255,255,0.15)'};display:inline-block;transition:background .3s"></span>`
+  ).join("");
+  tipIdx++;
+}
+
+let motivIdx = 0;
+function rotateMotiv() {
+  const m  = MOTIV[motivIdx % MOTIV.length];
+  const el = document.getElementById("motivText");
+  const ic = document.getElementById("motivIcon");
+  el.style.opacity = "0";
+  setTimeout(() => { el.textContent = m.text; ic.textContent = m.icon; el.style.opacity = "1"; }, 400);
+  motivIdx++;
+}
+
+const TRACKS = { calls:"📞 مكالمات", messages:"💬 رسائل", dual:"🔀 مشترك" };
+
+const EMPLOYEES = {
+  "مرح":"calls","جنان":"dual","أسيل":"messages",
+  "حور":"messages","سارة":"messages","طيف":"messages",
+  "روان":"messages","تهاني":"dual"
+};
+
+const PALS = [
+  ["#1a56db","#0ea5b0"],["#7c3aed","#c084fc"],["#065f46","#10b981"],
+  ["#92400e","#fbbf24"],["#9d174d","#f472b6"],["#1e3a5f","#60a5fa"],
+  ["#431407","#fb923c"],["#14532d","#4ade80"]
+];
+
+function rate(b) {
+  if (b>=95) return {lbl:"ممتاز ⭐",cls:"tag-exc",st:"نشطة ✅",          c1:"#10d9a0",c2:"#00c9b1"};
+  if (b>=85) return {lbl:"جيد جداً",cls:"tag-good",st:"أداء جيد 👍",    c1:"#00c9b1",c2:"#0099aa"};
+  if (b>=70) return {lbl:"جيد",     cls:"tag-avg", st:"مقبول ⚠️",       c1:"#f0a040",c2:"#d07020"};
+  return           {lbl:"يحتاج تحسين",cls:"tag-low",st:"تحت المراقبة 🔴",c1:"#ff6b6b",c2:"#cc3333"};
+}
+
+function fetchData(retry=0) {
+  return new Promise((resolve,reject) => {
+    const cb  = "_lb"+Date.now()+Math.random().toString(36).slice(2,6);
+    const url = GAS_URL+"?action=getAllData&callback="+cb+"&t="+Date.now();
+    const timer = setTimeout(()=>{
+      delete window[cb]; s.parentNode&&s.parentNode.removeChild(s);
+      retry<2 ? fetchData(retry+1).then(resolve).catch(reject)
+              : reject(new Error("انتهت المهلة"));
+    },20000);
+    window[cb]=(data)=>{clearTimeout(timer);delete window[cb];s.parentNode&&s.parentNode.removeChild(s);resolve(data)};
+    const s=document.createElement("script");
+    s.onerror=()=>{
+      clearTimeout(timer);delete window[cb];s.parentNode&&s.parentNode.removeChild(s);
+      retry<2 ? setTimeout(()=>fetchData(retry+1).then(resolve).catch(reject),2000)
+              : reject(new Error("فشل الاتصال بـ GAS"));
     };
-    const s = document.createElement("script");
-    s.onerror = () => { clearTimeout(timer); delete window[cb]; reject(new Error("فشل الاتصال")); };
-    s.src = url;
-    document.head.appendChild(s);
+    s.src=url; document.head.appendChild(s);
   });
 }
 
-// ══════════════════════════════════════════
-// بناء البطاقات
-// ══════════════════════════════════════════
-function buildCards(data) {
-  const scores = data.employeeScores || {};
+function render(data) {
+  const scores = data.employeeScores||{};
+  const list = Object.entries(EMPLOYEES).map(([name,track])=>{
+    const s=scores[name]||{};
+    return {name,track,balance:typeof s.balance==="number"?s.balance:100,deducted:typeof s.deducted==="number"?s.deducted:0};
+  }).sort((a,b)=>b.balance-a.balance);
 
-  // ابنِ قائمة الموظفات مع أرصدتهن
-  const list = Object.entries(EMPLOYEES_TRACK).map(([name, track]) => {
-    const s       = scores[name] || {};
-    const balance = typeof s.balance  === "number" ? s.balance  : 100;
-    const deducted= typeof s.deducted === "number" ? s.deducted : 0;
-    return { name, track, balance, deducted };
-  });
+  document.getElementById("kpiCount").textContent = list.length;
+  document.getElementById("kpiAvg").textContent   = Math.round(list.reduce((s,e)=>s+e.balance,0)/list.length);
+  document.getElementById("kpiLost").textContent  = list.reduce((s,e)=>s+e.deducted,0);
 
-  // رتّب تنازلياً بالرصيد
-  list.sort((a, b) => b.balance - a.balance);
-
-  // ── Header stats ──
-  document.getElementById("totalEmployees").textContent = list.length;
-  const avg = Math.round(list.reduce((s,e) => s + e.balance, 0) / list.length);
-  document.getElementById("avgScore").textContent = avg;
-  document.getElementById("totalDeducted").textContent = list.reduce((s,e) => s + e.deducted, 0);
-
-  // ── بناء الـ grid ──
-  const grid = document.getElementById("grid");
-  grid.innerHTML = list.map((emp, idx) => {
-    const rank    = idx + 1;
-    const rating  = getRating(emp.balance);
-    const pct     = Math.max(0, Math.min(100, emp.balance));
-    const colors  = AVATAR_COLORS[idx % AVATAR_COLORS.length];
-    const rankCls = rank === 1 ? "rank-1" : rank === 2 ? "rank-2" : rank === 3 ? "rank-3" : "";
-    const rankLbl = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : rank;
-    const rankBadgeCls = rank <= 3 ? "" : "other";
-
+  document.getElementById("grid").innerHTML = list.map((emp,idx)=>{
+    const rank=idx+1, r=rate(emp.balance), pct=Math.max(0,Math.min(100,emp.balance));
+    const pal=PALS[idx%PALS.length];
+    const rCls=rank===1?"r1":rank===2?"r2":rank===3?"r3":"rn";
+    const rEmoji=rank===1?"🥇":rank===2?"🥈":rank===3?"🥉":rank;
+    const pctColor=pct>=85?"#10d9a0":pct>=70?"#f0a040":"#ff6b6b";
     return `
-    <div class="card ${rankCls}" style="animation-delay:${idx * 0.06}s">
-      <div class="card-rank ${rankBadgeCls}">${rankLbl}</div>
-
-      <div class="card-top">
-        <div class="card-avatar" style="background:linear-gradient(135deg,${colors[0]},${colors[1]})">
-          ${emp.name.charAt(0)}
-        </div>
+    <div class="card ${rCls}" style="animation-delay:${idx*.07}s">
+      ${rank===1?'<div class="crown">👑</div>':''}
+      <div class="rank-badge">${rEmoji}</div>
+      <div class="card-head">
+        <div class="avatar" style="background:linear-gradient(135deg,${pal[0]},${pal[1]})">${emp.name.charAt(0)}</div>
         <div>
-          <div class="card-name">${emp.name}</div>
-          <span class="card-track">${TRACK_LABELS[emp.track] || emp.track}</span>
+          <div class="emp-name">${emp.name}</div>
+          <div class="track">${TRACKS[emp.track]||emp.track}</div>
         </div>
       </div>
-
-      <!-- شريط الأداء -->
-      <div class="progress-wrap">
-        <div class="progress-labels">
-          <span>الأداء</span>
-          <span style="color:${rating.barColor};font-weight:700">${pct}%</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress-fill" style="width:0%;background:linear-gradient(90deg,${colors[0]},${colors[1]})"
-               data-target="${pct}"></div>
-        </div>
+      <div class="bar-wrap">
+        <div class="bar-labels"><span>الأداء</span><span style="font-weight:700;color:${pctColor}">${pct}%</span></div>
+        <div class="bar-bg"><div class="bar-fill" data-w="${pct}" style="background:linear-gradient(90deg,${r.c1},${r.c2})"></div></div>
       </div>
-
-      <!-- إحصائيات -->
-      <div class="stats-row">
-        <div class="stat-cell">
-          <div class="n" style="color:${rating.barColor}">${emp.balance}</div>
-          <div class="l">الرصيد</div>
-        </div>
-        <div class="stat-cell">
-          <div class="n" style="color:#ef4444">-${emp.deducted}</div>
-          <div class="l">النقاط المفقودة</div>
-        </div>
-        <div class="stat-cell">
-          <div class="n" style="color:var(--muted)">100</div>
-          <div class="l">الحد الأقصى</div>
-        </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-n" style="color:${pctColor}">${emp.balance}</div><div class="stat-l">الرصيد</div></div>
+        <div class="stat"><div class="stat-n" style="color:#ff6b6b">-${emp.deducted}</div><div class="stat-l">النقاط المفقودة</div></div>
+        <div class="stat"><div class="stat-n" style="color:var(--muted2)">100</div><div class="stat-l">الحد الأقصى</div></div>
       </div>
-
-      <!-- تقييم وحالة -->
-      <div class="badges">
-        <span class="badge ${rating.cls}">${rating.label}</span>
-        <span class="badge" style="background:var(--border);color:var(--muted)">${rating.status}</span>
+      <div class="tags">
+        <span class="tag ${r.cls}">${r.lbl}</span>
+        <span class="tag tag-st">${r.st}</span>
       </div>
     </div>`;
   }).join("");
 
-  // حرّك أشرطة الأداء بعد الرسم
-  setTimeout(() => {
-    document.querySelectorAll(".progress-fill").forEach(bar => {
-      bar.style.width = bar.dataset.target + "%";
-    });
-  }, 100);
+  requestAnimationFrame(()=>setTimeout(()=>{
+    document.querySelectorAll(".bar-fill").forEach(b=>b.style.width=b.dataset.w+"%");
+  },80));
 
-  document.getElementById("loadingDiv").style.display = "none";
-  document.getElementById("grid").style.display = "grid";
+  document.getElementById("loadingWrap").style.display="none";
+  document.getElementById("grid").style.display="grid";
 }
 
-// ══════════════════════════════════════════
-// تحديث تلقائي
-// ══════════════════════════════════════════
-let refreshTimer = null;
-let countdown    = REFRESH_SECONDS;
-
-async function loadAndRender() {
+async function load() {
   try {
-    const data = await fetchData();
-    if (data && data.success) {
-      buildCards(data);
-      document.getElementById("refreshInfo").textContent =
-        "آخر تحديث: " + new Date().toLocaleTimeString("ar-SA");
-    }
+    const data=await fetchData();
+    if(data&&data.success){
+      render(data);
+      document.getElementById("rinfo").textContent="آخر تحديث: "+new Date().toLocaleTimeString("ar-SA");
+    } else throw new Error(data?.error||"بيانات غير صالحة");
   } catch(e) {
-    console.error("Leaderboard fetch error:", e.message);
-    document.getElementById("refreshInfo").textContent = "⚠️ " + e.message;
+    console.error(e);
+    document.getElementById("rinfo").textContent="⚠️ "+e.message;
+    if(document.getElementById("grid").style.display==="none"){
+      document.getElementById("loadingWrap").innerHTML=`
+        <div style="text-align:center">
+          <div style="font-size:48px;margin-bottom:16px;filter:drop-shadow(0 0 10px rgba(255,100,100,.5))">⚠️</div>
+          <div style="font-size:16px;font-weight:700;color:#ff6b6b;margin-bottom:8px">تعذّر الاتصال</div>
+          <div style="font-size:12px;color:var(--muted2);margin-bottom:16px">${e.message}</div>
+          <div style="font-size:11px;color:var(--muted)">إعادة المحاولة خلال ${REFRESH_SECONDS}ث</div>
+        </div>`;
+    }
   }
 }
 
-function startRefreshBar() {
-  clearInterval(refreshTimer);
-  countdown = REFRESH_SECONDS;
-  const fill = document.getElementById("refreshFill");
-  refreshTimer = setInterval(() => {
-    countdown--;
-    fill.style.width = (countdown / REFRESH_SECONDS * 100) + "%";
-    if (countdown <= 0) {
-      countdown = REFRESH_SECONDS;
-      fill.style.width = "100%";
-      loadAndRender();
-    }
-  }, 1000);
-}
+let countdown=REFRESH_SECONDS;
+setInterval(()=>{
+  countdown--;
+  document.getElementById("rfill").style.width=(countdown/REFRESH_SECONDS*100)+"%";
+  if(countdown<=0){countdown=REFRESH_SECONDS;document.getElementById("rfill").style.width="100%";load();}
+},1000);
 
-// ══════════════════════════════════════════
-// ساعة + تاريخ
-// ══════════════════════════════════════════
-function updateClock() {
-  const now = new Date();
-  document.getElementById("clock").textContent = now.toLocaleTimeString("ar-SA");
-  document.getElementById("dateDisplay").textContent =
-    now.toLocaleDateString("ar-SA", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+function tick(){
+  const n=new Date();
+  document.getElementById("clock").textContent=n.toLocaleTimeString("ar-SA");
+  document.getElementById("dateStr").textContent=n.toLocaleDateString("ar-SA",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
 }
+tick(); setInterval(tick,1000);
+load();
 
-// ══════════════════════════════════════════
-// Init
-// ══════════════════════════════════════════
-updateClock();
-setInterval(updateClock, 1000);
-loadAndRender();
-startRefreshBar();
+// تشغيل التذكيرات
+initTicker();
+rotateTip();   setInterval(rotateTip,  10000);
+rotateMotiv(); setInterval(rotateMotiv,15000);
 </script>
 </body>
 </html>
