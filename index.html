@@ -1073,9 +1073,31 @@
 
       <!-- ── آخر المخالفات ── -->
       <div style="background:var(--bg-card);border-radius:14px;padding:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1">
-        <div style="font-size:15px;font-weight:700;color:var(--text);font-family:Cairo;margin-bottom:16px;display:flex;align-items:center;gap:8px">
-          <span style="width:4px;height:18px;background:#8b5cf6;border-radius:2px;display:inline-block"></span>
-          آخر المخالفات المسجلة
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+          <div style="font-size:15px;font-weight:700;color:var(--text);font-family:Cairo;display:flex;align-items:center;gap:8px">
+            <span style="width:4px;height:18px;background:#8b5cf6;border-radius:2px;display:inline-block"></span>
+            آخر المخالفات المسجلة
+            <span id="logFilterBadge" style="display:none;background:#8b5cf6;color:#fff;font-size:11px;padding:2px 10px;border-radius:99px;font-weight:600"></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <label style="font-size:12px;color:var(--text-muted);font-family:Cairo">تصفية حسب الموظفة:</label>
+            <select id="logFilterSelect" onchange="filterLogTable()"
+              style="font-family:Cairo;font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid #e5e7eb;background:var(--bg-card);color:var(--text);cursor:pointer;outline:none">
+              <option value="">— الكل —</option>
+              <option value="مرح">مرح</option>
+              <option value="جنان">جنان</option>
+              <option value="أسيل">أسيل</option>
+              <option value="حور">حور</option>
+              <option value="سارة">سارة</option>
+              <option value="طيف">طيف</option>
+              <option value="روان">روان</option>
+              <option value="تهاني">تهاني</option>
+            </select>
+            <button onclick="document.getElementById('logFilterSelect').value='';filterLogTable()"
+              style="font-family:Cairo;font-size:11px;padding:5px 10px;border-radius:8px;border:1px solid #e5e7eb;background:transparent;color:var(--text-muted);cursor:pointer">
+              ✕ مسح
+            </button>
+          </div>
         </div>
         <div class="log-table-wrap" style="border:1px solid #f3f4f6;border-radius:8px">
           <table class="log-table" style="font-size:12px">
@@ -2207,6 +2229,68 @@ function renderLogTable() {
              </a>`
           : '<span style="color:#94a3b8;font-size:13px">—</span>'
         }
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+// ── تصفية جدول المخالفات حسب الموظفة ──
+function filterLogTable() {
+  const sel   = $id("logFilterSelect");
+  const badge = $id("logFilterBadge");
+  if (!sel) return;
+
+  const name = sel.value.trim();
+
+  // فلترة السجل
+  const filtered = name
+    ? state.violationLog.filter(v => (v.employee || "").trim() === name)
+    : state.violationLog;
+
+  // رتّب تنازلياً بالتاريخ (آخر أولاً)
+  const sorted = [...filtered].sort((a, b) => {
+    const da = new Date(a.date || 0), db = new Date(b.date || 0);
+    return db - da;
+  });
+
+  // شارة التصفية
+  if (name) {
+    badge.textContent = name;
+    badge.style.display = "inline-block";
+  } else {
+    badge.style.display = "none";
+  }
+
+  // أعد رسم الجدول بالنتائج المفلترة
+  const tbody = $id("logTableBody");
+  if (!tbody) return;
+
+  if (sorted.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px;font-family:Cairo">
+      لا توجد مخالفات مسجلة لـ ${name || "هذه الموظفة"}
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = sorted.slice(0, 50).map(v => {
+    const url   = v.attachmentUrl || v.imageUrl || "";
+    const valid = url && url.startsWith("http");
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:9px 12px;color:var(--text-muted);font-size:12px;font-family:Cairo">${v.date || ""}</td>
+      <td style="padding:9px 12px;font-weight:700;color:var(--text);font-family:Cairo">${v.employee || ""}</td>
+      <td style="padding:9px 12px;color:var(--text-label);font-family:Cairo">${v.category || ""}</td>
+      <td style="padding:9px 12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                 color:var(--text-label);font-family:Cairo" title="${v.criterion || ""}">${v.criterion || ""}</td>
+      <td style="padding:9px 12px;font-weight:700;color:#ef4444;font-family:Cairo">-${v.deduction ?? 0}</td>
+      <td style="padding:9px 12px">
+        <span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:4px;font-size:11px;font-family:Cairo">
+          #${v.violNum || ""}
+        </span>
+      </td>
+      <td style="padding:9px 12px;text-align:center">
+        ${valid
+          ? `<a href="${url}" target="_blank" style="color:#3b82f6;text-decoration:none;font-size:11px;font-family:Cairo">📎 عرض</a>`
+          : `<span style="color:var(--text-muted);font-size:11px">—</span>`}
       </td>
     </tr>`;
   }).join("");
