@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>APEXCARE - نظام الجودة</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-
+<script>
+  // تطبيق الثيم مبكراً لتجنب الوميض
+  (function(){
+    var t = localStorage.getItem('apex-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 <style>
   /* ══════════════════════════════════════════
      THEME VARIABLES
@@ -933,3 +939,2123 @@
         <div style="font-size:11px;color:rgba(255,255,255,0.75);font-family:Cairo">حافز: <span id="supBonusDisplay" style="color:#6ee7b7;font-weight:700">0</span> ريال</div>
       </div>
     </div>
+
+    <!-- ── مهام اليوم اليومية ── -->
+    <div id="dailyTasksCard" style="background:var(--bg-card);border-radius:14px;padding:20px;margin-bottom:16px;border:1px solid #e5e7eb;box-shadow:0 1px 8px rgba(0,0,0,0.07)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="width:4px;height:18px;background:#8b5cf6;border-radius:2px;display:inline-block"></span>
+          <span style="font-size:15px;font-weight:700;color:var(--text);font-family:Cairo">✅ مهام اليوم</span>
+          <span id="dailyDateBadge" style="font-size:11px;color:var(--apex-muted);font-family:Cairo"></span>
+        </div>
+        <span id="dailyStatusBadge" style="font-size:11px;padding:3px 10px;border-radius:99px;font-family:Cairo;font-weight:700"></span>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px" id="dailyTasksList">
+        <!-- تُملأ من JS -->
+      </div>
+
+      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+        <button onclick="submitDailyTasks()"
+          style="background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border:none;border-radius:10px;padding:10px 24px;font-family:Cairo;font-size:13px;font-weight:700;cursor:pointer;flex:1">
+          💾 حفظ مهام اليوم
+        </button>
+        <div id="dailySaveStatus" style="font-size:12px;color:var(--apex-muted);font-family:Cairo;display:flex;align-items:center"></div>
+      </div>
+    </div>
+
+    <!-- ── شريط تقدم نقاط رهف ── -->
+    <div style="background:var(--bg-card);border-radius:12px;padding:16px 20px;margin-bottom:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:12px;font-weight:700;color:var(--text-muted);font-family:Cairo">تقدمك نحو الحد الأقصى</span>
+        <span style="font-size:12px;color:#1a56db;font-weight:700;font-family:Cairo"><span id="supScoreDisplay2">0</span> / <span id="maxSupScore">800</span> نقطة</span>
+      </div>
+      <div style="height:10px;background:var(--border);border-radius:5px;overflow:hidden">
+        <div id="supScoreBar" style="height:100%;width:0%;background:linear-gradient(90deg,#1a56db,#0ea5b0);border-radius:5px;transition:width 0.8s ease"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px;font-family:Cairo">كل مخالفة موثّقة = <strong style="color:#1a56db">+2 نقطة</strong> &nbsp;|&nbsp; كل <strong style="color:#10b981">8 نقاط</strong> = <strong style="color:var(--apex-gold)">5 ريال</strong> &nbsp;|&nbsp; الحد الأقصى <strong style="color:#a78bfa">800 نقطة</strong></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+      
+      <!-- ── تذكير بمعايير الجودة (قابل للطي) ── -->
+      <div style="background:var(--bg-card);border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1;overflow:hidden">
+        <button onclick="toggleSection('criteriaSection','criteriaChevron')" style="width:100%;background:none;border:none;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:Cairo">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:4px;height:18px;background:#f59e0b;border-radius:2px;display:inline-block"></span>
+            <span style="font-size:15px;font-weight:700;color:var(--text)">تذكير بمعايير الجودة 💡</span>
+            <span style="font-size:11px;color:var(--text-muted);font-weight:400">راجعي المعايير قبل كل جلسة تقييم</span>
+          </div>
+          <span id="criteriaChevron" style="font-size:18px;color:var(--text-muted);transition:transform 0.3s">▸</span>
+        </button>
+        <div id="criteriaSection" style="display:none;padding:0 20px 20px">
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+            <button onclick="showCriteria('calls')" id="ctab-calls" style="padding:7px 16px;border-radius:20px;border:1.5px solid #0ea5b0;background:#e0f2fe;color:#0369a1;font-family:Cairo;font-size:12px;font-weight:700;cursor:pointer">📞 مكالمات</button>
+            <button onclick="showCriteria('messages')" id="ctab-messages" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e5e7eb;background:var(--bg-card);color:var(--text-muted);font-family:Cairo;font-size:12px;font-weight:700;cursor:pointer">💬 رسائل</button>
+            <button onclick="showCriteria('dual')" id="ctab-dual" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e5e7eb;background:var(--bg-card);color:var(--text-muted);font-family:Cairo;font-size:12px;font-weight:700;cursor:pointer">🔀 مشترك</button>
+          </div>
+          <div id="criteriaPanel" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>      <!-- ── فورم تسجيل المخالفة ── -->
+      <div style="background:var(--bg-card);border-radius:14px;padding:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1">
+        <div style="font-size:15px;font-weight:700;color:var(--text);font-family:Cairo;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+          <span style="width:4px;height:18px;background:#ef4444;border-radius:2px;display:inline-block"></span>
+          تسجيل مخالفة تشغيلية
+        </div>
+
+        <div class="form-row" style="margin-bottom:14px">
+          <div class="form-group">
+            <label style="color:var(--text-label);font-size:13px;font-weight:600">اسم المشرفة <span style="color:#ef4444">*</span></label>
+            <input type="text" id="supervisorName" placeholder="اكتبي اسمك هنا..."
+              class="t-input">
+          </div>
+          <div class="form-group">
+            <label style="color:var(--text-label);font-size:13px;font-weight:600">اسم الموظفة</label>
+            <select id="empSelect" onchange="onEmployeeChange()" class="t-input">
+              <option value="">-- اختر الموظفة --</option>
+              <option value="مرح">مرح</option>
+<option value="جنان">جنان</option>
+              <option value="أسيل">أسيل</option>
+              <option value="حور">حور</option>
+              <option value="سارة">سارة</option>
+              <option value="طيف">طيف</option>
+              <option value="روان">روان</option>
+              <option value="تهاني">تهاني</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- عرض المسار -->
+        <div id="trackDisplayRow" style="display:none;margin-bottom:14px">
+          <div id="trackDisplay" style="padding:10px 14px;background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:8px;min-height:42px;display:flex;align-items:center;font-family:Cairo"></div>
+        </div>
+
+        <!-- رصيد الموظفة المختارة -->
+        <div id="empBalanceRow" style="display:none;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:12px;background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px 16px">
+            <div style="text-align:center;min-width:56px">
+              <div style="font-size:11px;color:#0369a1;font-family:Cairo">الرصيد</div>
+              <div style="font-size:24px;font-weight:900;color:#0369a1;font-family:Cairo" id="empCurrentBalance">100</div>
+            </div>
+            <div style="flex:1">
+              <div style="height:8px;background:#bae6fd;border-radius:4px;overflow:hidden">
+                <div id="empBalanceBar" style="height:100%;width:100%;background:#0ea5e9;border-radius:4px;transition:width 0.5s"></div>
+              </div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:11px;color:#0369a1;font-family:Cairo">الحافز</div>
+              <div style="font-size:15px;font-weight:700;color:#059669;font-family:Cairo" id="empCurrentBonus">500 ريال</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-bottom:14px">
+          <div class="form-group">
+            <label style="color:var(--text-label);font-size:13px;font-weight:600">الفئة</label>
+            <select id="categorySelect" onchange="onCategoryChange()" disabled
+              class="t-input">
+              <option value="">-- اختر الفئة --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="color:var(--text-label);font-size:13px;font-weight:600">المعيار</label>
+            <select id="criterionSelect" onchange="onCriterionChange()" disabled
+              class="t-input">
+              <option value="">-- اختر المعيار --</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- معلومات المعيار -->
+        <div id="criterionInfo" style="display:none;margin-bottom:14px">
+          <div style="background:#fef3c7;border:1.5px solid #fcd34d;border-radius:8px;padding:12px 16px;display:flex;gap:20px;flex-wrap:wrap">
+            <div>
+              <span style="font-size:11px;color:#92400e;font-family:Cairo">نقاط المعيار: </span>
+              <strong id="infoPoints" style="color:#1d4ed8">--</strong>
+            </div>
+            <div>
+              <span style="font-size:11px;color:#92400e;font-family:Cairo">خصم هذه المخالفة: </span>
+              <strong id="infoDeduct" style="color:#dc2626">--</strong>
+            </div>
+            <div>
+              <span style="font-size:11px;color:#92400e;font-family:Cairo">رقم المخالفة: </span>
+              <strong id="infoViolNum" style="color:#d97706">--</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- مرفق دليل -->
+        <div class="form-group" style="margin-bottom:14px">
+          <label style="color:var(--text-label);font-size:13px;font-weight:600;font-family:Cairo">📎 مرفق دليل (اختياري)</label>
+          <div id="attachZone"
+            onclick="document.getElementById('attachInput').click()"
+            ondragover="event.preventDefault();this.style.borderColor='#1a56db'"
+            ondragleave="this.style.borderColor='var(--border)'"
+            ondrop="handleAttachDrop(event)"
+            style="border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:border-color 0.2s;margin-top:6px">
+            <div id="attachIcon" style="font-size:26px;margin-bottom:5px">📎</div>
+            <div id="attachText" style="font-size:12px;color:var(--text-muted);font-family:Cairo">اضغط أو اسحب · صورة / فيديو / PDF · حد أقصى 10MB</div>
+          </div>
+          <input type="file" id="attachInput" accept="image/*,video/*,.pdf" style="display:none" onchange="handleAttachFile(this)">
+          <div id="attachStatus" style="display:none;margin-top:8px;padding:8px 12px;background:var(--bg-card);border-radius:8px;border:1px solid var(--border);font-size:12px;font-family:Cairo"></div>
+        </div>
+        <!-- ملاحظات -->
+        <div class="form-group" style="margin-bottom:18px">
+          <label style="color:var(--text-label);font-size:13px;font-weight:600">ملاحظات إضافية</label>
+          <textarea id="notesInput" rows="2" placeholder="أي تفاصيل إضافية..."
+            style="background:var(--bg-card);border:1.5px solid #e5e7eb;border-radius:8px;color:var(--text);padding:10px 14px;font-family:Cairo;font-size:14px;width:100%;resize:vertical"></textarea>
+        </div>
+
+        <button id="submitBtn" onclick="submitViolation()" style="
+          width:100%;padding:13px;border-radius:10px;border:none;
+          background:linear-gradient(135deg,#1a56db,#0ea5b0);
+          color:#fff;font-family:Cairo;font-size:15px;font-weight:700;
+          cursor:pointer;transition:all 0.2s;box-shadow:0 4px 14px rgba(26,86,219,0.3)">
+          <span id="submitBtnText">✓ تسجيل المخالفة</span>
+        </button>
+      </div>
+
+      <!-- ── آخر المخالفات ── -->
+      <div style="background:var(--bg-card);border-radius:14px;padding:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+          <div style="font-size:15px;font-weight:700;color:var(--text);font-family:Cairo;display:flex;align-items:center;gap:8px">
+            <span style="width:4px;height:18px;background:#8b5cf6;border-radius:2px;display:inline-block"></span>
+            آخر المخالفات المسجلة
+            <span id="logFilterBadge" style="display:none;background:#8b5cf6;color:#fff;font-size:11px;padding:2px 10px;border-radius:99px;font-weight:600"></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <label style="font-size:12px;color:var(--text-muted);font-family:Cairo">تصفية حسب الموظفة:</label>
+            <select id="logFilterSelect" onchange="filterLogTable()"
+              style="font-family:Cairo;font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid #e5e7eb;background:var(--bg-card);color:var(--text);cursor:pointer;outline:none">
+              <option value="">— الكل —</option>
+              <option value="مرح">مرح</option>
+              <option value="جنان">جنان</option>
+              <option value="أسيل">أسيل</option>
+              <option value="حور">حور</option>
+              <option value="سارة">سارة</option>
+              <option value="طيف">طيف</option>
+              <option value="روان">روان</option>
+              <option value="تهاني">تهاني</option>
+            </select>
+            <button onclick="document.getElementById('logFilterSelect').value='';filterLogTable()"
+              style="font-family:Cairo;font-size:11px;padding:5px 10px;border-radius:8px;border:1px solid #e5e7eb;background:transparent;color:var(--text-muted);cursor:pointer">
+              ✕ مسح
+            </button>
+          </div>
+        </div>
+        <div class="log-table-wrap" style="border:1px solid #f3f4f6;border-radius:8px">
+          <table class="log-table" style="font-size:12px">
+            <thead>
+              <tr style="background:var(--bg-card)">
+                <th style="color:var(--text-muted);font-weight:600;padding:10px 12px">التاريخ</th>
+                <th style="color:var(--text-muted);font-weight:600;padding:10px 12px">الموظفة</th>
+                <th style="color:var(--text-muted);font-weight:600;padding:10px 12px">الفئة</th>
+                <th style="color:var(--text-muted);font-weight:600;padding:10px 12px">المعيار</th>
+                <th style="color:var(--text-muted);font-weight:600;padding:10px 12px">الخصم</th>
+                <th style="color:var(--text-muted);font-weight:600;padding:10px 12px">#</th>
+                <th style="color:var(--text-muted);font-weight:600;padding:10px 12px">مرفق</th>
+              </tr>
+            </thead>
+            <tbody id="logTableBody">
+              <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px;font-family:Cairo">جاري التحميل...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+
+
+  <!-- ==================== MANAGER PAGE ==================== -->
+  <div class="page" id="page-manager">
+
+    <!-- ── تنبيه مهام المشرفة ── -->
+    <div id="supervisorAlert" style="display:none;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #f59e0b;border-radius:12px;padding:16px 20px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:24px">⚠️</span>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#92400e;font-family:Cairo" id="alertTitle">المشرفة لم تؤكد مهام اليوم بعد</div>
+            <div style="font-size:12px;color:#b45309;font-family:Cairo;margin-top:3px" id="alertDetail"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="deductSupervisorForTasks()"
+            style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-family:Cairo;font-size:12px;font-weight:700;cursor:pointer">
+            خصم نقطة
+          </button>
+          <button onclick="dismissAlert()"
+            style="background:transparent;color:#92400e;border:1px solid #f59e0b;border-radius:8px;padding:8px 14px;font-family:Cairo;font-size:12px;cursor:pointer">
+            تجاهل
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div>
+        <h2>📊 لوحة مدير الجودة</h2>
+        <div id="mgrDateDisplay" style="font-family:Cairo;font-size:12px;color:var(--apex-muted);margin-top:4px"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-teal" onclick="generateWeeklyReport()">📄 تقرير أسبوعي</button>
+        <button class="btn btn-danger" onclick="confirmReset()">🔄 إعادة تعيين الشهر</button>
+        <button onclick="testConnection()" style="padding:8px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg-card);color:var(--text);font-family:Cairo;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px">
+          <span id="testConnIcon">🔌</span> اختبار الاتصال
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-row" id="managerStats">
+      <div class="stat-chip">
+        <div class="stat-chip-value" id="statTotalBonus" style="color:var(--apex-green)">--</div>
+        <div class="stat-chip-label">إجمالي الحوافز (ريال)</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-value" id="statTopPerformer" style="color:var(--apex-gold)">--</div>
+        <div class="stat-chip-label">أفضل أداء</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-value" id="statRahafScore" style="color:var(--apex-teal-light)">--</div>
+        <div class="stat-chip-label">نقاط رهف</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-value" id="statRahafBalance" style="color:var(--apex-purple)">--</div>
+        <div class="stat-chip-label">رصيد رهف (من 800)</div>
+      </div>
+    </div>
+
+
+      <!-- ── تنبيه Checklist المشرفة ── -->
+      <div id="checklistAlertCard" style="display:none;background:linear-gradient(135deg,rgba(239,68,68,0.08),rgba(245,158,11,0.05));border:1.5px solid #ef4444;border-radius:14px;padding:18px 20px;margin-bottom:20px">
+        <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+          <div style="font-size:28px">⚠️</div>
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;color:#ef4444;font-family:Cairo;margin-bottom:6px">
+              المشرفة لم تؤكد مهامها اليومية
+            </div>
+            <div id="checklistAlertDetail" style="font-size:12px;color:var(--text-muted);font-family:Cairo;margin-bottom:12px"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="applyChecklistDeduction()" id="checklistDeductBtn"
+                style="padding:7px 16px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-family:Cairo;font-size:12px;font-weight:700;cursor:pointer">
+                ✂️ تطبيق خصم المتابعة
+              </button>
+              <button onclick="dismissChecklistAlert()"
+                style="padding:7px 16px;background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:8px;font-family:Cairo;font-size:12px;cursor:pointer">
+                تجاهل اليوم
+              </button>
+            </div>
+          </div>
+          <div id="checklistStatusBadges" style="display:flex;flex-direction:column;gap:6px;min-width:200px"></div>
+        </div>
+      </div>
+
+    <!-- Employee Balances -->
+    <div class="card">
+      <div class="card-title">👥 أرصدة الموظفات</div>
+      <div class="employees-grid" id="managerEmployeeGrid">
+        <div style="color:var(--apex-muted);font-size:13px">جاري التحميل...</div>
+      </div>
+    </div>
+
+    <!-- Rahaf Evaluation -->
+    <div class="card">
+      <div class="card-title">🎯 تقييم المشرفة رهف</div>
+
+      <div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);border-radius:10px;padding:16px;margin-bottom:20px">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div>
+            <div style="font-size:11px;color:var(--apex-muted)">رصيد رهف الحالي</div>
+            <div style="font-size:28px;font-weight:900;color:#a78bfa" id="rahafBalanceDisplay">0</div>
+          </div>
+          <div style="flex:1">
+            <div class="progress-bar" style="height:8px">
+              <div class="progress-fill" id="rahafBalanceBar" style="width:0%;background:var(--apex-purple)"></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--apex-muted)">الحافز</div>
+            <div style="font-size:18px;font-weight:700;color:var(--apex-green)" id="rahafBonusDisplay">0 ريال</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:var(--apex-teal-light);font-family:Cairo;font-weight:600" id="rahafMilestone">
+          9 نقطة للمكافأة التالية (5 ريال)
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>المعيار / المهمة</label>
+          <select id="rahafCriteria">
+            <option value="">-- اختر المعيار --</option>
+            <option value="تقييم الرقم الموحد 7078">تقييم الرقم الموحد 7078</option>
+            <option value="المتابعة اليومية للجدول">المتابعة اليومية للجدول</option>
+            <option value="الالتزام برصد المخالفات وتوثيقها">الالتزام برصد المخالفات وتوثيقها</option>
+            <option value="متابعة المحادثات المفتوحة">متابعة المحادثات المفتوحة</option>
+            <option value="تنفيذ مهام الجرد والمتابعة">تنفيذ مهام الجرد والمتابعة</option>
+            <option value="استكمال تغطية الموظفات">استكمال تغطية الموظفات</option>
+            <option value="متابعة جودة المكالمات على 7078">متابعة جودة المكالمات على 7078</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>نوع التقييم</label>
+          <select id="rahafEvalType">
+            <option value="تقصير">تقصير</option>
+            <option value="مخالفة متكررة">مخالفة متكررة</option>
+            <option value="غياب متابعة">غياب متابعة</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px">
+        <label>ملاحظات</label>
+        <textarea id="rahafNotes" rows="2" placeholder="تفاصيل التقصير..."></textarea>
+      </div>
+
+      <!-- رفع ملف توثيق -->
+      <div class="form-group" style="margin-bottom:16px">
+        <label>توثيق الخطأ (صورة / ملف)</label>
+        <div id="rahafUploadZone"
+          onclick="document.getElementById('rahafFileInput').click()"
+          ondragover="event.preventDefault();this.style.borderColor='var(--apex-teal)'"
+          ondragleave="this.style.borderColor='var(--border)'"
+          ondrop="handleRahafDrop(event)"
+          style="border:2px dashed var(--border);background:var(--bg-input);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:border-color 0.2s">
+          <div style="font-size:24px;margin-bottom:4px" id="rahafUploadIcon">📎</div>
+          <div style="font-size:12px;color:var(--text-muted);font-family:Cairo">اضغط لرفع ملف أو اسحبه هنا</div>
+          <div style="font-size:11px;color:var(--text-muted);font-family:Cairo;margin-top:2px">صورة أو PDF</div>
+          <input type="file" id="rahafFileInput" accept="image/*,.pdf" style="display:none" onchange="handleRahafFile(this)">
+        </div>
+        <div id="rahafFilePreview" style="display:none;margin-top:8px;padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;display:none;align-items:center;gap:10px;font-family:Cairo;font-size:13px">
+          <span id="rahafFileIcon" style="font-size:20px">📄</span>
+          <span id="rahafFileName" style="flex:1;color:var(--text)">—</span>
+          <button onclick="clearRahafFile()" style="background:none;border:none;color:var(--apex-red);cursor:pointer;font-size:16px">✕</button>
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:8px">مقدار الخصم (نقاط)</label>
+        <div class="deduct-grid">
+          <button class="deduct-btn" onclick="deductRahaf(2)">2 نقطة<br><small>تكرار ١</small></button>
+          <button class="deduct-btn" onclick="deductRahaf(4)">4 نقاط<br><small>تكرار ٢</small></button>
+          <button class="deduct-btn" onclick="deductRahaf(6)">6 نقاط<br><small>تكرار ٣</small></button>
+          <button class="deduct-btn" onclick="deductRahaf(8)">8 نقاط<br><small>إنذار شفهي</small></button>
+          <button class="deduct-btn" onclick="deductRahaf(10)">10 نقاط<br><small>إنذار كتابي</small></button>
+        </div>
+      </div>
+
+      <!-- زر إرسال التقرير -->
+      <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+        <button onclick="sendRahafReport()" style="width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;font-family:Cairo;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+          <span>📤</span> إرسال التقرير للمشرفة
+        </button>
+      </div>
+    </div>
+
+    <!-- Weekly Report Preview -->
+    <div class="card" id="weeklyReportCard" style="display:none">
+      <div class="card-title">📄 التقرير الأسبوعي</div>
+      <div id="weeklyReportContent"></div>
+      <div style="margin-top:16px;display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="printReport()">🖨️ طباعة / PDF</button>
+        <button class="btn btn-teal" onclick="document.getElementById('weeklyReportCard').style.display='none'">إغلاق</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- VIOLATION CONFIRM MODAL -->
+<div id="violationConfirmModal" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);align-items:center;justify-content:center">
+  <div class="t-modal-box" style="padding:28px;max-width:400px;width:90%;border-top:3px solid #1a56db;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+    <div style="font-size:36px;text-align:center;margin-bottom:12px">📋</div>
+    <div style="font-size:17px;font-weight:700;color:var(--text);font-family:Cairo;text-align:center;margin-bottom:20px">تأكيد تسجيل المخالفة</div>
+    <div id="violConfirmSummary" class="t-inner-box" style="font-family:Cairo;font-size:13px;line-height:2;margin-bottom:20px"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeViolationConfirm()" class="t-cancel-btn">إلغاء</button>
+      <button onclick="confirmAndSubmit()" style="flex:1;padding:11px;border-radius:8px;border:none;background:linear-gradient(135deg,#1a56db,#0ea5b0);color:#fff;font-family:Cairo;font-size:14px;font-weight:700;cursor:pointer">✓ تأكيد التسجيل</button>
+    </div>
+  </div>
+</div>
+
+<!-- RAHAF REPORT CONFIRM MODAL -->
+<div id="rahafReportModal" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);align-items:center;justify-content:center">
+  <div class="t-modal-box" style="padding:28px;max-width:420px;width:90%;border-top:3px solid #8b5cf6;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+    <div style="font-size:36px;text-align:center;margin-bottom:12px">📤</div>
+    <div style="font-size:17px;font-weight:700;color:var(--text);font-family:Cairo;text-align:center;margin-bottom:16px">تأكيد إرسال التقرير</div>
+    <div id="rahafReportSummary" class="t-inner-box" style="font-family:Cairo;font-size:13px;line-height:2;margin-bottom:20px"></div>
+    <div style="font-size:12px;color:var(--text-muted);font-family:Cairo;text-align:center;margin-bottom:16px">سيتم إرسال التقرير مع المرفق إلى سجل التقييمات</div>
+    <div style="display:flex;gap:10px">
+      <button onclick="document.getElementById('rahafReportModal').style.display='none'" class="t-cancel-btn">إلغاء</button>
+      <button onclick="confirmRahafReport()" style="flex:1;padding:11px;border-radius:8px;border:none;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;font-family:Cairo;font-size:14px;font-weight:700;cursor:pointer">✓ تأكيد الإرسال</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESET CONFIRMATION MODAL -->
+<div id="resetModal" style="
+  display:none;position:fixed;inset:0;z-index:900;
+  background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;">
+  <div style="
+    class="t-modal-box" style="padding:36px;max-width:420px;width:90%;text-align:center;border-top:3px solid #ef4444;">
+    <div style="font-size:44px;margin-bottom:12px">⚠️</div>
+    <div style="font-size:18px;font-weight:700;color:#ef4444;margin-bottom:8px;font-family:Cairo">
+      تأكيد إعادة التعيين الشهرية
+    </div>
+    <div style="font-size:13px;color:#94a3b8;margin-bottom:20px;font-family:Cairo;line-height:1.8">
+      سيتم حفظ تقييم الشهر الحالي في سجل منفصل<br>
+      قبل إعادة التعيين — <strong style="color:#f0c96a">لن تضيع أي بيانات</strong>
+    </div>
+
+    <!-- ملخص الأرصدة الحالية -->
+    <div id="resetSummary" style="
+      class="t-inner-box" style="margin-bottom:20px;text-align:right;font-family:Cairo;font-size:13px">
+    </div>
+
+    <div style="font-size:12px;color:#ef4444;margin-bottom:20px;font-family:Cairo">
+      ⛔ بعد التأكيد تُصبح جميع الأرصدة 100 من جديد
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button onclick="closeResetModal()" style="
+        class="t-cancel-btn">
+        إلغاء
+      </button>
+      <button onclick="executeReset()" style="
+        flex:1;padding:11px;border-radius:8px;font-family:Cairo;font-size:14px;
+        font-weight:700;cursor:pointer;border:none;
+        background:linear-gradient(135deg,#ef4444,#b91c1c);color:white">
+        ✓ تأكيد التعيين
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<style id="printStyles">
+@media print {
+  body { background: white !important; color: black !important; }
+  .nav, .nav-tabs, .sup-score-bar, .btn, .deduct-grid, .card-title::before { display: none !important; }
+  .card { border: 1px solid #ccc !important; background: white !important; color: black !important; page-break-inside: avoid; }
+  #weeklyReportCard { display: block !important; }
+  .main { padding: 0 !important; }
+  .page { display: block !important; }
+  #page-supervisor, #page-manager > *:not(#weeklyReportCard) { display: none !important; }
+}
+</style>
+
+<script>
+// ============================================================
+// CONFIG & STATE
+// ============================================================
+const MANAGER_PASSWORD    = "T9@MG7tYxia8";
+const SUPERVISOR_PASSWORD = "Apex@sup2025";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxTzNRgI8wNzxgkEdPdYc1LDx4jpICh_tpk5Bk0UcGaKREBRPTlInREXxqwjhSRKnuo/exec";
+
+
+// ══════════════════════════════════════════
+// مهام الـ Checklist اليومي للمشرفة
+// ══════════════════════════════════════════
+const DAILY_TASKS = [
+  { id: "monitoring",   label: "🔍 مراقبة ومتابعة الموظفات اليوم",            desc: "هل راقبتِ أداء الموظفات اليوم؟" },
+  { id: "violations",   label: "📋 جرد المخالفات اليومية وتوثيقها",            desc: "هل تم رصد وتوثيق المخالفات؟" },
+  { id: "guidance",     label: "💬 توجيه الموظفات عند الخطأ",                  desc: "هل وجّهتِ من ارتكبت خطأ اليوم؟" },
+  { id: "appointments", label: "📅 مراجعة تأكيد المواعيد وحجوزاتها",           desc: "هل راجعتِ تأكيد المواعيد اليوم؟" },
+  { id: "callquality",  label: "📞 مراجعة جودة المكالمات",                     desc: "هل استمعتِ لمكالمة واحدة على الأقل؟" },
+];
+
+const EMPLOYEES = {
+  "مرح":    { track: "calls",    trackLabel: "مكالمات" },
+  "جنان":   { track: "dual",     trackLabel: "مشترك" },
+  "أسيل":   { track: "messages", trackLabel: "رسائل" },
+  "حور":    { track: "messages", trackLabel: "رسائل" },
+  "سارة":   { track: "messages", trackLabel: "رسائل" },
+  "طيف":    { track: "messages", trackLabel: "رسائل" },
+  "روان":   { track: "messages", trackLabel: "رسائل" },
+  "تهاني":  { track: "dual",     trackLabel: "مشترك" }
+};
+
+const MAX_SUP_SCORE = Object.keys(EMPLOYEES).length * 100; // 8 × 100 = 800
+const rahafBonus = pts => Math.floor(pts / 8) * 5; // كل 8 نقاط = 5 ريال
+
+
+// ── مساعد آمن للوصول للعناصر ──
+const $id = id => document.getElementById(id);
+const setEl = (id, prop, val) => { const e = $id(id); if (e) e[prop] = val; };
+const setStyle = (id, prop, val) => { const e = $id(id); if (e) e.style[prop] = val; };
+
+const CRITERIA = {
+  calls: {
+    "المكالمات": {
+      "الصياغة التعريفية في بداية المكالمة": 14,
+      "التحقق من وجود ملف للمراجع": 11,
+      "الرد على جميع المكالمات الواردة": 10,
+      "تقديم خدمة مكتملة حتى الإغلاق": 8,
+      "استخدام ألفاظ مهنية مناسبة": 6,
+      "إقفال المكالمة بعبارة ختامية": 6
+    },
+    "فتح الملف": {
+      "إدخال الاسم الرباعي بشكل صحيح": 7,
+      "إدخال رقم الهوية بشكل صحيح": 6,
+      "إدخال تاريخ الميلاد بشكل صحيح": 6,
+      "إدخال العنوان بشكل صحيح": 6,
+    },
+    "المواعيد": {
+      "تعويض المواعيد الملغاة": 6,
+      "تأكيد المواعيد مع المراجعين": 5,
+      "تعبئة المواعيد في حال توفر موعد بديل": 5,
+      "ترتيب جدول الدكتور (مواعيد متتالية)": 4
+    }
+  },
+  messages: {
+    "الرسائل": {
+      "الرد على الرسائل خلال 10 دقائق": 14,
+      "متابعة المحادثات وعدم ترك محادثة مفتوحة": 11,
+      "التحقق من وجود ملف للمراجع": 10,
+      "التفاعل مع المراجع خلال دقيقة": 8,
+      "عبارة ختامية مهذبة في آخر رد": 6,
+      "الالتزام بالاختصارات المعتمدة": 6
+    },
+    "فتح الملف": {
+      "إدخال الاسم الرباعي بشكل صحيح": 7,
+      "إدخال رقم الهوية بشكل صحيح": 6,
+      "إدخال تاريخ الميلاد بشكل صحيح": 6,
+      "إدخال العنوان بشكل صحيح": 6,
+    },
+    "المواعيد": {
+      "تعويض المواعيد الملغاة": 6,
+      "تأكيد المواعيد مع المراجعين": 5,
+      "تعبئة المواعيد في حال توفر موعد بديل": 5,
+      "ترتيب جدول الدكتور (مواعيد متتالية)": 4
+    }
+  },
+  dual: {
+    "المكالمات": {
+      "الصياغة التعريفية في بداية المكالمة": 8,
+      "التحقق من وجود ملف للمراجع": 6,
+      "الرد على جميع المكالمات الواردة": 5,
+      "تقديم خدمة مكتملة حتى الإغلاق": 5,
+      "استخدام ألفاظ مهنية مناسبة": 3,
+      "إقفال المكالمة بعبارة ختامية": 3
+    },
+    "الرسائل": {
+      "الرد على الرسائل خلال 10 دقائق": 8,
+      "متابعة المحادثات وعدم ترك محادثة مفتوحة": 5,
+      "التحقق من وجود ملف للمراجع": 5,
+      "التفاعل مع المراجع خلال دقيقة": 4,
+      "عبارة ختامية مهذبة في آخر رد": 4,
+      "الالتزام بالاختصارات المعتمدة": 4
+    },
+    "فتح الملف": {
+      "إدخال الاسم الرباعي بشكل صحيح": 7,
+      "إدخال رقم الهوية بشكل صحيح": 6,
+      "إدخال تاريخ الميلاد بشكل صحيح": 6,
+      "إدخال العنوان بشكل صحيح": 6,
+    },
+    "المواعيد": {
+      "تعويض المواعيد الملغاة": 5,
+      "تأكيد المواعيد مع المراجعين": 4,
+      "تعبئة المواعيد في حال توفر موعد بديل": 3,
+      "ترتيب جدول الدكتور (مواعيد متتالية)": 3
+    }
+  }
+};
+
+// Local state (mirrors what's in Sheets)
+let state = {
+  managerUnlocked:    false,
+  supervisorUnlocked: false,
+  employeeScores:     {},
+  violationLog:       [],
+  supervisorScore:    0,
+  rahafDeductions:    0,
+  attachmentUrl:      null,
+};
+
+// Init default scores
+Object.keys(EMPLOYEES).forEach(name => {
+  state.employeeScores[name] = { balance: 100, deducted: 0 };
+});
+
+// ============================================================
+// LANDING SCREEN — اختيار الدور ثم الدخول
+// ============================================================
+let _selectedRole = null;
+
+const ROLE_CONFIG = {
+  supervisor: {
+    icon: "🛡️",
+    iconBg: "linear-gradient(135deg,#0ea5b0,#1a56db)",
+    title: "واجهة الإشراف",
+    pwLabel: "رمز الدخول",
+    btnBg: "linear-gradient(135deg,#0ea5b0,#1a56db)"
+  },
+  manager: {
+    icon: "📊",
+    iconBg: "linear-gradient(135deg,#d4a843,#b8860b)",
+    title: "لوحة مدير الجودة",
+    pwLabel: "كلمة المرور",
+    btnBg: "linear-gradient(135deg,#d4a843,#b8860b)"
+  }
+};
+
+function showLoginScreen(role) {
+  _selectedRole = role;
+  const cfg = ROLE_CONFIG[role];
+  document.getElementById("role-select-screen").style.display = "none";
+  document.getElementById("login-screen").style.display      = "block";
+  document.getElementById("login-role-icon").textContent     = cfg.icon;
+  document.getElementById("login-role-icon").style.background = cfg.iconBg;
+  document.getElementById("login-role-title").textContent    = cfg.title;
+  document.getElementById("login-pw-label").textContent      = cfg.pwLabel;
+  document.getElementById("login-submit-btn").style.background = cfg.btnBg;
+  document.getElementById("landingPassword").value           = "";
+  setTimeout(() => document.getElementById("landingPassword").focus(), 100);
+}
+
+function showRoleSelect() {
+  _selectedRole = null;
+  document.getElementById("login-screen").style.display       = "none";
+  document.getElementById("role-select-screen").style.display = "block";
+  document.getElementById("landingPassword").value            = "";
+}
+
+function submitLandingLogin() {
+  const pw = document.getElementById("landingPassword").value;
+  if (_selectedRole === "supervisor") {
+    if (pw === SUPERVISOR_PASSWORD) {
+      state.supervisorUnlocked = true;
+      document.getElementById("landing-screen").style.display = "none";
+      switchPage("supervisor");
+      showToast("أهلاً بك في واجهة الإشراف ✓", "success");
+    } else {
+      showToast("رمز الدخول غير صحيح", "error");
+      document.getElementById("landingPassword").value = "";
+    }
+  } else if (_selectedRole === "manager") {
+    if (pw === MANAGER_PASSWORD) {
+      state.managerUnlocked = true;
+      document.getElementById("landing-screen").style.display = "none";
+      switchPage("manager");
+      showToast("تم الدخول بنجاح ✓", "success");
+    } else {
+      showToast("كلمة المرور غير صحيحة", "error");
+      document.getElementById("landingPassword").value = "";
+    }
+  }
+}
+
+// ============================================================
+// AUTH (للتبديل بين الصفحات بعد الدخول)
+// ============================================================
+function checkSupervisorAuth() {}
+function checkManagerAuth()    {}
+function goToSupervisor()      { switchPage("supervisor"); }
+
+// ============================================================
+// PAGE SWITCHING
+// ============================================================
+function switchPage(page) {
+  if (page === "supervisor" && !state.supervisorUnlocked) {
+    showLoginScreen("supervisor");
+    document.getElementById("landing-screen").style.display = "flex";
+    return;
+  }
+  if (page === "manager" && !state.managerUnlocked) {
+    showLoginScreen("manager");
+    document.getElementById("landing-screen").style.display = "flex";
+    return;
+  }
+  document.getElementById("landing-screen").style.display = "none";
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("page-" + page).classList.add("active");
+  document.getElementById("tab" + (page === "supervisor" ? "Sup" : "Mgr")).classList.add("active");
+  if (page === "supervisor") { refreshSupervisorPage(); loadDailyTasks(); }
+  if (page === "manager")    { refreshManagerPage(); checkSupervisorDailyAlert(); }
+}
+
+// ============================================================
+// EMPLOYEE SELECTION
+// ============================================================
+function onEmployeeChange() {
+  const name = document.getElementById("empSelect").value;
+  const trackDisplayRow = document.getElementById("trackDisplayRow");
+  if (trackDisplayRow) trackDisplayRow.style.display = name ? "block" : "none";
+  const trackDisplay = document.getElementById("trackDisplay");
+  const catSelect = document.getElementById("categorySelect");
+  const critSelect = document.getElementById("criterionSelect");
+
+  catSelect.innerHTML = '<option value="">-- اختر الفئة --</option>';
+  catSelect.disabled = true;
+  critSelect.innerHTML = '<option value="">-- اختر المعيار --</option>';
+  critSelect.disabled = true;
+  document.getElementById("criterionInfo").style.display = "none";
+
+  if (!name) {
+    trackDisplay.innerHTML = '<span style="color:var(--apex-muted);font-size:13px">يُحدد بعد اختيار الموظفة</span>';
+    document.getElementById("empBalanceRow").style.display = "none";
+    return;
+  }
+
+  const emp = EMPLOYEES[name];
+  const trackClass = emp.track === "calls" ? "track-calls" : emp.track === "messages" ? "track-messages" : "track-dual";
+  const icon = emp.track === "calls" ? "📞" : emp.track === "messages" ? "💬" : "🔀";
+  trackDisplay.innerHTML = `<span class="track-badge ${trackClass}">${icon} ${emp.trackLabel}</span>`;
+
+  // Populate categories
+  const cats = Object.keys(CRITERIA[emp.track]);
+  cats.forEach(cat => {
+    const opt = document.createElement("option");
+    opt.value = cat;
+    opt.textContent = cat;
+    catSelect.appendChild(opt);
+  });
+  catSelect.disabled = false;
+
+  // Show balance
+  const sc = state.employeeScores[name];
+  document.getElementById("empBalanceRow").style.display = "block";
+  updateEmpBalanceDisplay(name);
+}
+
+function updateEmpBalanceDisplay(name) {
+  const sc = state.employeeScores[name];
+  document.getElementById("empCurrentBalance").textContent = sc.balance;
+  document.getElementById("empCurrentBonus").textContent = (sc.balance * 5) + " ريال";
+  const pct = sc.balance;
+  const bar = document.getElementById("empBalanceBar");
+  bar.style.width = pct + "%";
+  bar.style.background = pct >= 80 ? "var(--apex-green)" : pct >= 60 ? "var(--apex-gold)" : "var(--apex-red)";
+}
+
+function onCategoryChange() {
+  const name = document.getElementById("empSelect").value;
+  const cat = document.getElementById("categorySelect").value;
+  const critSelect = document.getElementById("criterionSelect");
+
+  critSelect.innerHTML = '<option value="">-- اختر المعيار --</option>';
+  critSelect.disabled = true;
+  document.getElementById("criterionInfo").style.display = "none";
+
+  if (!name || !cat) return;
+
+  const track = EMPLOYEES[name].track;
+  const criteria = CRITERIA[track][cat];
+  Object.entries(criteria).forEach(([crit, pts]) => {
+    const opt = document.createElement("option");
+    opt.value = crit;
+    opt.textContent = `${crit} (${pts} نقطة)`;
+    critSelect.appendChild(opt);
+  });
+  critSelect.disabled = false;
+}
+
+function onCriterionChange() {
+  const name = document.getElementById("empSelect").value;
+  const cat = document.getElementById("categorySelect").value;
+  const crit = document.getElementById("criterionSelect").value;
+  if (!name || !cat || !crit) {
+    document.getElementById("criterionInfo").style.display = "none";
+    return;
+  }
+
+  const track = EMPLOYEES[name].track;
+  const points = CRITERIA[track][cat][crit];
+  const violNum = getViolationCount(name, crit) + 1;
+  const deductPer = Math.ceil(points / 3);
+  let deduction = 0;
+  if (violNum <= 3) deduction = deductPer;
+
+  document.getElementById("infoPoints").textContent = points + " نقطة";
+  document.getElementById("infoDeduct").textContent = deduction > 0 ? deduction + " نقطة" : "لا خصم (استُنفدت النقاط)";
+  document.getElementById("infoViolNum").textContent = violNum;
+  document.getElementById("criterionInfo").style.display = "block";
+}
+
+function getViolationCount(employee, criterion) {
+  return state.violationLog.filter(v => v.employee === employee && v.criterion === criterion).length;
+}
+
+// ============================================================
+// IMAGE HANDLING
+// ============================================================
+function handleAttachFile(input) {
+  if (!input.files || !input.files[0]) return;
+  processAttachment(input.files[0]);
+}
+
+function handleAttachDrop(event) {
+  event.preventDefault();
+  const az = document.getElementById("attachZone");
+  if (az) az.style.borderColor = "var(--border)";
+  if (event.dataTransfer && event.dataTransfer.files[0]) processAttachment(event.dataTransfer.files[0]);
+}
+
+function processAttachment(file) {
+  const MAX_MB = 10;
+  if (file.size > MAX_MB * 1024 * 1024) {
+    showToast("⚠️ حجم الملف يتجاوز " + MAX_MB + "MB", "warning");
+    return;
+  }
+  const iconEl = document.getElementById("attachIcon");
+  const textEl = document.getElementById("attachText");
+  const statEl = document.getElementById("attachStatus");
+  state.attachmentUrl = null;
+  if (iconEl) iconEl.textContent = "⏳";
+  if (textEl) textEl.textContent = "جاري الرفع...";
+  if (statEl) statEl.style.display = "none";
+
+  const reader = new FileReader();
+  reader.onerror = () => showToast("❌ فشل قراءة الملف", "error");
+  reader.onload = async (e) => {
+    const base64 = e.target.result.split(",")[1];
+    try {
+      const fd = new FormData();
+      fd.append("image", base64);
+      fd.append("type",  "base64");
+      const res  = await fetch("https://api.imgur.com/3/image", {
+        method:  "POST",
+        headers: { "Authorization": "Client-ID 546c25a59c58ad7" },
+        body: fd
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const json = await res.json();
+      if (!json.success) throw new Error(json.data && json.data.error ? json.data.error : "Imgur رفض الملف");
+      state.attachmentUrl  = json.data.link;
+      state._attachBase64  = base64;   // احتفظ بـ base64 لحفظه في Drive لاحقاً
+      if (iconEl) iconEl.textContent = "✅";
+      if (textEl) textEl.textContent  = file.name;
+      if (statEl) {
+        statEl.style.display = "block";
+        statEl.innerHTML = `<a href="${state.attachmentUrl}" target="_blank"
+          style="color:#1a56db;font-family:Cairo;text-decoration:none">🔗 عرض المرفق</a>
+          <span style="color:var(--text-muted);margin-right:8px">(${(file.size/1024).toFixed(0)} KB)</span>`;
+      }
+      showToast("✅ تم رفع المرفق", "success");
+    } catch(err) {
+      console.error("Imgur upload error:", err);
+      if (iconEl) iconEl.textContent = "❌";
+      if (textEl) textEl.textContent  = "فشل الرفع — جرب مرة أخرى";
+      showToast("❌ فشل رفع المرفق: " + err.message, "error");
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+// handleDrop merged into handleAttachDrop
+
+// ============================================================
+// SUBMIT VIOLATION
+// ============================================================
+let _pendingViolation = null;
+
+function submitViolation() {
+  const supName = document.getElementById("supervisorName").value.trim();
+  const name    = document.getElementById("empSelect").value;
+  const cat     = document.getElementById("categorySelect").value;
+  const crit    = document.getElementById("criterionSelect").value;
+  const notes   = document.getElementById("notesInput").value;
+
+  if (!supName) { showToast("يرجى كتابة اسم المشرفة", "error"); document.getElementById("supervisorName").focus(); return; }
+  if (!name || !cat || !crit) { showToast("يرجى تحديد الموظفة والفئة والمعيار", "error"); return; }
+
+  const track    = EMPLOYEES[name].track;
+  const points   = CRITERIA[track][cat][crit];
+  const violNum  = getViolationCount(name, crit) + 1;
+  const deductPer = Math.ceil(points / 3);
+  const deduction = violNum <= 3 ? deductPer : 0;
+
+  _pendingViolation = { supName, name, cat, crit, notes, track, points, violNum, deduction };
+
+  const escLabel = violNum === 4 ? "⚠️ إنذار شفهي" : violNum === 5 ? "⚠️ إنذار كتابي" : violNum > 5 ? "🚨 رفع للإدارة" : "";
+  const attachLine = state.attachmentUrl
+    ? `<div style="margin-top:4px"><span style="color:var(--text-muted)">مرفق:</span> <a href="${state.attachmentUrl}" target="_blank" style="color:#1a56db;font-family:Cairo;font-size:12px">📎 عرض المرفق</a></div>`
+    : "";
+
+  document.getElementById("violConfirmSummary").innerHTML = `
+    <div><span style="color:var(--text-muted)">المشرفة:</span> <strong>${supName}</strong></div>
+    <div><span style="color:var(--text-muted)">الموظفة:</span> <strong>${name}</strong></div>
+    <div><span style="color:var(--text-muted)">الفئة:</span> <strong>${cat}</strong></div>
+    <div><span style="color:var(--text-muted)">المعيار:</span> <strong>${crit}</strong></div>
+    <div><span style="color:var(--text-muted)">الخصم:</span> <strong style="color:#dc2626">-${deduction} نقطة</strong></div>
+    <div><span style="color:var(--text-muted)">رقم المخالفة:</span> <strong style="color:#d97706">#${violNum}</strong></div>
+    ${escLabel ? `<div style="margin-top:4px;padding:6px 10px;background:#fef2f2;border-radius:6px;color:#dc2626;font-weight:700">${escLabel}</div>` : ""}
+    ${attachLine}
+    ${notes ? `<div><span style="color:var(--text-muted)">ملاحظات:</span> ${notes}</div>` : ""}
+  `;
+  document.getElementById("violationConfirmModal").style.display = "flex";
+}
+
+function closeViolationConfirm() {
+  document.getElementById("violationConfirmModal").style.display = "none";
+  _pendingViolation = null;
+}
+
+async function confirmAndSubmit() {
+  document.getElementById("violationConfirmModal").style.display = "none";
+  if (!_pendingViolation) return;
+  const { supName, name, cat, crit, notes, track, points, violNum, deduction } = _pendingViolation;
+  _pendingViolation = null;
+
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  setEl("submitBtnText","innerHTML", '<span class="loading-spinner"></span> جاري الحفظ...');
+
+  state.employeeScores[name].balance  = Math.max(0, state.employeeScores[name].balance - deduction);
+  state.employeeScores[name].deducted += deduction;
+  state.supervisorScore = Math.min(MAX_SUP_SCORE, state.supervisorScore + 2);
+  state.violationLog.unshift({
+    date: new Date().toLocaleDateString("ar-SA"),
+    time: new Date().toLocaleTimeString("ar-SA"),
+    supervisor: supName, employee: name, category: cat, criterion: crit,
+    points, deduction, violNum, attachmentUrl: state.attachmentUrl || "", notes
+  });
+
+  try {
+    const res = await callGAS("recordViolation", {
+      supervisorName: supName, employeeName: name,
+      criterion: crit, category: cat, notes,
+      attachmentUrl: state.attachmentUrl || ""
+    });
+    if (res && res.success) {
+      showToast("✅ تم الحفظ" + (state.attachmentUrl ? " مع المرفق 📎" : ""), "success");
+      // احفظ في Drive بمجلد الموظفة (في الخلفية)
+      if (state._attachBase64 && name) {
+        const dateStr  = new Date().toISOString().slice(0,10);
+        const fileName = `${res.violationNum || "viol"}-${dateStr}.jpg`;
+        callGAS("saveToDrive", {
+          base64:       state._attachBase64,
+          fileName,
+          employeeName: name
+        }).then(dr => {
+          if (dr && dr.url) console.log("Drive saved:", dr.url);
+        }).catch(() => {});
+        state._attachBase64 = null;
+      }
+    } else {
+      showToast("⚠️ " + (res && res.error || "خطأ في الحفظ"), "warning");
+    }
+  } catch(e) { showToast("❌ " + e.message, "error"); }
+
+  // إعادة تعيين المرفق
+  state.attachmentUrl = null;
+  const ai = document.getElementById("attachIcon");
+  const at = document.getElementById("attachText");
+  const as = document.getElementById("attachStatus");
+  const ain = document.getElementById("attachInput");
+  if (ai)  ai.textContent      = "📎";
+  if (at)  at.textContent      = "اضغط أو اسحب · صورة / فيديو / PDF · حد أقصى 10MB";
+  if (as)  as.style.display    = "none";
+  if (ain) ain.value           = "";
+
+  updateSupervisorScoreDisplay(); updateRahafDisplay();
+  updateEmpBalanceDisplay(name); renderLogTable();
+  refreshManagerPage(); renderSupEmployeeList();
+
+  let esc = null;
+  if      (violNum === 4) esc = "إنذار شفهي";
+  else if (violNum === 5) esc = "إنذار كتابي";
+  else if (violNum > 5)   esc = "رفع للإدارة";
+  if (esc) showEscalation(esc, name, crit);
+  else showToast(`✓ تم تسجيل المخالفة | خُصم ${deduction} نقطة | +2 لرهف`, "success");
+
+  btn.disabled = false;
+  setEl("submitBtnText","textContent","✓ تسجيل المخالفة");
+  document.getElementById("empSelect").value = "";
+  ["categorySelect","criterionSelect"].forEach(id => {
+    document.getElementById(id).innerHTML = `<option value="">-- اختر ${id==="categorySelect"?"الفئة":"المعيار"} --</option>`;
+    document.getElementById(id).disabled = true;
+  });
+  document.getElementById("criterionInfo").style.display = "none";
+  document.getElementById("empBalanceRow").style.display = "none";
+  document.getElementById("notesInput").value = "";
+}
+
+// ============================================================
+// DEDUCT RAHAF
+// ============================================================
+// ============================================================
+// رفع ملف توثيق تقييم رهف
+// ============================================================
+let rahafFileData = null;
+let rahafFileName = null;
+
+function handleRahafFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  processRahafFile(file);
+}
+
+function handleRahafDrop(e) {
+  e.preventDefault();
+  document.getElementById("rahafUploadZone").style.borderColor = "var(--border)";
+  const file = e.dataTransfer.files[0];
+  if (file) processRahafFile(file);
+}
+
+function processRahafFile(file) {
+  const isImage = file.type.startsWith("image/");
+  const isPDF   = file.type === "application/pdf";
+  if (!isImage && !isPDF) { showToast("يُقبل صور أو PDF فقط", "error"); return; }
+
+  rahafFileName = file.name;
+  const icon = document.getElementById("rahafUploadIcon");
+  const preview = document.getElementById("rahafFilePreview");
+  const nameEl  = document.getElementById("rahafFileName");
+  const iconEl  = document.getElementById("rahafFileIcon");
+
+  if (isImage) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      rahafFileData = e.target.result.split(",")[1];
+      icon.textContent = "✅";
+      iconEl.textContent = "🖼️";
+      nameEl.textContent = file.name;
+      preview.style.display = "flex";
+    };
+    reader.readAsDataURL(file);
+  } else {
+    rahafFileData = "pdf";
+    icon.textContent = "✅";
+    iconEl.textContent = "📄";
+    nameEl.textContent = file.name;
+    preview.style.display = "flex";
+  }
+}
+
+function clearRahafFile() {
+  rahafFileData = null;
+  rahafFileName = null;
+  document.getElementById("rahafFileInput").value = "";
+  document.getElementById("rahafUploadIcon").textContent = "📎";
+  document.getElementById("rahafFilePreview").style.display = "none";
+}
+
+function sendRahafReport() {
+  const criterion = document.getElementById("rahafCriteria").value;
+  const evalType  = document.getElementById("rahafEvalType").value;
+  const notes     = document.getElementById("rahafNotes").value;
+
+  if (!criterion) { showToast("يرجى اختيار المعيار أولاً", "error"); return; }
+
+  const today = new Date().toLocaleDateString("ar-SA", { year:"numeric", month:"long", day:"numeric" });
+
+  document.getElementById("rahafReportSummary").innerHTML = `
+    <div><span style="color:var(--text-muted)">التاريخ:</span> <strong>${today}</strong></div>
+    <div><span style="color:var(--text-muted)">المعيار:</span> <strong>${criterion}</strong></div>
+    <div><span style="color:var(--text-muted)">نوع التقييم:</span> <strong>${evalType}</strong></div>
+    ${notes ? `<div><span style="color:var(--text-muted)">الملاحظات:</span> ${notes}</div>` : ""}
+    <div><span style="color:var(--text-muted)">مرفق:</span> <strong>${rahafFileData ? `✅ ${rahafFileName}` : "لا يوجد"}</strong></div>
+  `;
+  document.getElementById("rahafReportModal").style.display = "flex";
+}
+
+async function confirmRahafReport() {
+  document.getElementById("rahafReportModal").style.display = "none";
+
+  const criterion = document.getElementById("rahafCriteria").value;
+  const evalType  = document.getElementById("rahafEvalType").value;
+  const notes     = document.getElementById("rahafNotes").value;
+
+  try {
+    let fileUrl = "";
+    if (rahafFileData && rahafFileData !== "pdf") {
+      const imgRes = await callGAS("uploadImage", { base64Data: rahafFileData, fileName: `rahaf_${Date.now()}.jpg` });
+      if (imgRes && imgRes.success) fileUrl = imgRes.url;
+    }
+    await callGAS("recordSupervisorEvaluation", { criterion, evalType, deduction: 0, notes, fileUrl, reportOnly: true });
+  } catch(e) { console.warn("GAS:", e.message); }
+
+  clearRahafFile();
+  document.getElementById("rahafNotes").value = "";
+  showToast("✅ تم إرسال التقرير وحفظه في السجل", "success");
+}
+
+// ============================================================
+async function deductRahaf(amount) {
+  const criterion = document.getElementById("rahafCriteria").value;
+  const evalType  = document.getElementById("rahafEvalType").value;
+  const notes     = document.getElementById("rahafNotes").value;
+
+  if (!criterion) {
+    showToast("يرجى اختيار المعيار أولاً", "error");
+    return;
+  }
+
+  // الخصم يُضاف لمجموع الخصومات — النقاط الصافية = مكتسبة - خصومات
+  state.rahafDeductions = Math.min(state.supervisorScore, state.rahafDeductions + amount);
+
+  try {
+    await callGAS("recordSupervisorEvaluation", { criterion, evalType, deduction: amount, notes });
+  } catch (e) {
+    console.warn("GAS error:", e.message);
+  }
+
+  updateRahafDisplay();
+  refreshManagerPage();
+  showToast(`تم خصم ${amount} نقطة من رهف بسبب تقصير`, "warning");
+  document.getElementById("rahafNotes").value = "";
+}
+
+// ============================================================
+// WEEKLY REPORT
+// ============================================================
+function generateWeeklyReport() {
+  const card = document.getElementById("weeklyReportCard");
+  const content = document.getElementById("weeklyReportContent");
+
+  const now = new Date().toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" });
+  const totalBonus = Object.entries(state.employeeScores).reduce((sum, [, sc]) => sum + sc.balance * 5, 0);
+
+  let html = `
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:22px;font-weight:900;color:var(--apex-gold)">التقرير الأسبوعي – APEXCARE</div>
+      <div style="font-size:13px;color:var(--apex-muted)">تاريخ الإصدار: ${now}</div>
+    </div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>الموظفة</th>
+          <th>المسار</th>
+          <th>الرصيد</th>
+          <th>نقاط مخصومة</th>
+          <th>الحافز (ريال)</th>
+          <th>التقييم</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  Object.entries(state.employeeScores).forEach(([name, sc]) => {
+    const track = EMPLOYEES[name].trackLabel;
+    const pct = sc.balance;
+    const rating = pct >= 90 ? "ممتاز ⭐" : pct >= 75 ? "جيد جداً" : pct >= 60 ? "جيد" : "يحتاج تحسين";
+    const color = pct >= 90 ? "var(--apex-green)" : pct >= 75 ? "var(--apex-teal-light)" : pct >= 60 ? "var(--apex-gold)" : "var(--apex-red)";
+    html += `
+      <tr>
+        <td><strong>${name}</strong></td>
+        <td>${track}</td>
+        <td style="font-weight:700;color:${color}">${sc.balance}</td>
+        <td style="color:var(--apex-red)">${sc.deducted}</td>
+        <td style="color:var(--apex-green);font-weight:700">${sc.balance * 5}</td>
+        <td>${rating}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+      <tr style="background:rgba(212,168,67,0.08)">
+        <td colspan="4" style="font-weight:700;text-align:center">إجمالي الحوافز</td>
+        <td style="font-weight:900;font-size:18px;color:var(--apex-gold)">${totalBonus} ريال</td>
+        <td></td>
+      </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:16px;padding:12px;background:rgba(139,92,246,0.08);border-radius:8px;border:1px solid rgba(139,92,246,0.2)">
+      <strong>المشرفة رهف:</strong> مكتسبة: <strong style="color:#a78bfa">${state.supervisorScore}</strong> | خصومات: <strong style="color:#ef4444">-${state.rahafDeductions}</strong> | صافي: <strong style="color:#10b981">${Math.max(0,state.supervisorScore-state.rahafDeductions)}</strong> / ${MAX_SUP_SCORE} | حافز: <strong style="color:#f0c96a">${rahafBonus(Math.max(0,state.supervisorScore-state.rahafDeductions))} ريال</strong>
+    </div>
+  `;
+
+  content.innerHTML = html;
+  card.style.display = "block";
+  card.scrollIntoView({ behavior: "smooth" });
+}
+
+function printReport() {
+  window.print();
+}
+
+// ============================================================
+// REFRESH UI
+// ============================================================
+function refreshSupervisorPage() {
+  updateSupervisorScoreDisplay();
+  renderLogTable();
+  renderSupEmployeeList();
+}
+
+function renderSupEmployeeList() {
+  const list = document.getElementById("supEmployeeList");
+  if (!list) return;
+
+  const sorted = Object.entries(state.employeeScores)
+    .sort((a, b) => b[1].balance - a[1].balance);
+
+  const rankColors = ["#f59e0b","#9ca3af","#b45309"];
+  const rankIcons  = ["🥇","🥈","🥉"];
+  const trackIcon  = { calls:"📞", messages:"💬", dual:"🔀" };
+  const trackLabel = { calls:"مكالمات", messages:"رسائل", dual:"مشترك" };
+
+  list.innerHTML = sorted.map(([name, sc], idx) => {
+    const pct    = sc.balance;
+    const barClr = pct >= 80 ? "#10b981" : pct >= 60 ? "#f59e0b" : "#ef4444";
+    const bgClr  = pct >= 80 ? "#f0fdf4" : pct >= 60 ? "#fffbeb" : "#fef2f2";
+    const bdClr  = pct >= 80 ? "#bbf7d0" : pct >= 60 ? "#fde68a" : "#fecaca";
+    const emp    = EMPLOYEES[name];
+    const rank   = idx < 3 ? `<span style="font-size:18px">${rankIcons[idx]}</span>` :
+                   `<span style="width:24px;height:24px;border-radius:50%;background:var(--bg-card);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text-muted)">${idx+1}</span>`;
+
+    return `
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:${bgClr};border:1.5px solid ${bdClr};border-radius:10px;transition:transform 0.15s" 
+         onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+      ${rank}
+      <div style="min-width:52px">
+        <div style="font-size:14px;font-weight:700;color:var(--text);font-family:Cairo">${name}</div>
+        <div style="font-size:11px;color:var(--text-muted);font-family:Cairo">${trackIcon[emp.track]} ${trackLabel[emp.track]}</div>
+      </div>
+      <div style="flex:1">
+        <div style="height:7px;background:var(--border);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${barClr};border-radius:4px;transition:width 0.6s ease"></div>
+        </div>
+      </div>
+      <div style="text-align:center;min-width:38px">
+        <div style="font-size:18px;font-weight:900;color:${barClr};font-family:Cairo;line-height:1">${pct}</div>
+        <div style="font-size:10px;color:var(--text-muted);font-family:Cairo">نقطة</div>
+      </div>
+      <div style="text-align:center;min-width:60px;background:var(--bg-card);border-radius:8px;padding:4px 8px;border:1px solid #e5e7eb">
+        <div style="font-size:12px;font-weight:700;color:#059669;font-family:Cairo">${pct*5} ر</div>
+        <div style="font-size:9px;color:var(--text-muted);font-family:Cairo">حافز</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function updateSupervisorScoreDisplay() {
+  setEl("supScoreDisplay","textContent", state.supervisorScore);
+  setEl("supScoreDisplay2","textContent", state.supervisorScore);
+  setEl("supBonusDisplay","textContent", rahafBonus(state.supervisorScore) + " ريال");
+  setStyle("supScoreBar","width", (state.supervisorScore / MAX_SUP_SCORE * 100) + "%");
+}
+
+function refreshManagerPage() {
+  // Stats
+  const totalBonus = Object.values(state.employeeScores).reduce((s, sc) => s + sc.balance * 5, 0);
+  const top = Object.entries(state.employeeScores).reduce((best, [n, sc]) => sc.balance > best[1] ? [n, sc.balance] : best, ["", 0]);
+  document.getElementById("statTotalBonus").textContent = totalBonus.toLocaleString() + " ر";
+  document.getElementById("statTopPerformer").textContent = top[0] || "--";
+  document.getElementById("statRahafScore").textContent = state.supervisorScore;
+  document.getElementById("statRahafBalance").textContent = Math.max(0, state.supervisorScore - state.rahafDeductions) + " / " + MAX_SUP_SCORE;
+
+  // Employee grid
+  const grid = $id("managerEmployeeGrid");
+  grid.innerHTML = "";
+  Object.entries(state.employeeScores).forEach(([name, sc]) => {
+    const emp = EMPLOYEES[name];
+    const trackClass = emp.track === "calls" ? "track-calls" : emp.track === "messages" ? "track-messages" : "track-dual";
+    const icon = emp.track === "calls" ? "📞" : emp.track === "messages" ? "💬" : "🔀";
+    const pct = sc.balance;
+    const color = pct >= 80 ? "var(--apex-green)" : pct >= 60 ? "var(--apex-gold)" : "var(--apex-red)";
+    grid.innerHTML += `
+      <div class="employee-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div class="employee-card-name">${name}</div>
+          <span class="track-badge ${trackClass}" style="font-size:10px">${icon} ${emp.trackLabel}</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <span style="font-size:28px;font-weight:900;color:${color}">${sc.balance}</span>
+          <span style="font-size:12px;color:var(--apex-muted)">/100</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${pct}%;background:${color}"></div>
+        </div>
+        <div class="employee-card-bonus">${sc.balance * 5} ريال</div>
+      </div>
+    `;
+  });
+
+  updateRahafDisplay();
+}
+
+function updateRahafDisplay() {
+  // النقاط الصافية = مكتسبة - خصومات المدير
+  const earned  = state.supervisorScore;           // +2 لكل مخالفة موثقة
+  const deducted = state.rahafDeductions;          // خصومات المدير
+  const pts     = Math.max(0, earned - deducted);  // الصافي
+  const max     = MAX_SUP_SCORE;                   // 800
+  const pct     = Math.min(100, (pts / max) * 100);
+  const bonus   = rahafBonus(pts);                 // Math.floor(pts / 8) * 5
+  const THRESH  = Object.keys(EMPLOYEES).length;  // 9
+  const remainder = pts % THRESH;
+  const toNext  = remainder === 0 && pts > 0 ? 0 : THRESH - remainder;
+  const milestone = (pts > 0 && remainder === 0)
+    ? "✅ وصلت لمكافأة جديدة!"
+    : `${toNext} نقطة للمكافأة التالية (5 ريال)`;
+
+  // عرض التفاصيل
+  setEl("rahafBalanceDisplay", "textContent", pts);
+  setEl("rahafBonusDisplay",   "textContent", bonus + " ريال");
+  setEl("rahafMilestone",      "textContent", milestone);
+  setEl("statRahafBalance",    "textContent", pts + " / " + max);
+  setEl("statRahafScore",      "textContent", earned); // النقاط المكتسبة كاملة
+  const bar = document.getElementById("rahafBalanceBar");
+  if (bar) bar.style.width = pct + "%";
+  // شريط المشرفة في صفحة الإشراف
+  setEl("supScoreDisplay",  "textContent", pts);
+  setEl("supScoreDisplay2", "textContent", pts);
+  setEl("supBonusDisplay",  "textContent", bonus + " ريال");
+  const supBar = document.getElementById("supScoreBar");
+  if (supBar) supBar.style.width = pct + "%";
+}
+
+function renderLogTable() {
+  const tbody = $id("logTableBody");
+  if (!tbody) return;
+  if (!state.violationLog || state.violationLog.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--apex-muted);padding:20px;font-family:Cairo">لا توجد مخالفات مسجلة بعد</td></tr>';
+    return;
+  }
+  tbody.innerHTML = state.violationLog.slice(0, 50).map(v => {
+    const url   = v.attachmentUrl || v.imageUrl || "";
+    const valid = url && url.startsWith("http");
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:9px 12px;color:var(--text-muted);font-size:12px;font-family:Cairo">${v.date || ""}</td>
+      <td style="padding:9px 12px;font-weight:700;color:var(--text);font-family:Cairo">${v.employee || ""}</td>
+      <td style="padding:9px 12px;color:var(--text-label);font-family:Cairo">${v.category || ""}</td>
+      <td style="padding:9px 12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                 color:var(--text-label);font-family:Cairo" title="${v.criterion || ""}">${v.criterion || ""}</td>
+      <td style="padding:9px 12px;font-weight:700;color:#ef4444;font-family:Cairo">-${v.deduction ?? 0}</td>
+      <td style="padding:9px 12px">
+        <span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:4px;font-size:11px;font-family:Cairo">
+          #${v.violNum || ""}
+        </span>
+      </td>
+      <td style="padding:9px 12px;text-align:center">
+        ${valid
+          ? `<a href="${url}" target="_blank"
+               style="display:inline-block;color:#1a56db;font-size:12px;font-family:Cairo;text-decoration:none;
+                      border:1px solid #1a56db;border-radius:6px;padding:3px 10px;white-space:nowrap">
+               📎 عرض
+             </a>`
+          : '<span style="color:#94a3b8;font-size:13px">—</span>'
+        }
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+// ── تصفية جدول المخالفات حسب الموظفة ──
+function filterLogTable() {
+  const sel   = $id("logFilterSelect");
+  const badge = $id("logFilterBadge");
+  if (!sel) return;
+
+  const name = sel.value.trim();
+
+  // فلترة السجل
+  const filtered = name
+    ? state.violationLog.filter(v => (v.employee || "").trim() === name)
+    : state.violationLog;
+
+  // رتّب تنازلياً بالتاريخ (آخر أولاً)
+  const sorted = [...filtered].sort((a, b) => {
+    const da = new Date(a.date || 0), db = new Date(b.date || 0);
+    return db - da;
+  });
+
+  // شارة التصفية
+  if (name) {
+    badge.textContent = name;
+    badge.style.display = "inline-block";
+  } else {
+    badge.style.display = "none";
+  }
+
+  // أعد رسم الجدول بالنتائج المفلترة
+  const tbody = $id("logTableBody");
+  if (!tbody) return;
+
+  if (sorted.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px;font-family:Cairo">
+      لا توجد مخالفات مسجلة لـ ${name || "هذه الموظفة"}
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = sorted.slice(0, 50).map(v => {
+    const url   = v.attachmentUrl || v.imageUrl || "";
+    const valid = url && url.startsWith("http");
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:9px 12px;color:var(--text-muted);font-size:12px;font-family:Cairo">${v.date || ""}</td>
+      <td style="padding:9px 12px;font-weight:700;color:var(--text);font-family:Cairo">${v.employee || ""}</td>
+      <td style="padding:9px 12px;color:var(--text-label);font-family:Cairo">${v.category || ""}</td>
+      <td style="padding:9px 12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                 color:var(--text-label);font-family:Cairo" title="${v.criterion || ""}">${v.criterion || ""}</td>
+      <td style="padding:9px 12px;font-weight:700;color:#ef4444;font-family:Cairo">-${v.deduction ?? 0}</td>
+      <td style="padding:9px 12px">
+        <span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:4px;font-size:11px;font-family:Cairo">
+          #${v.violNum || ""}
+        </span>
+      </td>
+      <td style="padding:9px 12px;text-align:center">
+        ${valid
+          ? `<a href="${url}" target="_blank" style="color:#3b82f6;text-decoration:none;font-size:11px;font-family:Cairo">📎 عرض</a>`
+          : `<span style="color:var(--text-muted);font-size:11px">—</span>`}
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+// removed
+
+function showImagePopup(url) { if(url) window.open(url,"_blank"); }
+
+// ============================================================
+// ESCALATION
+// ============================================================
+function showEscalation(type, employee, criterion) {
+  setEl("escalationTitle","textContent", `⚠️ ${type}`);
+  setEl("escalationMsg","textContent", `الموظفة: ${employee} | المعيار: ${criterion}`);
+  setStyle("escalationOverlay","display","flex");
+}
+
+function closeEscalation() {
+  setStyle("escalationOverlay","display","none");
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, type = "info") {
+  const container = $id("toastContainer");
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
+// ============================================================
+// العبارات التشجيعية الدوّارة
+// ============================================================
+// ============================================================
+// طي / فتح الأقسام
+
+// ============================================================
+// الوضع الليلي / النهاري
+// ============================================================
+function toggleTheme() {
+  const html  = document.documentElement;
+  const isDark = html.getAttribute("data-theme") !== "light";
+  const next  = isDark ? "light" : "dark";
+  html.setAttribute("data-theme", next);
+  localStorage.setItem("apex-theme", next);
+  document.getElementById("themeIcon").textContent  = next === "light" ? "☀️" : "🌙";
+  document.getElementById("themeLabel").textContent = next === "light" ? "نهاري" : "ليلي";
+}
+
+function initTheme() {
+  const saved = localStorage.getItem("apex-theme") || "dark";
+  document.documentElement.setAttribute("data-theme", saved);
+  if (document.getElementById("themeIcon"))
+    document.getElementById("themeIcon").textContent  = saved === "light" ? "☀️" : "🌙";
+  if (document.getElementById("themeLabel"))
+    document.getElementById("themeLabel").textContent = saved === "light" ? "نهاري" : "ليلي";
+}
+
+// ============================================================
+// عرض التاريخ الحي
+// ============================================================
+function updateDateDisplays() {
+  const now  = new Date();
+
+  const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+  const months = ["يناير","فبراير","مارس","أبريل","مايو","يونيو",
+                  "يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+
+  const dayName = days[now.getDay()];
+  const day     = now.getDate();
+  const month   = months[now.getMonth()];
+  const year    = now.getFullYear();
+  const time    = now.toLocaleTimeString("ar-SA", { hour:"2-digit", minute:"2-digit" });
+
+  const fullDate  = `${dayName}، ${day} ${month} ${year}`;
+  const withTime  = `${dayName}، ${day} ${month} ${year}  ·  ${time}`;
+
+  // الـ nav
+  const nav = document.getElementById("navDateDisplay");
+  if (nav) nav.innerHTML =
+    `<span style="color:var(--apex-gold);font-weight:700">${time}</span>` +
+    `<span>${day} ${month} ${year}</span>`;
+
+  // هيدر المشرفة
+  const sup = document.getElementById("supDateDisplay");
+  if (sup) sup.textContent = `📅 ${fullDate}`;
+
+  // هيدر المدير
+  const mgr = document.getElementById("mgrDateDisplay");
+  if (mgr) mgr.textContent = `📅 ${withTime}`;
+}
+
+// ============================================================
+function toggleSection(sectionId, chevronId) {
+  const section = document.getElementById(sectionId);
+  const chevron = document.getElementById(chevronId);
+  if (!section) return;
+  const isOpen = section.style.display !== "none";
+  section.style.display = isOpen ? "none" : "block";
+  if (chevron) chevron.textContent = isOpen ? "▸" : "▾";
+}
+
+// ============================================================
+// ============================================================
+const MOTIVATIONAL_QUOTES = [
+  "أهلاً بك 👋  نتمنى لك يوماً موفقاً ومثمراً",
+  "التوثيق ضرورة — كل ملاحظة موثّقة تحمي الفريق وتحسّن الأداء 📋",
+  "لا تنسي التوثيق بالصورة — هو الدليل الذي يجعل التقييم عادلاً 📸",
+  "كل نقطة تسجّلينها اليوم تعكس اهتمامك بجودة الخدمة ⭐",
+  "المتابعة اليومية تختصر الكثير من المشاكل لاحقاً 🎯",
+  "فريق قوي يبدأ من متابعة دقيقة — شكراً على جهدك 💙",
+  "لا تتركي محادثة مفتوحة أو مخالفة دون إجراء — كل تفصيل مهم ✅",
+  "حافزك في نهاية الشهر يعكس دقتك في التوثيق طوله 💰",
+  "العمل الجيد لا يحتاج إلى إعلان — التقارير تتكلم عنه 📊",
+];
+
+let quoteIndex = 0;
+let quoteTimer = null;
+
+function initMotivationalQuotes() {
+  const el   = document.getElementById("motivationalQuote");
+  const dots = $id("quoteDots");
+  if (!el || !dots) return;
+
+  // أنشئ النقاط
+  dots.innerHTML = MOTIVATIONAL_QUOTES.map((_, i) =>
+    `<span id="qdot-${i}" style="width:6px;height:6px;border-radius:50%;background:${i===0?'#fff':'rgba(255,255,255,0.35)'};transition:background 0.3s;cursor:pointer" onclick="goToQuote(${i})"></span>`
+  ).join("");
+
+  showQuote(0);
+
+  // تبديل تلقائي كل 5 ثوانٍ
+  quoteTimer = setInterval(() => {
+    quoteIndex = (quoteIndex + 1) % MOTIVATIONAL_QUOTES.length;
+    showQuote(quoteIndex);
+  }, 5000);
+}
+
+function showQuote(idx) {
+  const el = document.getElementById("motivationalQuote");
+  if (!el) return;
+  el.style.opacity = "0";
+  setTimeout(() => {
+    el.textContent  = MOTIVATIONAL_QUOTES[idx];
+    el.style.opacity = "1";
+  }, 250);
+  // حدّث النقاط
+  MOTIVATIONAL_QUOTES.forEach((_, i) => {
+    const dot = document.getElementById(`qdot-${i}`);
+    if (dot) dot.style.background = i === idx ? "#fff" : "rgba(255,255,255,0.35)";
+  });
+}
+
+function goToQuote(idx) {
+  clearInterval(quoteTimer);
+  quoteIndex = idx;
+  showQuote(idx);
+  quoteTimer = setInterval(() => {
+    quoteIndex = (quoteIndex + 1) % MOTIVATIONAL_QUOTES.length;
+    showQuote(quoteIndex);
+  }, 5000);
+}
+
+// ============================================================
+// قائمة المعايير
+// ============================================================
+const CRITERIA_DISPLAY = {
+  calls: [
+    { cat:"📞 المكالمات", color:"#0369a1", bg:"#e0f2fe", border:"#bae6fd", items:[
+      { text:"الصياغة التعريفية في بداية المكالمة", pts:14, tip:"«حياك الله، معك نورة من عيادات أبكس كير»" },
+      { text:"التحقق من ملف المراجع برقم الجوال", pts:11, tip:"ابحثي قبل أن تسألي" },
+      { text:"الرد على جميع المكالمات الواردة", pts:10, tip:"كل مكالمة فائتة = فرصة ضائعة" },
+      { text:"تقديم خدمة مكتملة حتى الإغلاق", pts:8, tip:"أغلقي الطلب بوضوح" },
+      { text:"استخدام ألفاظ مهنية مناسبة", pts:6, tip:"تفضلي، أبشري، سمي" },
+      { text:"إقفال المكالمة بعبارة ختامية", pts:6, tip:"«نتمنى لك يوماً سعيداً»" },
+    ]},
+    { cat:"📁 فتح الملف", color:"#92400e", bg:"#fffbeb", border:"#fde68a", items:[
+      { text:"إدخال الاسم الرباعي بشكل صحيح", pts:7, tip:"الاسم الكامل أساس كل شيء" },
+      { text:"إدخال رقم الهوية بشكل صحيح", pts:6, tip:"تحققي مرتين قبل الحفظ" },
+      { text:"إدخال تاريخ الميلاد بشكل صحيح", pts:6, tip:"بيانات دقيقة = ملف موثوق" },
+      { text:"إدخال العنوان بشكل صحيح", pts:6, tip:"العنوان الصحيح يسهّل التواصل" },
+]},
+    { cat:"📅 المواعيد", color:"#065f46", bg:"#ecfdf5", border:"#a7f3d0", items:[
+      { text:"تعويض المواعيد الملغاة", pts:6, tip:"كل موعد ملغى = فرصة لمراجع آخر" },
+      { text:"تأكيد المواعيد مع المراجعين", pts:5, tip:"التأكيد يقلل الغياب" },
+      { text:"تعبئة المواعيد عند توفر بديل", pts:5, tip:"الجدول الممتلئ = عيادة ناجحة" },
+      { text:"ترتيب جدول الدكتور متتالياً", pts:4, tip:"الجدول المنظم يعكس كفاءتك" },
+    ]},
+  ],
+  messages: [
+    { cat:"💬 الرسائل", color:"#5b21b6", bg:"#f5f3ff", border:"#ddd6fe", items:[
+      { text:"الرد على الرسائل خلال 10 دقائق", pts:14, tip:"السرعة = رضا المريض" },
+      { text:"متابعة المحادثات وعدم تركها مفتوحة", pts:11, tip:"محادثة مفتوحة = مراجع غير مخدوم" },
+      { text:"التحقق من ملف المراجع فور الفتح", pts:10, tip:"ابدأي بالبحث برقم الجوال" },
+      { text:"التفاعل مع المراجع خلال دقيقة", pts:8, tip:"أظهري حضورك فوراً" },
+      { text:"عبارة ختامية مهذبة في آخر رد", pts:6, tip:"الختام الجميل يكمل التجربة" },
+      { text:"الالتزام بالاختصارات المعتمدة", pts:6, tip:"التوحيد يعكس احترافية الفريق" },
+    ]},
+    { cat:"📁 فتح الملف", color:"#92400e", bg:"#fffbeb", border:"#fde68a", items:[
+      { text:"إدخال الاسم الرباعي بشكل صحيح", pts:7, tip:"الاسم الكامل أساس كل شيء" },
+      { text:"إدخال رقم الهوية بشكل صحيح", pts:6, tip:"تحققي مرتين قبل الحفظ" },
+      { text:"إدخال تاريخ الميلاد بشكل صحيح", pts:6, tip:"بيانات دقيقة = ملف موثوق" },
+      { text:"إدخال العنوان بشكل صحيح", pts:6, tip:"العنوان الصحيح يسهّل التواصل" },
+]},
+    { cat:"📅 المواعيد", color:"#065f46", bg:"#ecfdf5", border:"#a7f3d0", items:[
+      { text:"تعويض المواعيد الملغاة", pts:6, tip:"كل موعد ملغى = فرصة لمراجع آخر" },
+      { text:"تأكيد المواعيد مع المراجعين", pts:5, tip:"التأكيد يقلل الغياب" },
+      { text:"تعبئة المواعيد عند توفر بديل", pts:5, tip:"الجدول الممتلئ = عيادة ناجحة" },
+      { text:"ترتيب جدول الدكتور متتالياً", pts:4, tip:"الجدول المنظم يعكس كفاءتك" },
+    ]},
+  ],
+  dual: [
+    { cat:"📞 المكالمات", color:"#0369a1", bg:"#e0f2fe", border:"#bae6fd", items:[
+      { text:"الصياغة التعريفية في بداية المكالمة", pts:8, tip:"«حياك الله، معك نورة من عيادات أبكس كير»" },
+      { text:"التحقق من ملف المراجع برقم الجوال", pts:6, tip:"ابحثي قبل أن تسألي" },
+      { text:"الرد على جميع المكالمات الواردة", pts:5, tip:"كل مكالمة فائتة = فرصة ضائعة" },
+      { text:"تقديم خدمة مكتملة حتى الإغلاق", pts:5, tip:"أغلقي الطلب بوضوح" },
+      { text:"استخدام ألفاظ مهنية مناسبة", pts:3, tip:"تفضلي، أبشري، سمي" },
+      { text:"إقفال المكالمة بعبارة ختامية", pts:3, tip:"«نتمنى لك يوماً سعيداً»" },
+    ]},
+    { cat:"💬 الرسائل", color:"#5b21b6", bg:"#f5f3ff", border:"#ddd6fe", items:[
+      { text:"الرد على الرسائل خلال 10 دقائق", pts:8, tip:"السرعة = رضا المريض" },
+      { text:"متابعة المحادثات وعدم تركها مفتوحة", pts:5, tip:"محادثة مفتوحة = مراجع غير مخدوم" },
+      { text:"التحقق من ملف المراجع فور الفتح", pts:5, tip:"ابدأي بالبحث برقم الجوال" },
+      { text:"التفاعل مع المراجع خلال دقيقة", pts:4, tip:"أظهري حضورك فوراً" },
+      { text:"عبارة ختامية مهذبة في آخر رد", pts:4, tip:"الختام الجميل يكمل التجربة" },
+      { text:"الالتزام بالاختصارات المعتمدة", pts:4, tip:"التوحيد يعكس احترافية الفريق" },
+    ]},
+    { cat:"📁 فتح الملف", color:"#92400e", bg:"#fffbeb", border:"#fde68a", items:[
+      { text:"إدخال الاسم الرباعي بشكل صحيح", pts:7, tip:"الاسم الكامل أساس كل شيء" },
+      { text:"إدخال رقم الهوية بشكل صحيح", pts:6, tip:"تحققي مرتين قبل الحفظ" },
+      { text:"إدخال تاريخ الميلاد بشكل صحيح", pts:6, tip:"بيانات دقيقة = ملف موثوق" },
+      { text:"إدخال العنوان بشكل صحيح", pts:6, tip:"العنوان الصحيح يسهّل التواصل" },
+]},
+    { cat:"📅 المواعيد", color:"#065f46", bg:"#ecfdf5", border:"#a7f3d0", items:[
+      { text:"تعويض المواعيد الملغاة", pts:5, tip:"كل موعد ملغى = فرصة لمراجع آخر" },
+      { text:"تأكيد المواعيد مع المراجعين", pts:4, tip:"التأكيد يقلل الغياب" },
+      { text:"تعبئة المواعيد عند توفر بديل", pts:3, tip:"الجدول الممتلئ = عيادة ناجحة" },
+      { text:"ترتيب جدول الدكتور متتالياً", pts:3, tip:"الجدول المنظم يعكس كفاءتك" },
+    ]},
+  ]
+};
+
+let activeCriteriaTrack = "calls";
+
+function showCriteria(track) {
+  activeCriteriaTrack = track;
+
+  // حدّث التبويبات
+  ["calls","messages","dual"].forEach(t => {
+    const btn = document.getElementById("ctab-" + t);
+    if (!btn) return;
+    if (t === track) {
+      btn.style.background = t === "calls" ? "#e0f2fe" : t === "messages" ? "#f5f3ff" : "#fef3c7";
+      btn.style.borderColor = t === "calls" ? "#0ea5b0" : t === "messages" ? "#8b5cf6" : "#f59e0b";
+      btn.style.color       = t === "calls" ? "#0369a1" : t === "messages" ? "#5b21b6" : "#92400e";
+    } else {
+      btn.style.background  = "";
+      btn.style.borderColor = "";
+      btn.style.color       = "#6b7280";
+    }
+  });
+
+  const panel = document.getElementById("criteriaPanel");
+  if (!panel) return;
+
+  const sections = CRITERIA_DISPLAY[track] || [];
+  panel.innerHTML = sections.map(sec => `
+    <div style="border:1.5px solid ${sec.border};border-radius:10px;overflow:hidden;margin-bottom:4px">
+      <div style="background:${sec.bg};padding:10px 14px;font-size:13px;font-weight:700;color:${sec.color};font-family:Cairo">
+        ${sec.cat}
+      </div>
+      ${sec.items.map(item => `
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-top:1px solid ${sec.border};background:var(--bg-card)">
+          <div style="flex:1">
+            <div style="font-size:13px;color:var(--text);font-family:Cairo">${item.text}</div>
+            <div style="font-size:11px;color:var(--text-muted);font-family:Cairo;margin-top:2px">💡 ${item.tip}</div>
+          </div>
+          <div style="min-width:36px;text-align:center">
+            <span style="background:${sec.bg};color:${sec.color};border:1.5px solid ${sec.border};border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;font-family:Cairo">${item.pts}</span>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `).join("");
+}
+// Apps Script يقبل POST ويرجع JSON
+// ============================================================
+// ============================================================
+// رفع الصورة للـ Drive عبر GAS بتقسيمها chunks
+// ============================================================
+// [removed]
+
+// [removed]
+
+
+async function callGAS(action, data = {}, _retry = 0) {
+  if (!GAS_URL || GAS_URL.includes("YOUR_DEPLOYMENT_ID")) throw new Error("GAS_URL غير مضبوط");
+  return new Promise((resolve, reject) => {
+    const cbName  = "_cb" + Date.now() + Math.random().toString(36).slice(2, 8);
+    const payload = encodeURIComponent(JSON.stringify({ action, ...data }));
+    const url     = GAS_URL + "?payload=" + payload + "&callback=" + cbName;
+
+    const timer = setTimeout(() => {
+      delete window[cbName];
+      script.parentNode && script.parentNode.removeChild(script);
+      _retry < 2
+        ? callGAS(action, data, _retry + 1).then(resolve).catch(reject)
+        : reject(new Error("انتهت مهلة الاتصال"));
+    }, 25000);
+
+    window[cbName] = (result) => {
+      clearTimeout(timer);
+      delete window[cbName];
+      script.parentNode && script.parentNode.removeChild(script);
+      resolve(result);
+    };
+
+    const script = document.createElement("script");
+    script.onerror = () => {
+      clearTimeout(timer);
+      delete window[cbName];
+      script.parentNode && script.parentNode.removeChild(script);
+      _retry < 2
+        ? setTimeout(() => callGAS(action, data, _retry + 1).then(resolve).catch(reject), 1500)
+        : reject(new Error("فشل الاتصال بـ GAS"));
+    };
+    script.src = url;
+    document.head.appendChild(script);
+  });
+}
+
+
+// ══════════════════════════════════════════
+// Checklist اليومي للمشرفة
+// ══════════════════════════════════════════
+let dailyChecklistState = {}; // { taskId: true/false }
+
+function renderDailyChecklist() {
+  const todayStr = new Date().toLocaleDateString("ar-SA", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+  const todayKey = new Date().toISOString().slice(0,10);
+
+  const badge = $id("checklistDateBadge");
+  if (badge) badge.textContent = todayStr;
+
+  const container = $id("checklistItems");
+  if (!container) return;
+
+  // اقرأ الحالة المحفوظة من state
+  const saved = state.dailyChecklist || {};
+
+  container.innerHTML = DAILY_TASKS.map(task => {
+    const done = saved[task.id] === true;
+    return `
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;
+      background:${done ? 'rgba(16,185,129,0.06)' : 'var(--bg)'};
+      border:1.5px solid ${done ? '#10b981' : 'var(--border)'};
+      border-radius:10px;cursor:pointer;transition:all .2s"
+      onclick="toggleChecklistTask('${task.id}')">
+      <div style="width:24px;height:24px;border-radius:6px;flex-shrink:0;
+        background:${done ? '#10b981' : 'var(--border)'};
+        display:flex;align-items:center;justify-content:center;
+        font-size:14px;transition:all .2s">
+        ${done ? '✓' : ''}
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:${done?'700':'600'};color:${done?'#10b981':'var(--text)'};font-family:Cairo">
+          ${task.label}
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);font-family:Cairo;margin-top:2px">${task.desc}</div>
+      </div>
+      ${done ? '<span style="font-size:11px;color:#10b981;font-family:Cairo;font-weight:700">تم ✓</span>' : '<span style="font-size:11px;color:var(--text-muted);font-family:Cairo">لم يتم</span>'}
+    </div>`;
+  }).join("");
+
+  updateChecklistProgress();
+}
+
+function toggleChecklistTask(taskId) {
+  if (!state.dailyChecklist) state.dailyChecklist = {};
+  state.dailyChecklist[taskId] = !state.dailyChecklist[taskId];
+  renderDailyChecklist();
+}
+
+function updateChecklistProgress() {
+  const done  = Object.values(state.dailyChecklist || {}).filter(Boolean).length;
+  const total = DAILY_TASKS.length;
+  const pct   = Math.round(done/total*100);
+  const el    = $id("checklistProgress");
+  if (el) el.innerHTML = `
+    <span style="color:${pct===100?'#10b981':pct>=60?'#f59e0b':'#ef4444'};font-weight:700">
+      ${done}/${total} مهام مكتملة (${pct}%)
+    </span>`;
+}
+
+async function submitDailyChecklist() {
+  const btn = $id("checklistSubmitBtn");
+  if (btn) { btn.disabled = true; btn.textContent = "⏳ جاري الحفظ..."; }
+
+  const todayKey = new Date().toISOString().slice(0,10);
+  const done     = Object.values(state.dailyChecklist || {}).filter(Boolean).length;
+  const total    = DAILY_TASKS.length;
+
+  try {
+    const res = await callGAS("saveDailyChecklist", {
+      date:      todayKey,
+      tasks:     state.dailyChecklist || {},
+      doneCount: done,
+      total:     total,
+      completed: done === total
+    });
+    if (res && res.success) {
+      showToast(done === total ? "✅ تم حفظ جميع المهام اليومية" : `✅ تم الحفظ — ${done}/${total} مهام`, "success");
+    }
+  } catch(e) {
+    showToast("⚠️ " + e.message, "warning");
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "💾 حفظ المهام اليومية"; }
+  }
+}
+
+// تحميل checklist اليوم عند الفتح
+async function loadTodayChecklist() {
+  try {
+    const todayKey = new Date().toISOString().slice(0,10);
+    const res = await callGAS("getTodayChecklist", { date: todayKey });
+    if (res && res.success && res.tasks) {
+      state.dailyChecklist = res.tasks;
+    } else {
+      state.dailyChecklist = {};
+    }
+  } catch(e) {
+    state.dailyChecklist = {};
+  }
+  renderDailyChecklist();
+}
+
+// ══════════════════════════════════════════
+// تنبيه المدير — Checklist المشرفة
+// ══════════════════════════════════════════
+async function loadManagerChecklistAlert() {
+  try {
+    const todayKey = new Date().toISOString().slice(0,10);
+    const res = await callGAS("getTodayChecklist", { date: todayKey });
+    const card = $id("checklistAlertCard");
+    if (!card) return;
+
+    if (!res || !res.success || !res.tasks) {
+      // لم تُسجَّل أي مهام اليوم
+      showChecklistAlert(todayKey, {}, 0);
+      return;
+    }
+
+    const done  = Object.values(res.tasks).filter(Boolean).length;
+    const total = DAILY_TASKS.length;
+
+    if (done < total) {
+      showChecklistAlert(todayKey, res.tasks, done);
+    } else {
+      card.style.display = "none";
+    }
+  } catch(e) {
+    console.warn("loadManagerChecklistAlert:", e.message);
+  }
+}
+
+function showChecklistAlert(date, tasks, doneCount) {
+  const card = $id("checklistAlertCard");
+  if (!card) return;
+  card.style.display = "block";
+
+  const total = DAILY_TASKS.length;
+  const detail = $id("checklistAlertDetail");
+  if (detail) {
+    detail.textContent = `يوم ${date} — أُنجز ${doneCount} من ${total} مهام (${Math.round(doneCount/total*100)}%)`;
+  }
+
+  const badges = $id("checklistStatusBadges");
+  if (badges) {
+    badges.innerHTML = DAILY_TASKS.map(t => {
+      const done = tasks[t.id] === true;
+      return `<span style="font-size:11px;padding:3px 10px;border-radius:99px;font-family:Cairo;
+        background:${done?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)'};
+        color:${done?'#10b981':'#ef4444'};
+        border:1px solid ${done?'#10b981':'#ef4444'}">
+        ${done?'✓':'✗'} ${t.label.replace(/^[^ ]+ /,'')}
+      </span>`;
+    }).join("");
+  }
+}
+
+async function applyChecklistDeduction() {
+  const btn = $id("checklistDeductBtn");
+  if (btn) { btn.disabled = true; btn.textContent = "⏳..."; }
+  try {
+    const res = await callGAS("recordSupervisorEvaluation", {
+      criterion:  "الالتزام بتنفيذ المهام الموكلة (جرد، متابعة، تقارير)",
+      evalType:   "خصم",
+      deduction:  3,
+      notes:      "لم تؤكد مهام المتابعة اليومية — خصم تلقائي"
+    });
+    if (res && res.success) {
+      showToast("✅ تم تطبيق خصم المتابعة على رهف", "success");
+      $id("checklistAlertCard").style.display = "none";
+      loadFromSheet();
+    }
+  } catch(e) {
+    showToast("⚠️ " + e.message, "warning");
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "✂️ تطبيق خصم المتابعة"; }
+  }
+}
+
+function dismissChecklistAlert() {
+  const card = $id("checklistAlertCard");
+  if (card) card.style.display = "none";
+}
+
+// ============================================================
+// تحميل البيانات من الشيت عند الفتح
+// ============================================================
+async function loadFromSheet() {
+  try {
+    showToast("⏳ جاري تحميل البيانات...", "info");
+    const res = await callGAS("getAllData");
+    if (!res || !res.success) {
+      showToast("⚠️ تعذّر تحميل البيانات من الشيت", "warning");
+      return;
+    }
+    // أرصدة الموظفات
+    if (res.employeeScores) {
+      Object.keys(res.employeeScores).forEach(n => {
+        if (state.employeeScores[n]) {
+          state.employeeScores[n].balance  = res.employeeScores[n].balance  ?? state.employeeScores[n].balance;
+          state.employeeScores[n].deducted = res.employeeScores[n].deducted ?? state.employeeScores[n].deducted;
+        }
+      });
+    }
+    // نقاط رهف
+    if (res.supervisorScore !== undefined) state.supervisorScore = res.supervisorScore;
+    if (res.rahafDeductions !== undefined) state.rahafDeductions = res.rahafDeductions;
+    // سجل المخالفات
+    if (Array.isArray(res.violationLog))   state.violationLog    = res.violationLog;
+
+    // تحديث كل العناصر المرئية
+    updateSupervisorScoreDisplay();
+    updateRahafDisplay();
+    renderLogTable();
+    if (state.managerUnlocked) loadManagerChecklistAlert();
+    refreshManagerPage();
+    renderSupEmployeeList();
+    Object.keys(EMPLOYEES).forEach(n => updateEmpBalanceDisplay(n));
+    showToast("✅ تم تحميل البيانات", "success");
+  } catch(e) {
+    console.error("loadFromSheet:", e);
+    showToast("⚠️ خطأ في تحميل البيانات: " + e.message, "warning");
+  }
+}
+
+// ============================================================
+// اختبار الاتصال بالشيت
+// ============================================================
+async function testConnection() {
+  const icon = document.getElementById("testConnIcon");
+  if (icon) icon.textContent = "⏳";
+  showToast("جاري اختبار الاتصال...", "info");
+  try {
+    const res = await fetch(GAS_URL, { method: "GET" });
+    const text = await res.text();
+    const json = JSON.parse(text);
+    if (json.success) {
+      showToast("✅ الاتصال بالشيت يعمل بنجاح", "success");
+      if (icon) icon.textContent = "✅";
+    } else {
+      showToast("⚠️ الشيت رد لكن فيه خطأ: " + json.error, "warning");
+      if (icon) icon.textContent = "⚠️";
+    }
+  } catch (err) {
+    showToast("❌ تعذّر الاتصال: " + err.message, "error");
+    if (icon) icon.textContent = "❌";
+  }
+  setTimeout(() => { if (icon) icon.textContent = "🔌"; }, 4000);
+}
+
+// ============================================================
+// RESET
+// ============================================================
+function confirmReset() {
+  // ابنِ ملخص الأرصدة الحالية قبل العرض
+  const summary = document.getElementById("resetSummary");
+  const totalBonus = Object.values(state.employeeScores)
+    .reduce((s, sc) => s + sc.balance * 5, 0);
+  const sorted = Object.entries(state.employeeScores)
+    .sort((a, b) => b[1].balance - a[1].balance);
+
+  let html = `<div style="margin-bottom:10px;color:#d4a843;font-weight:700;font-size:12px">
+    📊 ملخص الشهر الحالي — سيُحفظ قبل التعيين</div>`;
+  sorted.forEach(([name, sc]) => {
+    const pct  = sc.balance;
+    const clr  = pct >= 80 ? "#10b981" : pct >= 60 ? "#f59e0b" : "#ef4444";
+    const bar  = "█".repeat(Math.round(pct / 10)) + "░".repeat(10 - Math.round(pct / 10));
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+      <span style="min-width:52px;color:var(--text);font-size:12px">${name}</span>
+      <span style="font-family:Courier New;font-size:10px;color:${clr}">${bar}</span>
+      <span style="color:${clr};font-weight:700;font-size:12px">${pct}</span>
+      <span style="color:#10b981;font-size:11px;margin-right:auto">${pct * 5} ر</span>
+    </div>`;
+  });
+  html += `<div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;
+    color:#f0c96a;font-weight:700;font-size:13px;text-align:center">
+    إجمالي الحوافز: ${totalBonus.toLocaleString()} ريال
+  </div>`;
+
+  summary.innerHTML = html;
+  document.getElementById("resetModal").style.display = "flex";
+}
+
+function closeResetModal() {
+  document.getElementById("resetModal").style.display = "none";
+}
+
+function executeReset() {
+  closeResetModal();
+
+  // حفظ snapshot في الشيت قبل التعيين
+  callGAS("resetMonthlyScores").catch(() => {});
+
+  // إعادة التعيين محلياً
+  Object.keys(state.employeeScores).forEach(name => {
+    state.employeeScores[name] = { balance: 100, deducted: 0 };
+  });
+  state.supervisorScore  = 0;
+  state.rahafDeductions  = 0;  // رهف تبدأ من 0 كل شهر
+  state.rahafBalance     = 0;
+  state.violationLog    = [];
+
+  refreshManagerPage();
+  refreshSupervisorPage();
+  showToast("✓ تمت إعادة التعيين — البيانات محفوظة في الشيت", "success");
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener("DOMContentLoaded", () => {
+  setEl("maxSupScore", "textContent", MAX_SUP_SCORE);
+  initTheme();
+  updateDateDisplays();
+  setInterval(updateDateDisplays, 60000);
+  refreshSupervisorPage();
+  initMotivationalQuotes();
+  showCriteria("calls");
+  loadFromSheet();
+  loadTodayChecklist();
+});
+</script>
+
+</body>
+</html>
