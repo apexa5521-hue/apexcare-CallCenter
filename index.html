@@ -902,6 +902,27 @@
   <!-- ==================== SUPERVISOR PAGE ==================== -->
   <div class="page active" id="page-supervisor">
 
+
+      <!-- ── Checklist اليومي ── -->
+      <div id="dailyChecklistCard" style="background:var(--bg-card);border-radius:14px;padding:20px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:4px;height:18px;background:#10b981;border-radius:2px;display:inline-block"></span>
+            <span style="font-size:15px;font-weight:700;color:var(--text);font-family:Cairo">✅ مهامي اليومية</span>
+          </div>
+          <div id="checklistDateBadge" style="font-size:11px;color:var(--text-muted);font-family:Cairo;background:var(--bg);padding:4px 10px;border-radius:99px;border:1px solid var(--border)"></div>
+        </div>
+        <div id="checklistItems" style="display:flex;flex-direction:column;gap:10px"></div>
+        <div style="margin-top:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div id="checklistProgress" style="font-size:13px;color:var(--text-muted);font-family:Cairo"></div>
+          <button onclick="submitDailyChecklist()" id="checklistSubmitBtn"
+            style="padding:9px 20px;background:#10b981;color:#fff;border:none;border-radius:8px;font-family:Cairo;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s">
+            💾 حفظ المهام اليومية
+          </button>
+        </div>
+      </div>
+
+
     <!-- ── هيدر تشجيعي دوّار ── -->
     <div style="background:linear-gradient(135deg,#1a56db 0%,#0ea5b0 100%);border-radius:16px;padding:24px 28px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:relative;overflow:hidden">
       <div style="position:absolute;inset:0;opacity:0.05;background:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22><circle cx=%2230%22 cy=%2230%22 r=%2228%22 fill=%22none%22 stroke=%22white%22 stroke-width=%221%22/></svg>') repeat"></div>
@@ -916,6 +937,30 @@
         <div style="font-size:11px;color:rgba(255,255,255,0.75);font-family:Cairo">نقاطك التراكمية</div>
         <div style="font-size:28px;font-weight:900;color:#fde68a;font-family:Cairo" id="supScoreDisplay">0</div>
         <div style="font-size:11px;color:rgba(255,255,255,0.75);font-family:Cairo">حافز: <span id="supBonusDisplay" style="color:#6ee7b7;font-weight:700">0</span> ريال</div>
+      </div>
+    </div>
+
+    <!-- ── مهام اليوم اليومية ── -->
+    <div id="dailyTasksCard" style="background:var(--bg-card);border-radius:14px;padding:20px;margin-bottom:16px;border:1px solid #e5e7eb;box-shadow:0 1px 8px rgba(0,0,0,0.07)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="width:4px;height:18px;background:#8b5cf6;border-radius:2px;display:inline-block"></span>
+          <span style="font-size:15px;font-weight:700;color:var(--text);font-family:Cairo">✅ مهام اليوم</span>
+          <span id="dailyDateBadge" style="font-size:11px;color:var(--apex-muted);font-family:Cairo"></span>
+        </div>
+        <span id="dailyStatusBadge" style="font-size:11px;padding:3px 10px;border-radius:99px;font-family:Cairo;font-weight:700"></span>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px" id="dailyTasksList">
+        <!-- تُملأ من JS -->
+      </div>
+
+      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+        <button onclick="submitDailyTasks()"
+          style="background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border:none;border-radius:10px;padding:10px 24px;font-family:Cairo;font-size:13px;font-weight:700;cursor:pointer;flex:1">
+          💾 حفظ مهام اليوم
+        </button>
+        <div id="dailySaveStatus" style="font-size:12px;color:var(--apex-muted);font-family:Cairo;display:flex;align-items:center"></div>
       </div>
     </div>
 
@@ -1127,6 +1172,29 @@
   <!-- ==================== MANAGER PAGE ==================== -->
   <div class="page" id="page-manager">
 
+    <!-- ── تنبيه مهام المشرفة ── -->
+    <div id="supervisorAlert" style="display:none;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #f59e0b;border-radius:12px;padding:16px 20px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:24px">⚠️</span>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#92400e;font-family:Cairo" id="alertTitle">المشرفة لم تؤكد مهام اليوم بعد</div>
+            <div style="font-size:12px;color:#b45309;font-family:Cairo;margin-top:3px" id="alertDetail"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="deductSupervisorForTasks()"
+            style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-family:Cairo;font-size:12px;font-weight:700;cursor:pointer">
+            خصم نقطة
+          </button>
+          <button onclick="dismissAlert()"
+            style="background:transparent;color:#92400e;border:1px solid #f59e0b;border-radius:8px;padding:8px 14px;font-family:Cairo;font-size:12px;cursor:pointer">
+            تجاهل
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="section-header">
       <div>
         <h2>📊 لوحة مدير الجودة</h2>
@@ -1160,6 +1228,31 @@
         <div class="stat-chip-label">رصيد رهف (من 800)</div>
       </div>
     </div>
+
+
+      <!-- ── تنبيه Checklist المشرفة ── -->
+      <div id="checklistAlertCard" style="display:none;background:linear-gradient(135deg,rgba(239,68,68,0.08),rgba(245,158,11,0.05));border:1.5px solid #ef4444;border-radius:14px;padding:18px 20px;margin-bottom:20px">
+        <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+          <div style="font-size:28px">⚠️</div>
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;color:#ef4444;font-family:Cairo;margin-bottom:6px">
+              المشرفة لم تؤكد مهامها اليومية
+            </div>
+            <div id="checklistAlertDetail" style="font-size:12px;color:var(--text-muted);font-family:Cairo;margin-bottom:12px"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="applyChecklistDeduction()" id="checklistDeductBtn"
+                style="padding:7px 16px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-family:Cairo;font-size:12px;font-weight:700;cursor:pointer">
+                ✂️ تطبيق خصم المتابعة
+              </button>
+              <button onclick="dismissChecklistAlert()"
+                style="padding:7px 16px;background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:8px;font-family:Cairo;font-size:12px;cursor:pointer">
+                تجاهل اليوم
+              </button>
+            </div>
+          </div>
+          <div id="checklistStatusBadges" style="display:flex;flex-direction:column;gap:6px;min-width:200px"></div>
+        </div>
+      </div>
 
     <!-- Employee Balances -->
     <div class="card">
@@ -1363,6 +1456,18 @@
 const MANAGER_PASSWORD    = "T9@MG7tYxia8";
 const SUPERVISOR_PASSWORD = "Apex@sup2025";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxTzNRgI8wNzxgkEdPdYc1LDx4jpICh_tpk5Bk0UcGaKREBRPTlInREXxqwjhSRKnuo/exec";
+
+
+// ══════════════════════════════════════════
+// مهام الـ Checklist اليومي للمشرفة
+// ══════════════════════════════════════════
+const DAILY_TASKS = [
+  { id: "monitoring",   label: "🔍 مراقبة ومتابعة الموظفات اليوم",            desc: "هل راقبتِ أداء الموظفات اليوم؟" },
+  { id: "violations",   label: "📋 جرد المخالفات اليومية وتوثيقها",            desc: "هل تم رصد وتوثيق المخالفات؟" },
+  { id: "guidance",     label: "💬 توجيه الموظفات عند الخطأ",                  desc: "هل وجّهتِ من ارتكبت خطأ اليوم؟" },
+  { id: "appointments", label: "📅 مراجعة تأكيد المواعيد وحجوزاتها",           desc: "هل راجعتِ تأكيد المواعيد اليوم؟" },
+  { id: "callquality",  label: "📞 مراجعة جودة المكالمات",                     desc: "هل استمعتِ لمكالمة واحدة على الأقل؟" },
+];
 
 const EMPLOYEES = {
   "مرح":    { track: "calls",    trackLabel: "مكالمات" },
@@ -1571,8 +1676,8 @@ function switchPage(page) {
   document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
   document.getElementById("page-" + page).classList.add("active");
   document.getElementById("tab" + (page === "supervisor" ? "Sup" : "Mgr")).classList.add("active");
-  if (page === "supervisor") refreshSupervisorPage();
-  if (page === "manager")    refreshManagerPage();
+  if (page === "supervisor") { refreshSupervisorPage(); loadDailyTasks(); }
+  if (page === "manager")    { refreshManagerPage(); checkSupervisorDailyAlert(); }
 }
 
 // ============================================================
@@ -2628,6 +2733,191 @@ async function callGAS(action, data = {}, _retry = 0) {
 }
 
 
+// ══════════════════════════════════════════
+// Checklist اليومي للمشرفة
+// ══════════════════════════════════════════
+let dailyChecklistState = {}; // { taskId: true/false }
+
+function renderDailyChecklist() {
+  const todayStr = new Date().toLocaleDateString("ar-SA", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+  const todayKey = new Date().toISOString().slice(0,10);
+
+  const badge = $id("checklistDateBadge");
+  if (badge) badge.textContent = todayStr;
+
+  const container = $id("checklistItems");
+  if (!container) return;
+
+  // اقرأ الحالة المحفوظة من state
+  const saved = state.dailyChecklist || {};
+
+  container.innerHTML = DAILY_TASKS.map(task => {
+    const done = saved[task.id] === true;
+    return `
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;
+      background:${done ? 'rgba(16,185,129,0.06)' : 'var(--bg)'};
+      border:1.5px solid ${done ? '#10b981' : 'var(--border)'};
+      border-radius:10px;cursor:pointer;transition:all .2s"
+      onclick="toggleChecklistTask('${task.id}')">
+      <div style="width:24px;height:24px;border-radius:6px;flex-shrink:0;
+        background:${done ? '#10b981' : 'var(--border)'};
+        display:flex;align-items:center;justify-content:center;
+        font-size:14px;transition:all .2s">
+        ${done ? '✓' : ''}
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:${done?'700':'600'};color:${done?'#10b981':'var(--text)'};font-family:Cairo">
+          ${task.label}
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);font-family:Cairo;margin-top:2px">${task.desc}</div>
+      </div>
+      ${done ? '<span style="font-size:11px;color:#10b981;font-family:Cairo;font-weight:700">تم ✓</span>' : '<span style="font-size:11px;color:var(--text-muted);font-family:Cairo">لم يتم</span>'}
+    </div>`;
+  }).join("");
+
+  updateChecklistProgress();
+}
+
+function toggleChecklistTask(taskId) {
+  if (!state.dailyChecklist) state.dailyChecklist = {};
+  state.dailyChecklist[taskId] = !state.dailyChecklist[taskId];
+  renderDailyChecklist();
+}
+
+function updateChecklistProgress() {
+  const done  = Object.values(state.dailyChecklist || {}).filter(Boolean).length;
+  const total = DAILY_TASKS.length;
+  const pct   = Math.round(done/total*100);
+  const el    = $id("checklistProgress");
+  if (el) el.innerHTML = `
+    <span style="color:${pct===100?'#10b981':pct>=60?'#f59e0b':'#ef4444'};font-weight:700">
+      ${done}/${total} مهام مكتملة (${pct}%)
+    </span>`;
+}
+
+async function submitDailyChecklist() {
+  const btn = $id("checklistSubmitBtn");
+  if (btn) { btn.disabled = true; btn.textContent = "⏳ جاري الحفظ..."; }
+
+  const todayKey = new Date().toISOString().slice(0,10);
+  const done     = Object.values(state.dailyChecklist || {}).filter(Boolean).length;
+  const total    = DAILY_TASKS.length;
+
+  try {
+    const res = await callGAS("saveDailyChecklist", {
+      date:      todayKey,
+      tasks:     state.dailyChecklist || {},
+      doneCount: done,
+      total:     total,
+      completed: done === total
+    });
+    if (res && res.success) {
+      showToast(done === total ? "✅ تم حفظ جميع المهام اليومية" : `✅ تم الحفظ — ${done}/${total} مهام`, "success");
+    }
+  } catch(e) {
+    showToast("⚠️ " + e.message, "warning");
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "💾 حفظ المهام اليومية"; }
+  }
+}
+
+// تحميل checklist اليوم عند الفتح
+async function loadTodayChecklist() {
+  try {
+    const todayKey = new Date().toISOString().slice(0,10);
+    const res = await callGAS("getTodayChecklist", { date: todayKey });
+    if (res && res.success && res.tasks) {
+      state.dailyChecklist = res.tasks;
+    } else {
+      state.dailyChecklist = {};
+    }
+  } catch(e) {
+    state.dailyChecklist = {};
+  }
+  renderDailyChecklist();
+}
+
+// ══════════════════════════════════════════
+// تنبيه المدير — Checklist المشرفة
+// ══════════════════════════════════════════
+async function loadManagerChecklistAlert() {
+  try {
+    const todayKey = new Date().toISOString().slice(0,10);
+    const res = await callGAS("getTodayChecklist", { date: todayKey });
+    const card = $id("checklistAlertCard");
+    if (!card) return;
+
+    if (!res || !res.success || !res.tasks) {
+      // لم تُسجَّل أي مهام اليوم
+      showChecklistAlert(todayKey, {}, 0);
+      return;
+    }
+
+    const done  = Object.values(res.tasks).filter(Boolean).length;
+    const total = DAILY_TASKS.length;
+
+    if (done < total) {
+      showChecklistAlert(todayKey, res.tasks, done);
+    } else {
+      card.style.display = "none";
+    }
+  } catch(e) {
+    console.warn("loadManagerChecklistAlert:", e.message);
+  }
+}
+
+function showChecklistAlert(date, tasks, doneCount) {
+  const card = $id("checklistAlertCard");
+  if (!card) return;
+  card.style.display = "block";
+
+  const total = DAILY_TASKS.length;
+  const detail = $id("checklistAlertDetail");
+  if (detail) {
+    detail.textContent = `يوم ${date} — أُنجز ${doneCount} من ${total} مهام (${Math.round(doneCount/total*100)}%)`;
+  }
+
+  const badges = $id("checklistStatusBadges");
+  if (badges) {
+    badges.innerHTML = DAILY_TASKS.map(t => {
+      const done = tasks[t.id] === true;
+      return `<span style="font-size:11px;padding:3px 10px;border-radius:99px;font-family:Cairo;
+        background:${done?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)'};
+        color:${done?'#10b981':'#ef4444'};
+        border:1px solid ${done?'#10b981':'#ef4444'}">
+        ${done?'✓':'✗'} ${t.label.replace(/^[^ ]+ /,'')}
+      </span>`;
+    }).join("");
+  }
+}
+
+async function applyChecklistDeduction() {
+  const btn = $id("checklistDeductBtn");
+  if (btn) { btn.disabled = true; btn.textContent = "⏳..."; }
+  try {
+    const res = await callGAS("recordSupervisorEvaluation", {
+      criterion:  "الالتزام بتنفيذ المهام الموكلة (جرد، متابعة، تقارير)",
+      evalType:   "خصم",
+      deduction:  3,
+      notes:      "لم تؤكد مهام المتابعة اليومية — خصم تلقائي"
+    });
+    if (res && res.success) {
+      showToast("✅ تم تطبيق خصم المتابعة على رهف", "success");
+      $id("checklistAlertCard").style.display = "none";
+      loadFromSheet();
+    }
+  } catch(e) {
+    showToast("⚠️ " + e.message, "warning");
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "✂️ تطبيق خصم المتابعة"; }
+  }
+}
+
+function dismissChecklistAlert() {
+  const card = $id("checklistAlertCard");
+  if (card) card.style.display = "none";
+}
+
 // ============================================================
 // تحميل البيانات من الشيت عند الفتح
 // ============================================================
@@ -2658,6 +2948,7 @@ async function loadFromSheet() {
     updateSupervisorScoreDisplay();
     updateRahafDisplay();
     renderLogTable();
+    if (state.managerUnlocked) loadManagerChecklistAlert();
     refreshManagerPage();
     renderSupEmployeeList();
     Object.keys(EMPLOYEES).forEach(n => updateEmpBalanceDisplay(n));
@@ -2762,6 +3053,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initMotivationalQuotes();
   showCriteria("calls");
   loadFromSheet();
+  loadTodayChecklist();
 });
 </script>
 
