@@ -1254,6 +1254,14 @@
         </div>
       </div>
 
+    <!-- Checklist Report -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">📋 تقرير مهام المشرفة — آخر 7 أيام</div>
+      <div id="managerChecklistReport">
+        <div style="color:var(--apex-muted);font-size:13px;text-align:center;padding:20px;font-family:Cairo">جاري التحميل...</div>
+      </div>
+    </div>
+
     <!-- Employee Balances -->
     <div class="card">
       <div class="card-title">👥 أرصدة الموظفات</div>
@@ -1676,8 +1684,14 @@ function switchPage(page) {
   document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
   document.getElementById("page-" + page).classList.add("active");
   document.getElementById("tab" + (page === "supervisor" ? "Sup" : "Mgr")).classList.add("active");
-  if (page === "supervisor") { refreshSupervisorPage(); loadDailyTasks(); }
-  if (page === "manager")    { refreshManagerPage(); checkSupervisorDailyAlert(); }
+  if (page === "supervisor") {
+    refreshSupervisorPage();
+    loadTodayChecklist();
+  }
+  if (page === "manager") {
+    refreshManagerPage();
+    loadManagerChecklistAlert();
+  }
 }
 
 // ============================================================
