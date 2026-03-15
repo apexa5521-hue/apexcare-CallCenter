@@ -1271,17 +1271,12 @@
           <label>المعيار / المهمة</label>
           <select id="rahafCriteria" onchange="onRahafCriteriaChange()">
             <option value="">-- اختر المعيار --</option>
-            <optgroup label="── مهام يومية ──" style="color:#10b981">
-              <option value="مراقبة ومتابعة الموظفات — ✅ مكتملة">✅ مراقبة ومتابعة الموظفات — مكتملة</option>
-              <option value="مراقبة ومتابعة الموظفات — ❌ لم تُنجز">❌ مراقبة ومتابعة الموظفات — لم تُنجز</option>
-              <option value="جرد المخالفات اليومية وتوثيقها — ✅ مكتملة">✅ جرد المخالفات وتوثيقها — مكتملة</option>
-              <option value="جرد المخالفات اليومية وتوثيقها — ❌ لم تُنجز">❌ جرد المخالفات وتوثيقها — لم تُنجز</option>
-              <option value="توجيه الموظفات عند الخطأ — ✅ مكتملة">✅ توجيه الموظفات عند الخطأ — مكتملة</option>
-              <option value="توجيه الموظفات عند الخطأ — ❌ لم تُنجز">❌ توجيه الموظفات عند الخطأ — لم تُنجز</option>
-              <option value="مراجعة تأكيد المواعيد — ✅ مكتملة">✅ مراجعة تأكيد المواعيد — مكتملة</option>
-              <option value="مراجعة تأكيد المواعيد — ❌ لم تُنجز">❌ مراجعة تأكيد المواعيد — لم تُنجز</option>
-              <option value="مراجعة جودة المكالمات — ✅ مكتملة">✅ مراجعة جودة المكالمات — مكتملة</option>
-              <option value="مراجعة جودة المكالمات — ❌ لم تُنجز">❌ مراجعة جودة المكالمات — لم تُنجز</option>
+            <optgroup label="── مهام يومية لم تُنجز ──" style="color:#ef4444">
+              <option value="مراقبة ومتابعة الموظفات — لم تُنجز">❌ مراقبة ومتابعة الموظفات — لم تُنجز</option>
+              <option value="جرد المخالفات وتوثيقها — لم تُنجز">❌ جرد المخالفات وتوثيقها — لم تُنجز</option>
+              <option value="توجيه الموظفات عند الخطأ — لم تُنجز">❌ توجيه الموظفات عند الخطأ — لم تُنجز</option>
+              <option value="مراجعة تأكيد المواعيد — لم تُنجز">❌ مراجعة تأكيد المواعيد — لم تُنجز</option>
+              <option value="مراجعة جودة المكالمات — لم تُنجز">❌ مراجعة جودة المكالمات — لم تُنجز</option>
             </optgroup>
             <optgroup label="── معايير عامة ──" style="color:#d4a843">
               <option value="تقييم الرقم الموحد 7078">تقييم الرقم الموحد 7078</option>
@@ -1366,11 +1361,15 @@
         </div>
       </div>
 
-      <!-- زر إلغاء آخر خصم -->
-      <div style="margin-top:16px">
+      <!-- أزرار تصحيح النقاط -->
+      <div style="margin-top:16px;display:flex;gap:8px">
         <button onclick="undoLastRahafDeduct()"
-          style="width:100%;padding:10px;border-radius:10px;border:1.5px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.06);color:#10b981;font-family:Cairo;font-size:13px;font-weight:700;cursor:pointer">
-          ↩️ إلغاء آخر خصم واستعادة النقطة
+          style="flex:1;padding:10px;border-radius:10px;border:1.5px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.06);color:#10b981;font-family:Cairo;font-size:13px;font-weight:700;cursor:pointer">
+          ↩️ إلغاء آخر خصم
+        </button>
+        <button onclick="correctRahafPoints()"
+          style="flex:1;padding:10px;border-radius:10px;border:1.5px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.06);color:#10b981;font-family:Cairo;font-size:13px;font-weight:700;cursor:pointer">
+          ✏️ تصحيح النقاط
         </button>
       </div>
 
@@ -3297,6 +3296,33 @@ function renderRahafEvalLog() {
       '<td style="padding:8px 14px;font-weight:700;color:' + color + ';font-family:Cairo">' + sign + Math.abs(e.amount) + ' نقطة</td>' +
       '</tr>';
   }).join("");
+}
+
+
+async function correctRahafPoints() {
+  var current = Math.max(0, state.supervisorScore - state.rahafDeductions);
+  var input = window.prompt("الرصيد الحالي: " + current + "\nأدخلي الرصيد الصحيح:");
+  if (input === null || input === "") return;
+  var correct = parseInt(input);
+  if (isNaN(correct) || correct < 0 || correct > state.supervisorScore) {
+    showToast("رقم غير صحيح", "error");
+    return;
+  }
+  var diff = state.supervisorScore - correct;
+  state.rahafDeductions = Math.max(0, diff);
+  updateRahafDisplay();
+  refreshManagerPage();
+  renderRahafEvalLog();
+  showToast("✅ تم تصحيح الرصيد إلى " + correct + " نقطة", "success");
+
+  try {
+    await callGAS("recordSupervisorEvaluation", {
+      criterion: "تصحيح يدوي للرصيد",
+      evalType: "تصحيح",
+      deduction: 0,
+      notes: "تم تصحيح الرصيد من " + current + " إلى " + correct
+    });
+  } catch(e) {}
 }
 
 document.addEventListener("DOMContentLoaded", () => {
