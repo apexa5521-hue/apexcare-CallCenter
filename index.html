@@ -908,7 +908,7 @@
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
           <div style="display:flex;align-items:center;gap:8px">
             <span style="width:4px;height:18px;background:#10b981;border-radius:2px;display:inline-block"></span>
-            <span style="font-size:15px;font-weight:700;color:var(--text);font-family:Cairo">✅ مهامي اليومية</span>
+            <span style="font-size:15px;font-weight:700;color:var(--text);font-family:Cairo">مهامي اليومية</span>
           </div>
           <div id="checklistDateBadge" style="font-size:11px;color:var(--text-muted);font-family:Cairo;background:var(--bg);padding:4px 10px;border-radius:99px;border:1px solid var(--border)"></div>
         </div>
@@ -917,7 +917,7 @@
           <div id="checklistProgress" style="font-size:13px;color:var(--text-muted);font-family:Cairo"></div>
           <button onclick="submitDailyChecklist()" id="checklistSubmitBtn"
             style="padding:9px 20px;background:#10b981;color:#fff;border:none;border-radius:8px;font-family:Cairo;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s">
-            💾 حفظ المهام اليومية
+            💾 حفظ مهام اليوم
           </button>
         </div>
       </div>
@@ -1254,6 +1254,14 @@
         </div>
       </div>
 
+    <!-- ── ملخص مهام رهف اليومية ── -->
+    <div class="card" id="dailyTasksSummaryCard">
+      <div class="card-title">📋 مهام رهف اليومية</div>
+      <div id="dailyTasksSummary">
+        <div style="color:var(--apex-muted);font-size:13px;font-family:Cairo">جاري التحميل...</div>
+      </div>
+    </div>
+
     <!-- Employee Balances -->
     <div class="card">
       <div class="card-title">👥 أرصدة الموظفات</div>
@@ -1292,13 +1300,27 @@
           <label>المعيار / المهمة</label>
           <select id="rahafCriteria">
             <option value="">-- اختر المعيار --</option>
-            <option value="تقييم الرقم الموحد 7078">تقييم الرقم الموحد 7078</option>
-            <option value="المتابعة اليومية للجدول">المتابعة اليومية للجدول</option>
-            <option value="الالتزام برصد المخالفات وتوثيقها">الالتزام برصد المخالفات وتوثيقها</option>
-            <option value="متابعة المحادثات المفتوحة">متابعة المحادثات المفتوحة</option>
-            <option value="تنفيذ مهام الجرد والمتابعة">تنفيذ مهام الجرد والمتابعة</option>
-            <option value="استكمال تغطية الموظفات">استكمال تغطية الموظفات</option>
-            <option value="متابعة جودة المكالمات على 7078">متابعة جودة المكالمات على 7078</option>
+            <optgroup label="── مهام يومية ──" style="color:#10b981">
+              <option value="مراقبة ومتابعة الموظفات — ✅ مكتملة">✅ مراقبة ومتابعة الموظفات — مكتملة</option>
+              <option value="مراقبة ومتابعة الموظفات — ❌ لم تُنجز">❌ مراقبة ومتابعة الموظفات — لم تُنجز</option>
+              <option value="جرد المخالفات اليومية وتوثيقها — ✅ مكتملة">✅ جرد المخالفات وتوثيقها — مكتملة</option>
+              <option value="جرد المخالفات اليومية وتوثيقها — ❌ لم تُنجز">❌ جرد المخالفات وتوثيقها — لم تُنجز</option>
+              <option value="توجيه الموظفات عند الخطأ — ✅ مكتملة">✅ توجيه الموظفات عند الخطأ — مكتملة</option>
+              <option value="توجيه الموظفات عند الخطأ — ❌ لم تُنجز">❌ توجيه الموظفات عند الخطأ — لم تُنجز</option>
+              <option value="مراجعة تأكيد المواعيد — ✅ مكتملة">✅ مراجعة تأكيد المواعيد — مكتملة</option>
+              <option value="مراجعة تأكيد المواعيد — ❌ لم تُنجز">❌ مراجعة تأكيد المواعيد — لم تُنجز</option>
+              <option value="مراجعة جودة المكالمات — ✅ مكتملة">✅ مراجعة جودة المكالمات — مكتملة</option>
+              <option value="مراجعة جودة المكالمات — ❌ لم تُنجز">❌ مراجعة جودة المكالمات — لم تُنجز</option>
+            </optgroup>
+            <optgroup label="── معايير عامة ──" style="color:#d4a843">
+              <option value="تقييم الرقم الموحد 7078">تقييم الرقم الموحد 7078</option>
+              <option value="المتابعة اليومية للجدول">المتابعة اليومية للجدول</option>
+              <option value="الالتزام برصد المخالفات وتوثيقها">الالتزام برصد المخالفات وتوثيقها</option>
+              <option value="متابعة المحادثات المفتوحة">متابعة المحادثات المفتوحة</option>
+              <option value="تنفيذ مهام الجرد والمتابعة">تنفيذ مهام الجرد والمتابعة</option>
+              <option value="استكمال تغطية الموظفات">استكمال تغطية الموظفات</option>
+              <option value="متابعة جودة المكالمات على 7078">متابعة جودة المكالمات على 7078</option>
+            </optgroup>
           </select>
         </div>
         <div class="form-group">
@@ -1466,7 +1488,7 @@ const DAILY_TASKS = [
   { id: "violations",   label: "📋 جرد المخالفات اليومية وتوثيقها",            desc: "هل تم رصد وتوثيق المخالفات؟" },
   { id: "guidance",     label: "💬 توجيه الموظفات عند الخطأ",                  desc: "هل وجّهتِ من ارتكبت خطأ اليوم؟" },
   { id: "appointments", label: "📅 مراجعة تأكيد المواعيد وحجوزاتها",           desc: "هل راجعتِ تأكيد المواعيد اليوم؟" },
-  { id: "callquality",  label: "📞 مراجعة جودة المكالمات",                     desc: "هل استمعتِ لمكالمة واحدة على الأقل؟" },
+  { id: "callquality",  label: "📞 مراجعة جودة المكالمات",                     desc: "هل قيّمتِ مكالمة واحدة على الأقل لكل موظفة اتصال؟" },
 ];
 
 const EMPLOYEES = {
@@ -2817,7 +2839,7 @@ async function submitDailyChecklist() {
   } catch(e) {
     showToast("⚠️ " + e.message, "warning");
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = "💾 حفظ المهام اليومية"; }
+    if (btn) { btn.disabled = false; btn.textContent = "💾 حفظ مهام اليوم"; }
   }
 }
 
@@ -2950,6 +2972,7 @@ async function loadFromSheet() {
     renderLogTable();
     if (state.managerUnlocked) loadManagerChecklistAlert();
     refreshManagerPage();
+    loadManagerDailyTasks();
     renderSupEmployeeList();
     Object.keys(EMPLOYEES).forEach(n => updateEmpBalanceDisplay(n));
     showToast("✅ تم تحميل البيانات", "success");
@@ -3054,6 +3077,7 @@ document.addEventListener("DOMContentLoaded", () => {
   showCriteria("calls");
   loadFromSheet();
   loadTodayChecklist();
+  checkAndResetDailyChecklist();
 });
 </script>
 
