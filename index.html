@@ -1383,7 +1383,19 @@
 
     <!-- سجل تقييمات رهف -->
     <div class="card">
-      <div class="card-title">📋 سجل تقييمات المشرفة رهف</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin-bottom:0">📋 سجل تقييمات المشرفة رهف</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="generateRahafReport('daily')"
+            style="padding:8px 16px;border-radius:8px;border:1.5px solid var(--apex-teal);background:rgba(14,165,176,0.08);color:var(--apex-teal-light);font-family:Cairo;font-size:12px;font-weight:700;cursor:pointer">
+            📄 تقرير اليوم
+          </button>
+          <button onclick="generateRahafReport('weekly')"
+            style="padding:8px 16px;border-radius:8px;border:1.5px solid var(--apex-gold);background:rgba(212,168,67,0.08);color:var(--apex-gold);font-family:Cairo;font-size:12px;font-weight:700;cursor:pointer">
+            📊 تقرير أسبوعي
+          </button>
+        </div>
+      </div>
       <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border)">
         <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:500px">
           <thead>
@@ -1399,6 +1411,18 @@
           </tbody>
         </table>
       </div>
+    </div>
+
+    <!-- تقرير تقييمات رهف -->
+    <div class="card" id="rahafReportCard" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin-bottom:0" id="rahafReportTitle">📄 تقرير تقييمات رهف</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="window.print()" class="btn btn-primary">🖨️ طباعة / PDF</button>
+          <button onclick="$id('rahafReportCard').style.display='none'" class="btn btn-teal">إغلاق</button>
+        </div>
+      </div>
+      <div id="rahafReportContent"></div>
     </div>
 
     <!-- Weekly Report Preview -->
@@ -3324,6 +3348,82 @@ async function correctRahafPoints() {
       notes: "تم تصحيح الرصيد من " + current + " إلى " + correct
     });
   } catch(e) {}
+}
+
+
+function generateRahafReport(type) {
+  var isDaily  = type === "daily";
+  var today    = new Date().toISOString().slice(0,10);
+  var weekAgo  = new Date(Date.now() - 7*24*60*60*1000).toISOString().slice(0,10);
+  var cutoff   = isDaily ? today : weekAgo;
+  var title    = isDaily ? "تقرير تقييمات رهف — اليوم " + today : "التقرير الأسبوعي لتقييمات رهف";
+
+  // اجمع من state.rahafEvalLog
+  var log = (state.rahafEvalLog || []).filter(function(e) {
+    return !isDaily || (e.date || today) >= cutoff;
+  });
+
+  // اجمع أيضاً من سجل التقييمات المحفوظ في الشيت (ما يجلبه getAllData)
+  var evalLog = (state.supervisorEvalLog || []).filter(function(e) {
+    return !isDaily || (e.date || "") >= cutoff;
+  });
+
+  var allEntries = log.concat(evalLog);
+  var totalDeduct = allEntries.reduce(function(s,e){ return s + (parseFloat(e.amount||e.deduction||0)); }, 0);
+  var net = Math.max(0, state.supervisorScore - state.rahafDeductions);
+
+  var rows = allEntries.length > 0
+    ? allEntries.map(function(e) {
+        var amt = parseFloat(e.amount || e.deduction || 0);
+        var color = amt > 0 ? "#ef4444" : "#10b981";
+        var sign  = amt > 0 ? "-" : "+";
+        return "<tr style='border-bottom:1px solid #e5e7eb'>" +
+          "<td style='padding:10px 14px;font-family:Cairo;font-size:13px;color:#6b7280'>" + (e.date||today) + "</td>" +
+          "<td style='padding:10px 14px;font-family:Cairo;font-size:13px'>" + (e.criterion||"—") + "</td>" +
+          "<td style='padding:10px 14px;font-family:Cairo;font-size:13px;color:#6b7280'>" + (e.evalType||e.type||"خصم") + "</td>" +
+          "<td style='padding:10px 14px;font-family:Cairo;font-size:13px;font-weight:700;color:" + color + "'>" + sign + Math.abs(amt) + " نقطة</td>" +
+          "<td style='padding:10px 14px;font-family:Cairo;font-size:12px;color:#6b7280'>" + (e.notes||"—") + "</td>" +
+          "</tr>";
+      }).join("")
+    : "<tr><td colspan='5' style='text-align:center;padding:20px;font-family:Cairo;color:#6b7280'>لا توجد تقييمات في هذه الفترة</td></tr>";
+
+  var html =
+    "<div style='text-align:center;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #e5e7eb'>" +
+    "<div style='font-size:20px;font-weight:900;color:#1a56db;font-family:Cairo;margin-bottom:4px'>APEXCARE · نظام الجودة</div>" +
+    "<div style='font-size:16px;font-weight:700;font-family:Cairo;margin-bottom:4px'>" + title + "</div>" +
+    "<div style='font-size:12px;color:#6b7280;font-family:Cairo'>تاريخ الإصدار: " + today + "</div>" +
+    "</div>" +
+
+    "<div style='display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap'>" +
+    "<div style='flex:1;min-width:120px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;text-align:center'>" +
+    "<div style='font-size:11px;color:#6b7280;font-family:Cairo'>الرصيد الحالي</div>" +
+    "<div style='font-size:28px;font-weight:900;color:#10b981;font-family:Cairo'>" + net + "</div>" +
+    "<div style='font-size:11px;color:#6b7280;font-family:Cairo'>من 800</div></div>" +
+    "<div style='flex:1;min-width:120px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;text-align:center'>" +
+    "<div style='font-size:11px;color:#6b7280;font-family:Cairo'>إجمالي الخصم</div>" +
+    "<div style='font-size:28px;font-weight:900;color:#ef4444;font-family:Cairo'>" + totalDeduct + "</div>" +
+    "<div style='font-size:11px;color:#6b7280;font-family:Cairo'>نقطة</div></div>" +
+    "<div style='flex:1;min-width:120px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px;text-align:center'>" +
+    "<div style='font-size:11px;color:#6b7280;font-family:Cairo'>عدد التقييمات</div>" +
+    "<div style='font-size:28px;font-weight:900;color:#1d4ed8;font-family:Cairo'>" + allEntries.length + "</div>" +
+    "<div style='font-size:11px;color:#6b7280;font-family:Cairo'>تقييم</div></div>" +
+    "</div>" +
+
+    "<table style='width:100%;border-collapse:collapse;font-size:13px'>" +
+    "<thead><tr style='background:#f1f5f9'>" +
+    "<th style='padding:10px 14px;text-align:right;font-family:Cairo;color:#374151;font-weight:700'>التاريخ</th>" +
+    "<th style='padding:10px 14px;text-align:right;font-family:Cairo;color:#374151;font-weight:700'>المعيار</th>" +
+    "<th style='padding:10px 14px;text-align:right;font-family:Cairo;color:#374151;font-weight:700'>النوع</th>" +
+    "<th style='padding:10px 14px;text-align:right;font-family:Cairo;color:#374151;font-weight:700'>الخصم</th>" +
+    "<th style='padding:10px 14px;text-align:right;font-family:Cairo;color:#374151;font-weight:700'>ملاحظات</th>" +
+    "</tr></thead><tbody>" + rows + "</tbody></table>";
+
+  var card = $id("rahafReportCard");
+  var content = $id("rahafReportContent");
+  var titleEl = $id("rahafReportTitle");
+  if (titleEl) titleEl.textContent = (isDaily ? "📄 " : "📊 ") + title;
+  if (content) content.innerHTML = html;
+  if (card) { card.style.display = "block"; card.scrollIntoView({behavior:"smooth"}); }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
