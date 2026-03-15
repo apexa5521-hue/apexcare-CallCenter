@@ -1695,7 +1695,7 @@ function switchPage(page) {
   document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
   document.getElementById("page-" + page).classList.add("active");
   document.getElementById("tab" + (page === "supervisor" ? "Sup" : "Mgr")).classList.add("active");
-  if (page === "supervisor") { refreshSupervisorPage(); loadDailyTasks(); }
+  if (page === "supervisor") { refreshSupervisorPage(); loadTodayChecklist(); }
   if (page === "manager")    { refreshManagerPage(); checkSupervisorDailyAlert(); }
 }
 
@@ -3064,6 +3064,52 @@ function executeReset() {
 // ============================================================
 // INIT
 // ============================================================
+
+function checkAndResetDailyChecklist() {
+  var todayKey = new Date().toISOString().slice(0,10);
+  var lastDay  = localStorage.getItem("apex_checklist_day");
+  if (lastDay !== todayKey) {
+    state.dailyChecklist = {};
+    localStorage.setItem("apex_checklist_day", todayKey);
+  }
+}
+
+async function loadManagerDailyTasks() {
+  var container = document.getElementById("dailyTasksSummary");
+  if (!container) return;
+  var TASK_LABELS = {
+    monitoring:   "🔍 مراقبة ومتابعة الموظفات",
+    violations:   "📋 جرد المخالفات وتوثيقها",
+    guidance:     "💬 توجيه الموظفات عند الخطأ",
+    appointments: "📅 مراجعة تأكيد المواعيد",
+    callquality:  "📞 مراجعة جودة المكالمات"
+  };
+  try {
+    var todayKey = new Date().toISOString().slice(0,10);
+    var res = await callGAS("getTodayChecklist", { date: todayKey });
+    if (!res || !res.success || !res.tasks) {
+      container.innerHTML = '<div style="background:rgba(239,68,68,0.08);border:1.5px solid #ef4444;border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:12px"><span style="font-size:24px">⚠️</span><div><div style="font-size:14px;font-weight:700;color:#ef4444;font-family:Cairo">رهف لم تسجّل مهامها اليوم بعد</div><div style="font-size:12px;color:var(--text-muted);font-family:Cairo;margin-top:3px">📅 ' + todayKey + '</div></div></div>';
+      return;
+    }
+    var tasks = res.tasks;
+    var done  = Object.values(tasks).filter(Boolean).length;
+    var total = Object.keys(TASK_LABELS).length;
+    var pct   = Math.round(done/total*100);
+    var barC  = done===total ? "#10b981" : done>=3 ? "#f59e0b" : "#ef4444";
+    var rows  = "";
+    Object.entries(TASK_LABELS).forEach(function(e) {
+      var isDone = tasks[e[0]] === true;
+      rows += '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:' + (isDone?'rgba(16,185,129,0.06)':'rgba(239,68,68,0.06)') + ';border:1px solid ' + (isDone?'rgba(16,185,129,0.3)':'rgba(239,68,68,0.2)') + ';border-radius:8px"><span style="font-size:14px">' + (isDone?'✅':'❌') + '</span><span style="font-size:11px;font-family:Cairo;color:var(--text)">' + e[1] + '</span></div>';
+    });
+    container.innerHTML =
+      '<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:12px;color:var(--text-muted);font-family:Cairo">📅 ' + todayKey + '</span><span style="font-size:13px;font-weight:700;color:' + barC + ';font-family:Cairo">' + done + '/' + total + ' مهام • ' + pct + '%</span></div><div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + barC + ';border-radius:4px"></div></div></div>' +
+      (done<total ? '<div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px"><span style="font-size:18px">⚠️</span><span style="font-size:12px;color:#ef4444;font-weight:700;font-family:Cairo">مهام لم تُنجز اليوم</span></div>' : '<div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px"><span style="font-size:18px">✅</span><span style="font-size:12px;color:#10b981;font-weight:700;font-family:Cairo">رهف أنجزت جميع مهام اليوم</span></div>') +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' + rows + '</div>';
+  } catch(e) {
+    if (container) container.innerHTML = '<div style="color:var(--text-muted);font-size:12px;font-family:Cairo">تعذّر تحميل المهام</div>';
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   setEl("maxSupScore", "textContent", MAX_SUP_SCORE);
   initTheme();
