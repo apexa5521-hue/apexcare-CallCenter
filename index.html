@@ -2968,11 +2968,12 @@ async function loadFromSheet() {
     updateSupervisorScoreDisplay();
     updateRahafDisplay();
     renderLogTable();
-    if (state.managerUnlocked) loadManagerChecklistAlert();
-    refreshManagerPage();
-    loadManagerDailyTasks();
     renderSupEmployeeList();
     Object.keys(EMPLOYEES).forEach(n => updateEmpBalanceDisplay(n));
+    if (state.managerUnlocked) {
+      refreshManagerPage();
+      loadManagerDailyTasks();
+    }
     showToast("✅ تم تحميل البيانات", "success");
   } catch(e) {
     console.error("loadFromSheet:", e);
