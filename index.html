@@ -1722,8 +1722,8 @@ function onEmployeeChange() {
 
 function updateEmpBalanceDisplay(name) {
   const sc = state.employeeScores[name];
-  document.getElementById("empCurrentBalance").textContent = sc.balance;
-  document.getElementById("empCurrentBonus").textContent = (sc.balance * 5) + " ريال";
+  setEl("empCurrentBalance", "textContent", sc.balance);
+  setEl("empCurrentBonus", "textContent", (sc.balance * 5) + " ريال");
   const pct = sc.balance;
   const bar = document.getElementById("empBalanceBar");
   bar.style.width = pct + "%";
@@ -1768,9 +1768,9 @@ function onCriterionChange() {
   let deduction = 0;
   if (violNum <= 3) deduction = deductPer;
 
-  document.getElementById("infoPoints").textContent = points + " نقطة";
-  document.getElementById("infoDeduct").textContent = deduction > 0 ? deduction + " نقطة" : "لا خصم (استُنفدت النقاط)";
-  document.getElementById("infoViolNum").textContent = violNum;
+  setEl("infoPoints", "textContent", points + " نقطة");
+  setEl("infoDeduct", "textContent", deduction > 0 ? deduction + " نقطة" : "لا خصم (استُنفدت النقاط)");
+  setEl("infoViolNum", "textContent", violNum);
   document.getElementById("criterionInfo").style.display = "block";
 }
 
@@ -2029,7 +2029,7 @@ function clearRahafFile() {
   rahafFileData = null;
   rahafFileName = null;
   document.getElementById("rahafFileInput").value = "";
-  document.getElementById("rahafUploadIcon").textContent = "📎";
+  setEl("rahafUploadIcon", "textContent", "📎");
   document.getElementById("rahafFilePreview").style.display = "none";
 }
 
@@ -2234,10 +2234,10 @@ function refreshManagerPage() {
   if (!$id("statTotalBonus")) return;
   const totalBonus = Object.values(state.employeeScores).reduce((s, sc) => s + sc.balance * 5, 0);
   const top = Object.entries(state.employeeScores).reduce((best, [n, sc]) => sc.balance > best[1] ? [n, sc.balance] : best, ["", 0]);
-  document.getElementById("statTotalBonus").textContent = totalBonus.toLocaleString() + " ر";
-  document.getElementById("statTopPerformer").textContent = top[0] || "--";
-  document.getElementById("statRahafScore").textContent = state.supervisorScore;
-  document.getElementById("statRahafBalance").textContent = Math.max(0, state.supervisorScore - state.rahafDeductions) + " / " + MAX_SUP_SCORE;
+  setEl("statTotalBonus", "textContent", totalBonus.toLocaleString() + " ر");
+  setEl("statTopPerformer", "textContent", top[0] || "--");
+  setEl("statRahafScore", "textContent", state.supervisorScore);
+  setEl("statRahafBalance", "textContent", Math.max(0, state.supervisorScore - state.rahafDeductions) + " / " + MAX_SUP_SCORE);
 
   // Employee grid
   const grid = $id("managerEmployeeGrid");
