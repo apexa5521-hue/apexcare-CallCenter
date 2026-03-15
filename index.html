@@ -2319,7 +2319,11 @@ function refreshManagerPage() {
   // Stats — تحقق من وجود العناصر أولاً (قد تكون في صفحة المدير فقط)
   if (!$id("statTotalBonus")) return;
   const totalBonus = Object.values(state.employeeScores).reduce((s, sc) => s + sc.balance * 5, 0);
-  const top = Object.entries(state.employeeScores).reduce((best, [n, sc]) => sc.balance > best[1] ? [n, sc.balance] : best, ["", 0]);
+  const maxScore = Math.max(...Object.values(state.employeeScores).map(sc => sc.balance));
+  const topNames = Object.entries(state.employeeScores)
+    .filter(([, sc]) => sc.balance === maxScore)
+    .map(([n]) => n);
+  const top = [topNames.join(" · "), maxScore];
   setEl("statTotalBonus", "textContent", totalBonus.toLocaleString() + " ر");
   setEl("statTopPerformer", "textContent", top[0] || "--");
   const rahafNet = Math.max(0, state.supervisorScore - state.rahafDeductions);
