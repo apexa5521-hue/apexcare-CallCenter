@@ -1382,6 +1382,26 @@
       </div>
     </div>
 
+    <!-- سجل تقييمات رهف -->
+    <div class="card">
+      <div class="card-title">📋 سجل تقييمات المشرفة رهف</div>
+      <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border)">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:500px">
+          <thead>
+            <tr style="background:var(--border)">
+              <th style="padding:9px 14px;text-align:right;color:var(--text-muted);font-family:Cairo;font-weight:600">التاريخ</th>
+              <th style="padding:9px 14px;text-align:right;color:var(--text-muted);font-family:Cairo;font-weight:600">المعيار</th>
+              <th style="padding:9px 14px;text-align:right;color:var(--text-muted);font-family:Cairo;font-weight:600">النوع</th>
+              <th style="padding:9px 14px;text-align:right;color:var(--text-muted);font-family:Cairo;font-weight:600">الخصم</th>
+            </tr>
+          </thead>
+          <tbody id="rahafEvalLogTable">
+            <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px;font-family:Cairo">لا توجد سجلات بعد</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Weekly Report Preview -->
     <div class="card" id="weeklyReportCard" style="display:none">
       <div class="card-title">📄 التقرير الأسبوعي</div>
@@ -2136,6 +2156,7 @@ async function deductRahaf(amount) {
 
   updateRahafDisplay();
   refreshManagerPage();
+  renderRahafEvalLog();
   showToast(`تم خصم ${amount} نقطة من رهف بسبب تقصير`, "warning");
   document.getElementById("rahafNotes").value = "";
 }
@@ -3252,8 +3273,30 @@ async function undoLastRahafDeduct() {
 
   updateRahafDisplay();
   refreshManagerPage();
+  renderRahafEvalLog();
   showToast("✅ تم إلغاء الخصم واستعادة " + last.amount + " نقطة", "success");
   onRahafCriteriaChange();
+}
+
+
+function renderRahafEvalLog() {
+  var tbody = document.getElementById("rahafEvalLogTable");
+  if (!tbody) return;
+  var log = state.rahafEvalLog || [];
+  if (log.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px;font-family:Cairo">لا توجد سجلات بعد</td></tr>';
+    return;
+  }
+  tbody.innerHTML = log.slice().reverse().map(function(e) {
+    var color = e.amount > 0 ? "#ef4444" : "#10b981";
+    var sign  = e.amount > 0 ? "-" : "+";
+    return '<tr style="border-bottom:1px solid var(--border)">' +
+      '<td style="padding:8px 14px;color:var(--text-muted);font-size:11px;font-family:Cairo">' + (e.date||"") + '</td>' +
+      '<td style="padding:8px 14px;color:var(--text);font-family:Cairo;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (e.criterion||"") + '</td>' +
+      '<td style="padding:8px 14px;color:var(--text-muted);font-family:Cairo">' + (e.evalType||"خصم") + '</td>' +
+      '<td style="padding:8px 14px;font-weight:700;color:' + color + ';font-family:Cairo">' + sign + Math.abs(e.amount) + ' نقطة</td>' +
+      '</tr>';
+  }).join("");
 }
 
 document.addEventListener("DOMContentLoaded", () => {
