@@ -2284,10 +2284,11 @@ function renderSupEmployeeList() {
 }
 
 function updateSupervisorScoreDisplay() {
-  setEl("supScoreDisplay","textContent", state.supervisorScore);
-  setEl("supScoreDisplay2","textContent", state.supervisorScore);
-  setEl("supBonusDisplay","textContent", rahafBonus(state.supervisorScore) + " ريال");
-  setStyle("supScoreBar","width", (state.supervisorScore / MAX_SUP_SCORE * 100) + "%");
+  const pts = Math.max(0, state.supervisorScore - state.rahafDeductions);
+  setEl("supScoreDisplay",  "textContent", pts);
+  setEl("supScoreDisplay2", "textContent", pts);
+  setEl("supBonusDisplay",  "textContent", rahafBonus(pts) + " ريال");
+  setStyle("supScoreBar",   "width", (pts / MAX_SUP_SCORE * 100) + "%");
 }
 
 function refreshManagerPage() {
