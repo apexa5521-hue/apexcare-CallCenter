@@ -1194,13 +1194,10 @@
         <div class="stat-chip-label">أفضل أداء</div>
       </div>
       <div class="stat-chip">
-        <div class="stat-chip-value" id="statRahafScore" style="color:var(--apex-teal-light)">--</div>
-        <div class="stat-chip-label">نقاط رهف</div>
+        <div class="stat-chip-value" id="statRahafScore" style="color:var(--apex-purple)">--</div>
+        <div class="stat-chip-label">نقاط رهف (صافي)</div>
       </div>
-      <div class="stat-chip">
-        <div class="stat-chip-value" id="statRahafBalance" style="color:var(--apex-purple)">--</div>
-        <div class="stat-chip-label">رصيد رهف (من 800)</div>
-      </div>
+
     </div>
 
 
@@ -2272,8 +2269,9 @@ function refreshManagerPage() {
   const top = Object.entries(state.employeeScores).reduce((best, [n, sc]) => sc.balance > best[1] ? [n, sc.balance] : best, ["", 0]);
   setEl("statTotalBonus", "textContent", totalBonus.toLocaleString() + " ر");
   setEl("statTopPerformer", "textContent", top[0] || "--");
-  setEl("statRahafScore", "textContent", state.supervisorScore);
-  setEl("statRahafBalance", "textContent", Math.max(0, state.supervisorScore - state.rahafDeductions) + " / " + MAX_SUP_SCORE);
+  const rahafNet = Math.max(0, state.supervisorScore - state.rahafDeductions);
+  setEl("statRahafScore",   "textContent", rahafNet);
+  setEl("statRahafBalance", "textContent", rahafNet + " / " + MAX_SUP_SCORE);
 
   // Employee grid
   const grid = $id("managerEmployeeGrid");
@@ -2325,7 +2323,7 @@ function updateRahafDisplay() {
   setEl("rahafBonusDisplay",   "textContent", bonus + " ريال");
   setEl("rahafMilestone",      "textContent", milestone);
   setEl("statRahafBalance",    "textContent", pts + " / " + max);
-  setEl("statRahafScore",      "textContent", earned); // النقاط المكتسبة كاملة
+  setEl("statRahafScore",      "textContent", pts); // الصافي فقط
   const bar = document.getElementById("rahafBalanceBar");
   if (bar) bar.style.width = pct + "%";
   // شريط المشرفة في صفحة الإشراف
