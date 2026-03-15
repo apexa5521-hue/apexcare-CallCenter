@@ -2230,7 +2230,8 @@ function updateSupervisorScoreDisplay() {
 }
 
 function refreshManagerPage() {
-  // Stats
+  // Stats — تحقق من وجود العناصر أولاً (قد تكون في صفحة المدير فقط)
+  if (!$id("statTotalBonus")) return;
   const totalBonus = Object.values(state.employeeScores).reduce((s, sc) => s + sc.balance * 5, 0);
   const top = Object.entries(state.employeeScores).reduce((best, [n, sc]) => sc.balance > best[1] ? [n, sc.balance] : best, ["", 0]);
   document.getElementById("statTotalBonus").textContent = totalBonus.toLocaleString() + " ر";
