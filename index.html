@@ -2805,15 +2805,24 @@ async function submitDailyChecklist() {
   showToast(done === total ? "✅ تم حفظ جميع المهام اليومية" : "✅ تم الحفظ — " + done + "/" + total + " مهام", "success");
 
   try {
-    await callGAS("saveDailyChecklist", {
+    console.log("📤 إرسال saveDailyChecklist...", { date: todayKey, tasks: state.dailyChecklist, done, total });
+    const res = await callGAS("saveDailyChecklist", {
       date:      todayKey,
       tasks:     state.dailyChecklist || {},
       doneCount: done,
       total:     total,
       completed: done === total
     });
+    console.log("📥 نتيجة saveDailyChecklist:", res);
+    if (res && res.success) {
+      showToast("✅ تم الحفظ في الشيت", "success");
+    } else if (res && res.error) {
+      showToast("❌ خطأ: " + res.error, "error");
+      console.error("GAS error:", res.error);
+    }
   } catch(e) {
-    console.warn("saveDailyChecklist GAS error:", e.message);
+    console.error("saveDailyChecklist failed:", e.message);
+    showToast("❌ فشل الاتصال: " + e.message, "error");
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = "💾 حفظ مهام اليوم"; }
   }
