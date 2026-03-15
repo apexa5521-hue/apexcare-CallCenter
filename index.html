@@ -1272,7 +1272,7 @@
       <div class="form-row">
         <div class="form-group">
           <label>المعيار / المهمة</label>
-          <select id="rahafCriteria">
+          <select id="rahafCriteria" onchange="onRahafCriteriaChange()">
             <option value="">-- اختر المعيار --</option>
             <optgroup label="── مهام يومية ──" style="color:#10b981">
               <option value="مراقبة ومتابعة الموظفات — ✅ مكتملة">✅ مراقبة ومتابعة الموظفات — مكتملة</option>
@@ -1296,6 +1296,22 @@
               <option value="متابعة جودة المكالمات على 7078">متابعة جودة المكالمات على 7078</option>
             </optgroup>
           </select>
+          <!-- معلومات التكرار والخصم المقترح -->
+          <div id="rahafCriteriaInfo" style="display:none;margin-top:10px;padding:12px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg)">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+              <div style="display:flex;gap:20px">
+                <div>
+                  <div style="font-size:11px;color:var(--text-muted);font-family:Cairo">عدد مرات التكرار</div>
+                  <div style="font-size:22px;font-weight:900;color:#d97706;font-family:Cairo" id="rahafRepeatCount">0</div>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:var(--text-muted);font-family:Cairo">الخصم المقترح</div>
+                  <div style="font-size:22px;font-weight:900;color:#ef4444;font-family:Cairo" id="rahafSuggestedDeduct">1 نقطة</div>
+                </div>
+              </div>
+              <div id="rahafRepeatBadge" style="font-size:12px;padding:4px 14px;border-radius:99px;font-family:Cairo;font-weight:700;background:rgba(239,68,68,0.1);color:#ef4444"></div>
+            </div>
+          </div>
         </div>
         <div class="form-group">
           <label>نوع التقييم</label>
@@ -1333,11 +1349,20 @@
         </div>
       </div>
 
-      <div>
-        <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:8px">مقدار الخصم (نقاط)</label>
+      <!-- خصم تلقائي — تكرار أول -->
+      <div id="rahafAutoDeductDiv" style="display:none;margin-bottom:12px">
+        <button onclick="deductRahaf(1)"
+          style="width:100%;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;font-family:Cairo;font-size:14px;font-weight:700;cursor:pointer">
+          ✂️ تطبيق خصم 1 نقطة (خطأ أول)
+        </button>
+      </div>
+
+      <!-- خصم متدرج — تكرار ثانٍ فأكثر -->
+      <div id="rahafGradedDeductDiv" style="display:none">
+        <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:8px">الخصم المتدرج (تكرار <span id="rahafRepeatLabel">2</span>+)</label>
         <div class="deduct-grid">
-          <button class="deduct-btn" onclick="deductRahaf(2)">2 نقطة<br><small>تكرار ١</small></button>
-          <button class="deduct-btn" onclick="deductRahaf(4)">4 نقاط<br><small>تكرار ٢</small></button>
+          <button class="deduct-btn" onclick="deductRahaf(2)">2 نقطة<br><small>خفيف</small></button>
+          <button class="deduct-btn" onclick="deductRahaf(4)">4 نقاط<br><small>متوسط</small></button>
           <button class="deduct-btn" onclick="deductRahaf(6)">6 نقاط<br><small>تكرار ٣</small></button>
           <button class="deduct-btn" onclick="deductRahaf(8)">8 نقاط<br><small>إنذار شفهي</small></button>
           <button class="deduct-btn" onclick="deductRahaf(10)">10 نقاط<br><small>إنذار كتابي</small></button>
@@ -2083,6 +2108,10 @@ async function deductRahaf(amount) {
     showToast("يرجى اختيار المعيار أولاً", "error");
     return;
   }
+
+  // سجّل في rahafEvalLog للتتبع
+  if (!state.rahafEvalLog) state.rahafEvalLog = [];
+  state.rahafEvalLog.push({ criterion, amount, date: new Date().toISOString().slice(0,10) });
 
   // الخصم يُضاف لمجموع الخصومات — النقاط الصافية = مكتسبة - خصومات
   state.rahafDeductions = Math.min(state.supervisorScore, state.rahafDeductions + amount);
@@ -3105,6 +3134,59 @@ function logSupervisorLoginToSheet() {
   var done  = Object.values(tasks).filter(Boolean).length;
   callGAS("logSupervisorLogin", { tasks: tasks, doneCount: done })
     .catch(function(e) { console.warn("logSupervisorLogin:", e.message); });
+}
+
+
+// ══════════════════════════════════════════
+// تقييم رهف — حساب التكرار والخصم المقترح
+// ══════════════════════════════════════════
+function onRahafCriteriaChange() {
+  var criterion = document.getElementById("rahafCriteria").value;
+  var infoDiv   = document.getElementById("rahafCriteriaInfo");
+  var autoDiv   = document.getElementById("rahafAutoDeductDiv");
+  var gradedDiv = document.getElementById("rahafGradedDeductDiv");
+  var repeatLabel = document.getElementById("rahafRepeatLabel");
+
+  if (!criterion) {
+    if (infoDiv)   infoDiv.style.display   = "none";
+    if (autoDiv)   autoDiv.style.display   = "none";
+    if (gradedDiv) gradedDiv.style.display = "none";
+    return;
+  }
+
+  // عدّ مرات هذا المعيار في سجل تقييم رهف
+  var count = (state.rahafEvalLog || []).filter(function(e) {
+    return e.criterion === criterion;
+  }).length;
+
+  var repeatCount   = document.getElementById("rahafRepeatCount");
+  var suggestedDeduct = document.getElementById("rahafSuggestedDeduct");
+  var badge         = document.getElementById("rahafRepeatBadge");
+
+  if (repeatCount)    repeatCount.textContent   = count;
+  if (repeatLabel)    repeatLabel.textContent   = count + 1;
+
+  if (count === 0) {
+    // خطأ أول — خصم 1 نقطة
+    if (suggestedDeduct) suggestedDeduct.textContent = "1 نقطة";
+    if (badge) { badge.textContent = "خطأ أول"; badge.style.background = "rgba(245,158,11,0.1)"; badge.style.color = "#d97706"; }
+    if (autoDiv)   autoDiv.style.display   = "block";
+    if (gradedDiv) gradedDiv.style.display = "none";
+  } else {
+    // تكرار — خصم متدرج
+    var suggested = Math.min(count * 2, 10);
+    if (suggestedDeduct) suggestedDeduct.textContent = suggested + " نقطة";
+    if (badge) {
+      var label = count === 1 ? "تكرار ثانٍ" : count === 2 ? "تكرار ثالث" : "تكرار " + (count+1);
+      badge.textContent = label;
+      badge.style.background = "rgba(239,68,68,0.1)";
+      badge.style.color = "#ef4444";
+    }
+    if (autoDiv)   autoDiv.style.display   = "none";
+    if (gradedDiv) gradedDiv.style.display = "block";
+  }
+
+  if (infoDiv) infoDiv.style.display = "block";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
