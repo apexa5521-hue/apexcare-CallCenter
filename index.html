@@ -1746,7 +1746,7 @@ function switchPage(page) {
   document.getElementById("page-" + page).classList.add("active");
   document.getElementById("tab" + (page === "supervisor" ? "Sup" : "Mgr")).classList.add("active");
   if (page === "supervisor") { refreshSupervisorPage(); loadTodayChecklist(); logSupervisorLoginToSheet(); }
-  if (page === "manager")    { refreshManagerPage(); loadManagerDailyTasks(); }
+  if (page === "manager")    { refreshManagerPage(); loadManagerDailyTasks(); checkYesterdayAbsence(); }
 }
 
 // ============================================================
@@ -3428,6 +3428,60 @@ function generateRahafReport(type) {
   if (titleEl) titleEl.textContent = (isDaily ? "📄 " : "📊 ") + title;
   if (content) content.innerHTML = html;
   if (card) { card.style.display = "block"; card.scrollIntoView({behavior:"smooth"}); }
+}
+
+
+async function checkYesterdayAbsence() {
+  try {
+    const res = await callGAS("checkYesterdayTasks");
+    if (!res || !res.success || !res.hasAbsence) return;
+
+    const missing = res.missingTasks || [];
+    const done    = res.doneTasks || [];
+    const deduct  = res.deduction || missing.length;
+
+    const detailLines = missing.map(t => "❌ " + t).join("\n");
+    const doneLines   = done.length > 0 ? "\n\n✅ منجزة:\n" + done.map(t => "✓ " + t).join("\n") : "";
+
+    const confirmed = await showConfirmDialog(
+      "⚠️ مهام غير منجزة — " + res.date,
+      "المهام الغير منجزة (" + missing.length + "):\n" + detailLines +
+      doneLines +
+      "\n\nهل تريد احتساب خصم " + deduct + " نقطة (نقطة لكل مهمة)؟"
+    );
+
+    if (confirmed) {
+      state.rahafDeductions = Math.min(state.supervisorScore, state.rahafDeductions + deduct);
+      if (!state.rahafEvalLog) state.rahafEvalLog = [];
+      missing.forEach(function(task) {
+        state.rahafEvalLog.push({
+          criterion: task + " — لم تُنجز",
+          amount: 1,
+          evalType: "غياب متابعة",
+          notes: "خصم تلقائي — " + res.date,
+          date: res.date
+        });
+      });
+
+      try {
+        await callGAS("recordSupervisorEvaluation", {
+          criterion: "غياب المهام اليومية (" + missing.length + " مهام)",
+          evalType: "غياب متابعة",
+          deduction: deduct,
+          notes: "مهام غير منجزة في " + res.date + ": " + missing.join("، ")
+        });
+      } catch(e) {}
+
+      updateRahafDisplay();
+      refreshManagerPage();
+      renderRahafEvalLog();
+      showToast("✅ تم تسجيل خصم " + deduct + " نقطة على " + missing.length + " مهام غير منجزة", "warning");
+    } else {
+      showToast("تم تسجيل الغياب في الشيت بدون خصم", "info");
+    }
+  } catch(e) {
+    console.warn("checkYesterdayAbsence:", e.message);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
