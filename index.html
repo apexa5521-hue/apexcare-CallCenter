@@ -1988,9 +1988,13 @@ function closeViolationConfirm() {
   _pendingViolation = null;
 }
 
+let _submitting = false;
+
 async function confirmAndSubmit() {
+  if (_submitting) return;
+  _submitting = true;
   document.getElementById("violationConfirmModal").style.display = "none";
-  if (!_pendingViolation) return;
+  if (!_pendingViolation) { _submitting = false; return; }
   const { supName, name, cat, crit, notes, track, points, violNum, deduction } = _pendingViolation;
   _pendingViolation = null;
 
@@ -2032,7 +2036,7 @@ async function confirmAndSubmit() {
     } else {
       showToast("⚠️ " + (res && res.error || "خطأ في الحفظ"), "warning");
     }
-  } catch(e) { showToast("❌ " + e.message, "error"); }
+  } catch(e) { showToast("❌ " + e.message, "error"); _submitting = false; }
 
   // إعادة تعيين المرفق
   state.attachmentUrl = null;
@@ -2057,6 +2061,7 @@ async function confirmAndSubmit() {
   else showToast(`✓ تم تسجيل المخالفة | خُصم ${deduction} نقطة | +2 لرهف`, "success");
 
   btn.disabled = false;
+  _submitting = false;
   setEl("submitBtnText","textContent","✓ تسجيل المخالفة");
   document.getElementById("empSelect").value = "";
   ["categorySelect","criterionSelect"].forEach(id => {
