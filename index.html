@@ -1812,6 +1812,17 @@ function onCategoryChange() {
   critSelect.disabled = true;
   document.getElementById("criterionInfo").style.display = "none";
 
+  // تحديث تلميح المرفق
+  const attachText = document.getElementById("attachText");
+  if (attachText && cat) {
+    const optionalCats = ["المكالمات"];
+    if (optionalCats.includes(cat)) {
+      attachText.innerHTML = 'اضغط أو اسحب · صورة / فيديو / PDF · حد أقصى 10MB <span style="color:#10b981;font-size:11px">(اختياري)</span>';
+    } else {
+      attachText.innerHTML = 'اضغط أو اسحب · صورة / فيديو / PDF · حد أقصى 10MB <span style="color:#ef4444;font-size:11px;font-weight:700">⚠️ إلزامي لهذه الفئة</span>';
+    }
+  }
+
   if (!name || !cat) return;
 
   const track = EMPLOYEES[name].track;
@@ -1933,6 +1944,17 @@ function submitViolation() {
 
   if (!supName) { showToast("يرجى كتابة اسم المشرفة", "error"); document.getElementById("supervisorName").focus(); return; }
   if (!name || !cat || !crit) { showToast("يرجى تحديد الموظفة والفئة والمعيار", "error"); return; }
+
+  // التحقق من المرفق — إلزامي للرسائل وفتح الملف والمواعيد
+  const OPTIONAL_CATS = ["المكالمات"];
+  const requiresAttachment = !OPTIONAL_CATS.includes(cat);
+  if (requiresAttachment && !state.attachmentUrl) {
+    showToast("📎 مخالفات " + cat + " تستلزم إرفاق دليل (صورة / PDF)", "error");
+    // أبرز منطقة الرفع
+    const az = document.getElementById("attachZone");
+    if (az) { az.style.borderColor = "#ef4444"; az.style.background = "rgba(239,68,68,0.05)"; setTimeout(() => { az.style.borderColor = "var(--border)"; az.style.background = ""; }, 3000); }
+    return;
+  }
 
   const track    = EMPLOYEES[name].track;
   const points   = CRITERIA[track][cat][crit];
