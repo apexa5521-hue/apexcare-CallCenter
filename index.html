@@ -1491,7 +1491,7 @@
     <div id="violConfirmSummary" class="t-inner-box" style="font-family:Cairo;font-size:13px;line-height:2;margin-bottom:20px"></div>
     <div style="display:flex;gap:10px">
       <button onclick="closeViolationConfirm()" class="t-cancel-btn">إلغاء</button>
-      <button onclick="confirmAndSubmit()" style="flex:1;padding:11px;border-radius:8px;border:none;background:linear-gradient(135deg,#1a56db,#0ea5b0);color:#fff;font-family:Cairo;font-size:14px;font-weight:700;cursor:pointer">✓ تأكيد التسجيل</button>
+      <button onclick="this.disabled=true;this.textContent='⏳...';confirmAndSubmit()" id="confirmSubmitBtn" style="flex:1;padding:11px;border-radius:8px;border:none;background:linear-gradient(135deg,#1a56db,#0ea5b0);color:#fff;font-family:Cairo;font-size:14px;font-weight:700;cursor:pointer">✓ تأكيد التسجيل</button>
     </div>
   </div>
 </div>
@@ -2063,7 +2063,14 @@ async function confirmAndSubmit() {
       criterion: crit, category: cat, notes,
       attachmentUrl: state.attachmentUrl || ""
     });
-    if (res && res.success) {
+    if (res && res.duplicate) {
+      showToast("⚠️ تم رصد هذه المخالفة مؤخراً — تجنباً للتكرار لم يُسجَّل", "warning");
+      // تراجع عن التغييرات المحلية
+      state.employeeScores[name].balance  = Math.min(100, state.employeeScores[name].balance + deduction);
+      state.employeeScores[name].deducted = Math.max(0, state.employeeScores[name].deducted - deduction);
+      state.supervisorScore = Math.max(0, state.supervisorScore - 2);
+      state.violationLog.shift();
+    } else if (res && res.success) {
       showToast("✅ تم الحفظ" + (state.attachmentUrl ? " مع المرفق 📎" : ""), "success");
       // احفظ في Drive بمجلد الموظفة (في الخلفية)
       if (state._attachBase64 && name) {
