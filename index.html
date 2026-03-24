@@ -3568,16 +3568,7 @@ async function checkYesterdayAbsence() {
       renderRahafEvalLog();
       showToast("✅ تم تسجيل خصم " + deduct + " نقطة على " + missing.length + " مهام غير منجزة", "warning");
     } else {
-      // سجّل الغياب في الشيت بدون خصم
-      try {
-        await callGAS("recordSupervisorEvaluation", {
-          criterion: "غياب المهام اليومية (" + missing.length + " مهام)",
-          evalType: "غياب متابعة",
-          deduction: 0,
-          notes: "تم تسجيل الغياب بدون خصم — " + res.date + ": " + missing.join("، ")
-        });
-      } catch(e) {}
-      showToast("تم تسجيل الغياب في الشيت بدون خصم", "info");
+      showToast("تم تجاهل الغياب — لن يُحتسب أي خصم", "info");
     }
   } catch(e) {
     console.warn("checkYesterdayAbsence:", e.message);
