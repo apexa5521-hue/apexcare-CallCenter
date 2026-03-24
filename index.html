@@ -3115,9 +3115,12 @@ async function loadFromSheet() {
         }
       });
     }
-    // نقاط رهف
+    // نقاط رهف — supervisorScore = مكتسبة (من المخالفات × 2)
+    // rahafDeductions = خصومات فقط
     if (res.supervisorScore !== undefined) state.supervisorScore = res.supervisorScore;
     if (res.rahafDeductions !== undefined) state.rahafDeductions = res.rahafDeductions;
+    // تأكد أن الصافي لا يتجاوز المكتسبة
+    state.rahafDeductions = Math.min(state.rahafDeductions, state.supervisorScore);
     // سجل المخالفات
     if (Array.isArray(res.violationLog))   state.violationLog    = res.violationLog;
 
@@ -3412,25 +3415,34 @@ async function correctRahafPoints() {
   var input = window.prompt("الرصيد الحالي: " + current + "\nأدخلي الرصيد الصحيح:");
   if (input === null || input === "") return;
   var correct = parseInt(input);
-  if (isNaN(correct) || correct < 0 || correct > state.supervisorScore) {
+  if (isNaN(correct) || correct < 0) {
     showToast("رقم غير صحيح", "error");
     return;
   }
+
+  // حدّث محلياً
   var diff = state.supervisorScore - correct;
   state.rahafDeductions = Math.max(0, diff);
   updateRahafDisplay();
   refreshManagerPage();
   renderRahafEvalLog();
-  showToast("✅ تم تصحيح الرصيد إلى " + correct + " نقطة", "success");
 
+  // حدّث في الشيت
   try {
-    await callGAS("recordSupervisorEvaluation", {
-      criterion: "تصحيح يدوي للرصيد",
-      evalType: "تصحيح",
-      deduction: 0,
-      notes: "تم تصحيح الرصيد من " + current + " إلى " + correct
-    });
-  } catch(e) {}
+    const res = await callGAS("setRahafBalance", { target: correct });
+    if (res && res.success) {
+      // حدّث state بالقيم الفعلية من GAS
+      state.supervisorScore = res.earned;
+      state.rahafDeductions = res.deductions;
+      updateRahafDisplay();
+      refreshManagerPage();
+      showToast("✅ تم تصحيح الرصيد إلى " + correct + " نقطة في الشيت", "success");
+    } else {
+      showToast("✅ تم التصحيح محلياً", "success");
+    }
+  } catch(e) {
+    showToast("✅ تم التصحيح محلياً", "success");
+  }
 }
 
 
@@ -3556,6 +3568,15 @@ async function checkYesterdayAbsence() {
       renderRahafEvalLog();
       showToast("✅ تم تسجيل خصم " + deduct + " نقطة على " + missing.length + " مهام غير منجزة", "warning");
     } else {
+      // سجّل الغياب في الشيت بدون خصم
+      try {
+        await callGAS("recordSupervisorEvaluation", {
+          criterion: "غياب المهام اليومية (" + missing.length + " مهام)",
+          evalType: "غياب متابعة",
+          deduction: 0,
+          notes: "تم تسجيل الغياب بدون خصم — " + res.date + ": " + missing.join("، ")
+        });
+      } catch(e) {}
       showToast("تم تسجيل الغياب في الشيت بدون خصم", "info");
     }
   } catch(e) {
