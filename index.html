@@ -2114,6 +2114,9 @@ async function confirmAndSubmit() {
 
   btn.disabled = false;
   _submitting = false;
+  // أعِد تفعيل زر التأكيد في modal
+  const confirmBtn = document.getElementById("confirmSubmitBtn");
+  if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = "✓ تأكيد التسجيل"; }
   setEl("submitBtnText","textContent","✓ تسجيل المخالفة");
   document.getElementById("empSelect").value = "";
   ["categorySelect","criterionSelect"].forEach(id => {
@@ -2863,40 +2866,65 @@ function showCriteria(track) {
 // [removed]
 
 
+// ── طابور الطلبات — يمنع التوازي والتكرار ──
+const _gasQueue = new Map(); // action+key → Promise جارٍ
+
 async function callGAS(action, data = {}, _retry = 0) {
   if (!GAS_URL || GAS_URL.includes("YOUR_DEPLOYMENT_ID")) throw new Error("GAS_URL غير مضبوط");
-  return new Promise((resolve, reject) => {
+
+  // مفتاح فريد للطلب — يمنع إرسال نفس الطلب مرتين
+  const queueKey = action + "|" + JSON.stringify(data).slice(0, 80);
+  if (_gasQueue.has(queueKey)) {
+    console.warn("⚠️ طلب مكرر تم تجاهله:", action);
+    return _gasQueue.get(queueKey);
+  }
+
+  const promise = new Promise((resolve, reject) => {
     const cbName  = "_cb" + Date.now() + Math.random().toString(36).slice(2, 8);
     const payload = encodeURIComponent(JSON.stringify({ action, ...data }));
     const url     = GAS_URL + "?payload=" + payload + "&callback=" + cbName;
 
+    // مهلة 30 ثانية
     const timer = setTimeout(() => {
-      delete window[cbName];
-      script.parentNode && script.parentNode.removeChild(script);
-      _retry < 2
-        ? callGAS(action, data, _retry + 1).then(resolve).catch(reject)
-        : reject(new Error("انتهت مهلة الاتصال"));
-    }, 25000);
+      cleanup();
+      _gasQueue.delete(queueKey);
+      if (_retry < 1) {
+        callGAS(action, data, _retry + 1).then(resolve).catch(reject);
+      } else {
+        reject(new Error("انتهت مهلة الاتصال — تحقق من الإنترنت"));
+      }
+    }, 30000);
 
-    window[cbName] = (result) => {
+    function cleanup() {
       clearTimeout(timer);
       delete window[cbName];
-      script.parentNode && script.parentNode.removeChild(script);
+      const s = document.getElementById(cbName);
+      if (s) s.parentNode.removeChild(s);
+    }
+
+    window[cbName] = (result) => {
+      cleanup();
+      _gasQueue.delete(queueKey);
       resolve(result);
     };
 
     const script = document.createElement("script");
+    script.id = cbName;
     script.onerror = () => {
-      clearTimeout(timer);
-      delete window[cbName];
-      script.parentNode && script.parentNode.removeChild(script);
-      _retry < 2
-        ? setTimeout(() => callGAS(action, data, _retry + 1).then(resolve).catch(reject), 1500)
-        : reject(new Error("فشل الاتصال بـ GAS"));
+      cleanup();
+      _gasQueue.delete(queueKey);
+      if (_retry < 1) {
+        setTimeout(() => callGAS(action, data, _retry + 1).then(resolve).catch(reject), 2000);
+      } else {
+        reject(new Error("فشل الاتصال بـ GAS"));
+      }
     };
     script.src = url;
     document.head.appendChild(script);
   });
+
+  _gasQueue.set(queueKey, promise);
+  return promise;
 }
 
 
