@@ -1005,7 +1005,22 @@
 
         <!-- عرض المسار -->
         <div id="trackDisplayRow" style="display:none;margin-bottom:14px">
-          <div id="trackDisplay" style="padding:10px 14px;background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:8px;min-height:42px;display:flex;align-items:center;font-family:Cairo"></div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div id="trackDisplay" style="padding:10px 14px;background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:8px;min-height:42px;display:flex;align-items:center;font-family:Cairo;flex:1"></div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <label style="font-size:12px;color:var(--text-muted);font-family:Cairo;white-space:nowrap">تكليف مؤقت:</label>
+              <select id="tempTrackSelect" onchange="onTempTrackChange()"
+                style="font-family:Cairo;font-size:12px;padding:6px 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer">
+                <option value="">— المسار الأصلي —</option>
+                <option value="calls">📞 مكالمات</option>
+                <option value="messages">💬 رسائل</option>
+                <option value="dual">🔀 مشترك</option>
+              </select>
+            </div>
+          </div>
+          <div id="tempTrackBadge" style="display:none;margin-top:6px;padding:5px 12px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.4);border-radius:8px;font-size:11px;color:#d97706;font-family:Cairo;font-weight:700">
+            ⚡ تكليف مؤقت — سيُطبَّق معايير المسار الجديد لهذا الرصد فقط
+          </div>
         </div>
 
         <!-- رصيد الموظفة المختارة -->
@@ -1811,6 +1826,12 @@ function onEmployeeChange() {
   critSelect.disabled = true;
   document.getElementById("criterionInfo").style.display = "none";
 
+  // أعِد ضبط التكليف المؤقت عند تغيير الموظفة
+  const tts2 = document.getElementById("tempTrackSelect");
+  if (tts2) tts2.value = "";
+  const ttb2 = document.getElementById("tempTrackBadge");
+  if (ttb2) ttb2.style.display = "none";
+
   if (!name) {
     trackDisplay.innerHTML = '<span style="color:var(--apex-muted);font-size:13px">يُحدد بعد اختيار الموظفة</span>';
     document.getElementById("empBalanceRow").style.display = "none";
@@ -2001,7 +2022,9 @@ function submitViolation() {
     return;
   }
 
-  const track    = EMPLOYEES[name].track;
+  // المسار الفعلي — الأصلي أو المؤقت
+  const tempSel  = document.getElementById("tempTrackSelect");
+  const track    = (tempSel && tempSel.value) ? tempSel.value : EMPLOYEES[name].track;
   const points   = CRITERIA[track][cat][crit];
   const violNum  = getViolationCount(name, crit) + 1;
   const deductPer = Math.ceil(points / 3);
@@ -2058,10 +2081,13 @@ async function confirmAndSubmit() {
   });
 
   try {
+    const tempSelVal = document.getElementById("tempTrackSelect");
+    const activeTrack = (tempSelVal && tempSelVal.value) ? tempSelVal.value : EMPLOYEES[name].track;
     const res = await callGAS("recordViolation", {
       supervisorName: supName, employeeName: name,
       criterion: crit, category: cat, notes,
-      attachmentUrl: state.attachmentUrl || ""
+      attachmentUrl: state.attachmentUrl || "",
+      overrideTrack: activeTrack
     });
     if (res && res.duplicate) {
       showToast("⚠️ تم رصد هذه المخالفة مؤخراً — تجنباً للتكرار لم يُسجَّل", "warning");
@@ -2119,6 +2145,10 @@ async function confirmAndSubmit() {
   if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = "✓ تأكيد التسجيل"; }
   setEl("submitBtnText","textContent","✓ تسجيل المخالفة");
   document.getElementById("empSelect").value = "";
+  const tts = document.getElementById("tempTrackSelect");
+  if (tts) tts.value = "";
+  const ttb = document.getElementById("tempTrackBadge");
+  if (ttb) ttb.style.display = "none";
   ["categorySelect","criterionSelect"].forEach(id => {
     document.getElementById(id).innerHTML = `<option value="">-- اختر ${id==="categorySelect"?"الفئة":"المعيار"} --</option>`;
     document.getElementById(id).disabled = true;
@@ -3683,6 +3713,36 @@ async function recalculateAllBalances() {
   } catch(e) {
     showToast("❌ " + e.message, "error");
   }
+}
+
+
+function onTempTrackChange() {
+  const sel   = document.getElementById("tempTrackSelect");
+  const badge = document.getElementById("tempTrackBadge");
+  const name  = document.getElementById("empSelect").value;
+  if (!name) return;
+
+  const empOrigTrack = EMPLOYEES[name].track;
+  const tempTrack    = sel.value;
+  const activeTrack  = tempTrack || empOrigTrack;
+
+  // أظهر/أخفِ badge التكليف
+  if (badge) badge.style.display = tempTrack ? "block" : "none";
+
+  // أعِد بناء قائمة الفئات حسب المسار الفعلي
+  const catSelect  = document.getElementById("categorySelect");
+  const critSelect = document.getElementById("criterionSelect");
+  catSelect.innerHTML  = '<option value="">-- اختر الفئة --</option>';
+  critSelect.innerHTML = '<option value="">-- اختر المعيار --</option>';
+  critSelect.disabled  = true;
+  document.getElementById("criterionInfo").style.display = "none";
+
+  Object.keys(CRITERIA[activeTrack]).forEach(cat => {
+    const opt = document.createElement("option");
+    opt.value = cat; opt.textContent = cat;
+    catSelect.appendChild(opt);
+  });
+  catSelect.disabled = false;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
