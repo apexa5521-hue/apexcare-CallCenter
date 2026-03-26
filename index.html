@@ -1891,8 +1891,11 @@ function onCategoryChange() {
 
   if (!name || !cat) return;
 
-  const track = EMPLOYEES[name].track;
-  const criteria = CRITERIA[track][cat];
+  // المسار الفعلي — الأصلي أو المؤقت
+  const tempSel  = document.getElementById("tempTrackSelect");
+  const track    = (tempSel && tempSel.value) ? tempSel.value : EMPLOYEES[name].track;
+  const criteria = CRITERIA[track] && CRITERIA[track][cat];
+  if (!criteria) return;
   Object.entries(criteria).forEach(([crit, pts]) => {
     const opt = document.createElement("option");
     opt.value = crit;
@@ -1911,8 +1914,9 @@ function onCriterionChange() {
     return;
   }
 
-  const track = EMPLOYEES[name].track;
-  const points = CRITERIA[track][cat][crit];
+  const tempSel2 = document.getElementById("tempTrackSelect");
+  const track    = (tempSel2 && tempSel2.value) ? tempSel2.value : EMPLOYEES[name].track;
+  const points   = CRITERIA[track] && CRITERIA[track][cat] ? CRITERIA[track][cat][crit] : 0;
   const violNum = getViolationCount(name, crit) + 1;
   const deductPer = Math.ceil(points / 3);
   let deduction = 0;
