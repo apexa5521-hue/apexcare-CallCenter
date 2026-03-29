@@ -2011,7 +2011,7 @@ function switchPage(page) {
   document.getElementById("page-" + page).classList.add("active");
   document.getElementById("tab" + (page === "supervisor" ? "Sup" : "Mgr")).classList.add("active");
   if (page === "supervisor") { refreshSupervisorPage(); loadTodayChecklist(); logSupervisorLoginToSheet(); }
-  if (page === "manager")    { refreshManagerPage(); loadManagerDailyTasks(); checkYesterdayAbsence(); }
+  if (page === "manager")    { refreshManagerPage(); loadManagerDailyTasks(); checkYesterdayAbsence(); checkMonthlyResetOnLogin(); }
 }
 
 // ============================================================
@@ -4428,6 +4428,40 @@ async function loadQualityEdits() {
       </tr>`;
     }).join("");
   } catch(e) { showToast("❌ " + e.message, "error"); }
+}
+
+
+async function checkMonthlyResetOnLogin() {
+  try {
+    const res = await callGAS("checkMonthlyReset");
+    if (!res || !res.success) return;
+
+    if (!res.skipped) {
+      // تم التعيين الآن — حدّث كل شيء
+      Object.keys(state.employeeScores).forEach(name => {
+        state.employeeScores[name] = { balance: 100, deducted: 0 };
+      });
+      state.supervisorScore = 0;
+      state.rahafDeductions = 0;
+
+      updateRahafDisplay();
+      updateSupervisorScoreDisplay();
+      refreshManagerPage();
+      renderSupEmployeeList();
+
+      showToast("🔄 بداية شهر جديد " + (res.month || "") + " — تم تصفير جميع النقاط وأرشفة الشهر السابق", "info");
+
+      // أظهر نافذة إشعار
+      setTimeout(() => {
+        showConfirmDialog(
+          "🔄 بداية شهر جديد — " + (res.month || ""),
+          "تم تلقائياً:\n✅ أرصدة الموظفات: بدأت من 100 نقطة\n✅ نقاط المشرفات: بدأت من صفر\n✅ الشهر السابق: محفوظ في شيت أرشيف\n✅ سجل التعديلات: يحتوي على ملاحظة البداية\n\nيمكنك مراجعة الأرشيف في Google Sheets"
+        );
+      }, 1500);
+    }
+  } catch(e) {
+    console.warn("checkMonthlyReset:", e.message);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
