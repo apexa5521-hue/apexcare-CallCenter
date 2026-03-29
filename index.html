@@ -870,6 +870,27 @@
 
     </div>
 
+    <!-- ── شاشة اختيار المشرفة (بعد كلمة المرور) ── -->
+    <div id="sup-select-screen" style="display:none">
+      <div style="font-size:15px;font-weight:700;color:var(--text);font-family:Cairo;margin-bottom:6px;text-align:center">من أنتِ؟</div>
+      <div style="font-size:12px;color:var(--text-muted);font-family:Cairo;margin-bottom:20px;text-align:center">اختاري اسمك لتسجيل الدخول</div>
+
+      <!-- بطاقات المشرفات -->
+      <div id="supProfileCards" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px"></div>
+
+      <!-- إضافة مشرفة جديدة -->
+      <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+        <div id="addSupInlineRow" style="display:flex;gap:8px">
+          <input type="text" id="newSupInlineName" placeholder="إضافة مشرفة جديدة..." class="t-input" style="flex:1"
+            onkeydown="if(event.key==='Enter')addSupInline()">
+          <button onclick="addSupInline()"
+            style="padding:8px 16px;border-radius:8px;border:none;background:#10b981;color:#fff;font-family:Cairo;font-size:13px;font-weight:700;cursor:pointer">➕</button>
+        </div>
+      </div>
+
+      <button onclick="showRoleSelect()" style="width:100%;margin-top:14px;padding:8px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:Cairo;font-size:12px;cursor:pointer">← رجوع</button>
+    </div>
+
   </div>
 </div>
 
@@ -956,6 +977,71 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
 
       
+      <!-- اختيار المشرفة -->
+      <div style="background:var(--bg-card);border-radius:14px;padding:16px 20px;margin-bottom:16px;border:1px solid #e5e7eb">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-size:13px;color:var(--text-muted);font-family:Cairo;white-space:nowrap">المشرفة:</span>
+          <select id="supNameSelect" onchange="onSupNameSelect(this.value)"
+            style="flex:1;font-family:Cairo;font-size:14px;font-weight:700;color:var(--apex-gold);padding:8px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg-input);cursor:pointer;min-width:140px">
+            <option value="">-- اختر أو أضف --</option>
+          </select>
+          <span id="supScoreBadge" style="font-size:11px;padding:3px 10px;border-radius:99px;background:rgba(212,168,67,0.1);color:var(--apex-gold);font-family:Cairo;font-weight:700;white-space:nowrap"></span>
+        </div>
+        <!-- إضافة مشرفة جديدة -->
+        <div id="addSupRow" style="display:none;margin-top:10px;display:flex;gap:8px;align-items:center">
+          <input type="text" id="newSupNameInput" placeholder="اسم المشرفة الجديدة" class="t-input" style="flex:1">
+          <button onclick="addNewSupervisor()"
+            style="padding:8px 16px;border-radius:8px;border:none;background:#10b981;color:#fff;font-family:Cairo;font-size:13px;font-weight:700;cursor:pointer">✅ إضافة</button>
+          <button onclick="document.getElementById('addSupRow').style.display='none'"
+            style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-muted);font-family:Cairo;font-size:12px;cursor:pointer">إلغاء</button>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          <button onclick="document.getElementById('addSupRow').style.display='flex'"
+            style="font-size:11px;padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:Cairo;cursor:pointer">➕ مشرفة جديدة</button>
+          <button onclick="resetCurrentSupervisor()"
+            style="font-size:11px;padding:4px 12px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.05);color:#ef4444;font-family:Cairo;cursor:pointer">🔄 بدء شهر جديد</button>
+        </div>
+      </div>
+      <!-- ── إدارة الموظفات ── -->
+      <div style="background:var(--bg-card);border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1;overflow:hidden;margin-bottom:0">
+        <button onclick="toggleSection('empMgmtSection','empMgmtChevron')" style="width:100%;background:none;border:none;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:Cairo">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:4px;height:18px;background:#10b981;border-radius:2px;display:inline-block"></span>
+            <span style="font-size:15px;font-weight:700;color:var(--text)">👥 إدارة الموظفات</span>
+            <span id="empCountBadge" style="background:rgba(16,185,129,0.1);color:#10b981;font-size:11px;padding:2px 10px;border-radius:99px;font-weight:700;font-family:Cairo"></span>
+          </div>
+          <span id="empMgmtChevron" style="font-size:18px;color:var(--text-muted);transition:transform 0.3s">▸</span>
+        </button>
+        <div id="empMgmtSection" style="display:none;padding:0 20px 20px">
+
+          <!-- قائمة الموظفات الحالية -->
+          <div id="empListCards" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"></div>
+
+          <!-- إضافة موظفة جديدة -->
+          <div style="background:var(--bg);border:1.5px dashed var(--border);border-radius:10px;padding:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);font-family:Cairo;margin-bottom:10px">➕ إضافة موظفة جديدة</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+              <div style="flex:1;min-width:120px">
+                <label style="font-size:11px;color:var(--text-muted);font-family:Cairo">الاسم</label>
+                <input type="text" id="newEmpName" placeholder="اسم الموظفة" class="t-input" style="margin-top:4px">
+              </div>
+              <div style="flex:1;min-width:120px">
+                <label style="font-size:11px;color:var(--text-muted);font-family:Cairo">المسار</label>
+                <select id="newEmpTrack" class="t-input" style="margin-top:4px">
+                  <option value="calls">📞 مكالمات</option>
+                  <option value="messages" selected>💬 رسائل</option>
+                  <option value="dual">🔀 مشترك</option>
+                </select>
+              </div>
+              <button onclick="addEmployee()"
+                style="padding:10px 20px;border-radius:8px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-family:Cairo;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">
+                ✅ إضافة
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ── تذكير بمعايير الجودة (قابل للطي) ── -->
       <div style="background:var(--bg-card);border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,0.07);border:1px solid #e5e7eb;grid-column:1/-1;overflow:hidden">
         <button onclick="toggleSection('criteriaSection','criteriaChevron')" style="width:100%;background:none;border:none;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:Cairo">
@@ -1485,6 +1571,81 @@
       <div id="rahafReportContent"></div>
     </div>
 
+    <!-- تعديل سجل الجودة -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin-bottom:0">📝 تعديل سجل الجودة</div>
+        <button onclick="loadQualityEdits()"
+          style="padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg-card);color:var(--text);font-family:Cairo;font-size:12px;cursor:pointer">
+          🔄 تحديث السجل
+        </button>
+      </div>
+
+      <!-- فورم التعديل -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);font-family:Cairo;margin-bottom:12px">➕ تسجيل تعديل جديد</div>
+        <div class="form-row" style="margin-bottom:10px">
+          <div class="form-group">
+            <label>نوع التعديل</label>
+            <select id="qeEditType" class="t-input">
+              <option value="حذف مخالفة مكررة">حذف مخالفة مكررة</option>
+              <option value="تصحيح خصم خاطئ">تصحيح خصم خاطئ</option>
+              <option value="استعادة نقاط">استعادة نقاط</option>
+              <option value="خصم إضافي">خصم إضافي</option>
+              <option value="تعديل آخر">تعديل آخر</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>الموظفة المتأثرة</label>
+            <select id="qeEmployee" class="t-input">
+              <option value="">-- اختر --</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:10px">
+          <div class="form-group">
+            <label>الخصم الأصلي</label>
+            <input type="number" id="qeOrigDeduct" placeholder="0" class="t-input" min="0">
+          </div>
+          <div class="form-group">
+            <label>الخصم الجديد (الصحيح)</label>
+            <input type="number" id="qeNewDeduct" placeholder="0" class="t-input" min="0">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label>المعيار / السبب</label>
+          <input type="text" id="qeReason" placeholder="اذكري سبب التعديل بوضوح..." class="t-input">
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>ملاحظات إضافية</label>
+          <input type="text" id="qeNotes" placeholder="أي تفاصيل إضافية..." class="t-input">
+        </div>
+        <button onclick="submitQualityEdit()"
+          style="padding:10px 24px;border-radius:8px;border:none;background:linear-gradient(135deg,#1a56db,#0ea5b0);color:#fff;font-family:Cairo;font-size:13px;font-weight:700;cursor:pointer">
+          ✅ تسجيل التعديل
+        </button>
+      </div>
+
+      <!-- سجل التعديلات -->
+      <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border)">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:600px">
+          <thead>
+            <tr style="background:var(--border)">
+              <th style="padding:8px 12px;text-align:right;font-family:Cairo;color:var(--text-muted)">التاريخ</th>
+              <th style="padding:8px 12px;text-align:right;font-family:Cairo;color:var(--text-muted)">نوع التعديل</th>
+              <th style="padding:8px 12px;text-align:right;font-family:Cairo;color:var(--text-muted)">الموظفة</th>
+              <th style="padding:8px 12px;text-align:right;font-family:Cairo;color:var(--text-muted)">الخصم قبل</th>
+              <th style="padding:8px 12px;text-align:right;font-family:Cairo;color:var(--text-muted)">الخصم بعد</th>
+              <th style="padding:8px 12px;text-align:right;font-family:Cairo;color:var(--text-muted)">السبب</th>
+            </tr>
+          </thead>
+          <tbody id="qualityEditsTable">
+            <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);font-family:Cairo">اضغط تحديث لعرض السجل</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Weekly Report Preview -->
     <div class="card" id="weeklyReportCard" style="display:none">
       <div class="card-title">📄 التقرير الأسبوعي</div>
@@ -1582,8 +1743,8 @@
 // ============================================================
 // CONFIG & STATE
 // ============================================================
-const MANAGER_PASSWORD    = "Apex@manager2000";
-const SUPERVISOR_PASSWORD = "Apex@sup2000";
+const MANAGER_PASSWORD    = "T9@MG7tYxia8";
+const SUPERVISOR_PASSWORD = "Apex@sup2025";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzvJ0S4NIyjIg9asiHqCc1TrabnwUaPmW3xH9ZeSmc82VxqYiE3p58lFao0yaBFg_QL/exec";
 
 
@@ -1598,7 +1759,8 @@ const DAILY_TASKS = [
   { id: "callquality",  label: "📞 مراجعة جودة المكالمات",                     desc: "هل قيّمتِ مكالمة واحدة على الأقل لكل موظفة اتصال؟" },
 ];
 
-const EMPLOYEES = {
+// EMPLOYEES ديناميكي — يُحمَّل من GAS ويمكن تعديله
+let EMPLOYEES = {
   "مرح":    { track: "calls",    trackLabel: "مكالمات" },
   "جنان":   { track: "messages", trackLabel: "رسائل" },
   "أسيل":   { track: "messages", trackLabel: "رسائل" },
@@ -1608,6 +1770,49 @@ const EMPLOYEES = {
   "روان":   { track: "messages", trackLabel: "رسائل" },
   "تهاني":  { track: "dual",     trackLabel: "مشترك" }
 };
+
+function applyDynamicEmployees(emps) {
+  if (!emps || typeof emps !== "object") return;
+  EMPLOYEES = {};
+  Object.entries(emps).forEach(([name, data]) => {
+    const track = data.track || "messages";
+    EMPLOYEES[name] = {
+      track,
+      trackLabel: track === "calls" ? "مكالمات" : track === "messages" ? "رسائل" : "مشترك"
+    };
+  });
+  // أعِد بناء قوائم الموظفات في الفورم
+  rebuildEmployeeDropdowns();
+  // حدّث MAX_SUP_SCORE
+  updateMaxSupScore();
+}
+
+function updateMaxSupScore() {
+  const count = Object.keys(EMPLOYEES).length;
+  const newMax = count * 100;
+  // حدّث الـ badge
+  setEl("maxSupScore", "textContent", newMax);
+  // أعِد حساب العرض
+  updateRahafDisplay();
+  updateSupervisorScoreDisplay();
+}
+
+function rebuildEmployeeDropdowns() {
+  const names = Object.keys(EMPLOYEES);
+  // فورم المشرفة
+  ["empSelect", "logFilterSelect", "editEmpSelect"].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const first = sel.options[0]; // احتفظ بالخيار الأول (-- اختر --)
+    sel.innerHTML = "";
+    sel.appendChild(first);
+    names.forEach(name => {
+      const opt = document.createElement("option");
+      opt.value = name; opt.textContent = name;
+      sel.appendChild(opt);
+    });
+  });
+}
 
 const MAX_SUP_SCORE = Object.keys(EMPLOYEES).length * 100; // 8 × 100 = 800
 const rahafBonus = pts => Math.floor(pts / 8) * 5; // كل 8 نقاط = 5 ريال
@@ -1759,9 +1964,9 @@ function submitLandingLogin() {
   if (_selectedRole === "supervisor") {
     if (pw === SUPERVISOR_PASSWORD) {
       state.supervisorUnlocked = true;
-      document.getElementById("landing-screen").style.display = "none";
-      switchPage("supervisor");
-      showToast("أهلاً بك في واجهة الإشراف ✓", "success");
+      // أظهر شاشة اختيار المشرفة
+      document.getElementById("login-screen").style.display = "none";
+      showSupSelectScreen();
     } else {
       showToast("رمز الدخول غير صحيح", "error");
       document.getElementById("landingPassword").value = "";
@@ -2375,6 +2580,7 @@ function refreshSupervisorPage() {
   updateSupervisorScoreDisplay();
   renderLogTable();
   renderSupEmployeeList();
+  renderEmpListCards();
 }
 
 function renderSupEmployeeList() {
@@ -2432,6 +2638,7 @@ function updateSupervisorScoreDisplay() {
 }
 
 function refreshManagerPage() {
+  initQualityEditsDropdown();
   // Stats — تحقق من وجود العناصر أولاً (قد تكون في صفحة المدير فقط)
   if (!$id("statTotalBonus")) return;
   const totalBonus = Object.values(state.employeeScores).reduce((s, sc) => s + sc.balance * 5, 0);
@@ -3168,6 +3375,14 @@ async function loadFromSheet() {
       showToast("⚠️ تعذّر تحميل البيانات من الشيت", "warning");
       return;
     }
+    // تحديث الموظفات الديناميكية أولاً
+    if (res.dynamicEmployees) {
+      applyDynamicEmployees(res.dynamicEmployees);
+      // أعِد بناء state.employeeScores
+      Object.keys(EMPLOYEES).forEach(n => {
+        if (!state.employeeScores[n]) state.employeeScores[n] = { balance: 100, deducted: 0 };
+      });
+    }
     // أرصدة الموظفات
     if (res.employeeScores) {
       Object.keys(res.employeeScores).forEach(n => {
@@ -3749,9 +3964,476 @@ function onTempTrackChange() {
   catSelect.disabled = false;
 }
 
+
+// ══════════════════════════════════════════
+// إدارة الموظفات — ديناميكية
+// ══════════════════════════════════════════
+function renderEmpListCards() {
+  const container = document.getElementById("empListCards");
+  const badge     = document.getElementById("empCountBadge");
+  if (!container) return;
+
+  const names = Object.keys(EMPLOYEES);
+  if (badge) badge.textContent = names.length + " موظفة | حد رهف: " + (names.length * 100) + " نقطة";
+
+  container.innerHTML = names.map(name => {
+    const emp   = EMPLOYEES[name];
+    const track = emp.track;
+    const trackLabel = emp.trackLabel;
+    const trackColor = track === "calls" ? "#0ea5b0" : track === "messages" ? "#8b5cf6" : "#d4a843";
+    const trackIcon  = track === "calls" ? "📞" : track === "messages" ? "💬" : "🔀";
+    const bal = state.employeeScores[name] ? state.employeeScores[name].balance : 100;
+
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px">
+      <div style="flex:1;font-size:14px;font-weight:700;color:var(--text);font-family:Cairo">${name}</div>
+      <div style="font-size:11px;padding:3px 10px;border-radius:99px;background:rgba(${track==='calls'?'14,165,176':track==='messages'?'139,92,246':'212,168,67'},0.1);color:${trackColor};font-family:Cairo;font-weight:700">${trackIcon} ${trackLabel}</div>
+      <div style="font-size:12px;color:var(--text-muted);font-family:Cairo">رصيد: ${bal}</div>
+      <button onclick="showEditEmployee('${name}')"
+        style="padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-family:Cairo;font-size:11px;cursor:pointer">✏️ تعديل</button>
+      <button onclick="removeEmployee('${name}')"
+        style="padding:5px 12px;border-radius:6px;border:none;background:rgba(239,68,68,0.1);color:#ef4444;font-family:Cairo;font-size:11px;cursor:pointer">🗑️ حذف</button>
+    </div>`;
+  }).join("");
+}
+
+async function addEmployee() {
+  const name  = document.getElementById("newEmpName").value.trim();
+  const track = document.getElementById("newEmpTrack").value;
+  if (!name) { showToast("أدخلي اسم الموظفة", "error"); return; }
+  if (EMPLOYEES[name]) { showToast("الموظفة موجودة مسبقاً", "error"); return; }
+
+  showToast("⏳ جاري الإضافة...", "info");
+  try {
+    const res = await callGAS("addEmployee", { name, track });
+    if (res && res.success) {
+      applyDynamicEmployees(res.employees);
+      state.employeeScores[name] = { balance: 100, deducted: 0 };
+      renderEmpListCards();
+      refreshManagerPage();
+      renderSupEmployeeList();
+      document.getElementById("newEmpName").value = "";
+      showToast("✅ تمت إضافة " + name + " — المسار: " + (track==="calls"?"مكالمات":track==="messages"?"رسائل":"مشترك"), "success");
+    } else {
+      showToast("❌ " + (res && res.error || "خطأ"), "error");
+    }
+  } catch(e) { showToast("❌ " + e.message, "error"); }
+}
+
+async function removeEmployee(name) {
+  if (Object.keys(EMPLOYEES).length <= 1) { showToast("لا يمكن حذف الموظفة الأخيرة", "error"); return; }
+  const confirmed = await showConfirmDialog("🗑️ حذف موظفة", "هل أنتِ متأكدة من حذف " + name + "؟\nلن تُحذف مخالفاتها من السجل.");
+  if (!confirmed) return;
+
+  try {
+    const res = await callGAS("removeEmployee", { name });
+    if (res && res.success) {
+      applyDynamicEmployees(res.employees);
+      delete state.employeeScores[name];
+      renderEmpListCards();
+      refreshManagerPage();
+      renderSupEmployeeList();
+      showToast("✅ تم حذف " + name, "success");
+    } else {
+      showToast("❌ " + (res && res.error || "خطأ"), "error");
+    }
+  } catch(e) { showToast("❌ " + e.message, "error"); }
+}
+
+function showEditEmployee(name) {
+  const emp = EMPLOYEES[name];
+  // إنشاء modal ديناميكي
+  const existing = document.getElementById("editEmpModal");
+  if (existing) existing.remove();
+
+  const modal = document.createElement("div");
+  modal.id = "editEmpModal";
+  modal.style.cssText = "position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center";
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-top:3px solid #10b981;border-radius:16px;padding:28px;max-width:420px;width:90%;direction:rtl">
+      <div style="font-size:17px;font-weight:700;color:var(--text);font-family:Cairo;margin-bottom:20px;text-align:center">✏️ تعديل بيانات ${name}</div>
+
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--text-muted);font-family:Cairo">الاسم</label>
+        <input type="text" id="_editName" value="${name}" class="t-input" style="margin-top:4px">
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--text-muted);font-family:Cairo">المسار</label>
+        <select id="_editTrack" class="t-input" style="margin-top:4px">
+          <option value="calls" ${emp.track==="calls"?"selected":""}>📞 مكالمات</option>
+          <option value="messages" ${emp.track==="messages"?"selected":""}>💬 رسائل</option>
+          <option value="dual" ${emp.track==="dual"?"selected":""}>🔀 مشترك</option>
+        </select>
+      </div>
+
+      <div id="_trackChangeNote" style="display:none;padding:8px 12px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-size:11px;color:#d97706;font-family:Cairo;margin-bottom:14px">
+        ⚡ تغيير المسار دائم — ستستكمل الموظفة رصيدها الحالي (${emp.track ? (state.employeeScores[name]?.balance || 100) : 100} نقطة) وتُطبَّق معايير المسار الجديد من الآن
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button onclick="document.getElementById('editEmpModal').remove()"
+          style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-family:Cairo;font-size:13px;font-weight:700;cursor:pointer">إلغاء</button>
+        <button onclick="confirmEditEmployee('${name}')"
+          style="flex:1;padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-family:Cairo;font-size:13px;font-weight:700;cursor:pointer">✅ حفظ التغييرات</button>
+      </div>
+    </div>`;
+
+  // أظهر ملاحظة تغيير المسار عند التغيير
+  document.body.appendChild(modal);
+  document.getElementById("_editTrack").addEventListener("change", function() {
+    const note = document.getElementById("_trackChangeNote");
+    if (note) note.style.display = this.value !== emp.track ? "block" : "none";
+  });
+}
+
+async function confirmEditEmployee(oldName) {
+  const newName  = document.getElementById("_editName").value.trim();
+  const newTrack = document.getElementById("_editTrack").value;
+  document.getElementById("editEmpModal").remove();
+
+  if (!newName) { showToast("الاسم لا يمكن أن يكون فارغاً", "error"); return; }
+
+  showToast("⏳ جاري الحفظ...", "info");
+  try {
+    const res = await callGAS("updateEmployee", { oldName, newName, newTrack });
+    if (res && res.success) {
+      // انقل الرصيد من الاسم القديم للجديد
+      if (newName !== oldName) {
+        state.employeeScores[newName] = state.employeeScores[oldName] || { balance: 100, deducted: 0 };
+        delete state.employeeScores[oldName];
+      }
+      applyDynamicEmployees(res.employees);
+      renderEmpListCards();
+      refreshManagerPage();
+      renderSupEmployeeList();
+      showToast("✅ تم حفظ التغييرات", "success");
+    } else {
+      showToast("❌ " + (res && res.error || "خطأ"), "error");
+    }
+  } catch(e) { showToast("❌ " + e.message, "error"); }
+}
+
+
+function saveSupName(name) {
+  if (name) {
+    localStorage.setItem("apex_sup_name", name);
+    // حدّث حقل الاسم في فورم المخالفة
+    const supInput = document.getElementById("supervisorName");
+    if (supInput) supInput.value = name;
+  }
+}
+
+function loadSupName() {
+  const saved = localStorage.getItem("apex_sup_name") || "";
+  const display = document.getElementById("supNameDisplay");
+  const input   = document.getElementById("supervisorName");
+  if (display) display.value = saved;
+  if (input && saved) input.value = saved;
+}
+
+
+// ══════════════════════════════════════════
+// نظام المشرفات المتعددة
+// ══════════════════════════════════════════
+let _supervisorsList = {}; // { name: { earned, deductions, net } }
+let _currentSupName  = "";
+
+async function loadSupervisorsList() {
+  try {
+    const res = await callGAS("getSupervisorList");
+    if (res && res.success) {
+      _supervisorsList = res.supervisors || {};
+      rebuildSupSelect();
+      // استعد المشرفة الأخيرة
+      const lastSup = localStorage.getItem("apex_last_sup") || "";
+      if (lastSup && _supervisorsList[lastSup]) {
+        document.getElementById("supNameSelect").value = lastSup;
+        await onSupNameSelect(lastSup);
+      }
+    }
+  } catch(e) { console.warn("loadSupervisorsList:", e.message); }
+}
+
+function rebuildSupSelect() {
+  const sel = document.getElementById("supNameSelect");
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">-- اختر المشرفة --</option>';
+  Object.keys(_supervisorsList).forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name; opt.textContent = name;
+    if (name === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+async function onSupNameSelect(name) {
+  if (!name) return;
+  _currentSupName = name;
+  localStorage.setItem("apex_last_sup", name);
+
+  // حدّث حقل الاسم في فورم المخالفة
+  const supInput = document.getElementById("supervisorName");
+  if (supInput) supInput.value = name;
+
+  // اجلب نقاطها من GAS
+  try {
+    const res = await callGAS("getSupervisorScore", { name });
+    if (res && res.success) {
+      state.supervisorScore  = res.earned || 0;
+      state.rahafDeductions  = res.deductions || 0;
+      updateRahafDisplay();
+      updateSupervisorScoreDisplay();
+      const badge = document.getElementById("supScoreBadge");
+      if (badge) badge.textContent = "نقاط صافية: " + res.net + " | منذ: " + (res.startDate || "—");
+    }
+  } catch(e) { console.warn("getSupervisorScore:", e.message); }
+}
+
+async function addNewSupervisor() {
+  const name = document.getElementById("newSupNameInput").value.trim();
+  if (!name) { showToast("أدخلي اسم المشرفة", "error"); return; }
+  try {
+    const res = await callGAS("addSupervisor", { name });
+    if (res && res.success) {
+      _supervisorsList[name] = res.supervisor;
+      rebuildSupSelect();
+      document.getElementById("supNameSelect").value = name;
+      document.getElementById("newSupNameInput").value = "";
+      document.getElementById("addSupRow").style.display = "none";
+      await onSupNameSelect(name);
+      showToast("✅ تمت إضافة المشرفة " + name, "success");
+    } else {
+      showToast("❌ " + (res && res.error || "خطأ"), "error");
+    }
+  } catch(e) { showToast("❌ " + e.message, "error"); }
+}
+
+async function resetCurrentSupervisor() {
+  if (!_currentSupName) { showToast("اختاري المشرفة أولاً", "error"); return; }
+  const confirmed = await showConfirmDialog(
+    "🔄 بدء شهر جديد",
+    "سيتم حفظ سجل " + _currentSupName + " الحالي وبدء نقاطها من صفر.\n\nهل أنتِ متأكدة؟"
+  );
+  if (!confirmed) return;
+  try {
+    const res = await callGAS("resetSupervisor", { name: _currentSupName });
+    if (res && res.success) {
+      state.supervisorScore = 0;
+      state.rahafDeductions = 0;
+      updateRahafDisplay();
+      updateSupervisorScoreDisplay();
+      showToast("✅ تم حفظ السجل القديم وبدء شهر جديد لـ " + _currentSupName, "success");
+    }
+  } catch(e) { showToast("❌ " + e.message, "error"); }
+}
+
+
+// ══════════════════════════════════════════
+// شاشة اختيار المشرفة
+// ══════════════════════════════════════════
+async function showSupSelectScreen() {
+  document.getElementById("login-screen").style.display    = "none";
+  document.getElementById("sup-select-screen").style.display = "block";
+
+  // حمّل قائمة المشرفات من GAS
+  try {
+    const res = await callGAS("getSupervisorList");
+    if (res && res.success) {
+      _supervisorsList = res.supervisors || {};
+      renderSupProfileCards();
+    }
+  } catch(e) {
+    // إذا فشل — أظهر الاسم المحفوظ محلياً
+    renderSupProfileCards();
+  }
+}
+
+function renderSupProfileCards() {
+  const container = document.getElementById("supProfileCards");
+  if (!container) return;
+
+  const names = Object.keys(_supervisorsList);
+  if (names.length === 0) {
+    container.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-family:Cairo;font-size:13px">لا توجد مشرفات بعد — أضيفي اسمك أدناه</div>';
+    return;
+  }
+
+  container.innerHTML = names.map(name => {
+    const data = _supervisorsList[name] || {};
+    const net  = Math.max(0, (data.earned || 0) - (data.deductions || 0));
+    const initials = name.charAt(0);
+    return `<button onclick="selectSupAndEnter('${name}')"
+      style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg-card);cursor:pointer;text-align:right;width:100%;transition:all 0.2s"
+      onmouseover="this.style.borderColor='var(--apex-teal)';this.style.background='rgba(14,165,176,0.06)'"
+      onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg-card)'">
+      <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#0ea5b0,#1a56db);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0">${initials}</div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:700;color:var(--text);font-family:Cairo">${name}</div>
+        <div style="font-size:11px;color:var(--text-muted);font-family:Cairo">نقاط صافية: ${net} | منذ: ${data.startDate || "—"}</div>
+      </div>
+      <div style="color:var(--text-muted);font-size:18px">←</div>
+    </button>`;
+  }).join("");
+}
+
+async function selectSupAndEnter(name) {
+  _currentSupName = name;
+  localStorage.setItem("apex_last_sup", name);
+
+  // حدّث حقل الاسم في الفورم
+  const supInput = document.getElementById("supervisorName");
+  if (supInput) supInput.value = name;
+
+  // حدّث قائمة الاختيار في صفحة الإشراف
+  const sel = document.getElementById("supNameSelect");
+  if (sel) {
+    rebuildSupSelect();
+    sel.value = name;
+  }
+
+  // أغلق landing وافتح الإشراف
+  document.getElementById("landing-screen").style.display = "none";
+  switchPage("supervisor");
+  showToast("أهلاً " + name + " 👋", "success");
+
+  // اجلب نقاطها
+  try {
+    const res = await callGAS("getSupervisorScore", { name });
+    if (res && res.success) {
+      state.supervisorScore = res.earned || 0;
+      state.rahafDeductions = res.deductions || 0;
+      updateRahafDisplay();
+      updateSupervisorScoreDisplay();
+    }
+  } catch(e) {}
+}
+
+async function addSupInline() {
+  const name = document.getElementById("newSupInlineName").value.trim();
+  if (!name) { showToast("أدخلي الاسم", "error"); return; }
+  try {
+    const res = await callGAS("addSupervisor", { name });
+    if (res && res.success) {
+      _supervisorsList[name] = res.supervisor;
+      document.getElementById("newSupInlineName").value = "";
+      renderSupProfileCards();
+      showToast("✅ تمت إضافة " + name, "success");
+    } else {
+      // أضف محلياً وحاول لاحقاً
+      _supervisorsList[name] = { earned: 0, deductions: 0, startDate: new Date().toISOString().slice(0,10) };
+      renderSupProfileCards();
+      document.getElementById("newSupInlineName").value = "";
+    }
+  } catch(e) {
+    _supervisorsList[name] = { earned: 0, deductions: 0, startDate: new Date().toISOString().slice(0,10) };
+    renderSupProfileCards();
+    document.getElementById("newSupInlineName").value = "";
+  }
+}
+
+
+// ══════════════════════════════════════════
+// تعديل سجل الجودة
+// ══════════════════════════════════════════
+function initQualityEditsDropdown() {
+  const sel = document.getElementById("qeEmployee");
+  if (!sel) return;
+  const first = sel.options[0];
+  sel.innerHTML = "";
+  sel.appendChild(first);
+  Object.keys(EMPLOYEES).forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+}
+
+async function submitQualityEdit() {
+  const editType   = document.getElementById("qeEditType").value;
+  const employee   = document.getElementById("qeEmployee").value;
+  const origDeduct = parseFloat(document.getElementById("qeOrigDeduct").value) || 0;
+  const newDeduct  = parseFloat(document.getElementById("qeNewDeduct").value) || 0;
+  const reason     = document.getElementById("qeReason").value.trim();
+  const notes      = document.getElementById("qeNotes").value.trim();
+
+  if (!employee) { showToast("اختاري الموظفة المتأثرة", "error"); return; }
+  if (!reason)   { showToast("اذكري سبب التعديل", "error"); return; }
+
+  const difference = newDeduct - origDeduct; // سالب = استعادة، موجب = خصم إضافي
+
+  const confirmed = await showConfirmDialog(
+    "تأكيد التعديل",
+    `نوع: ${editType}\nالموظفة: ${employee}\nالفرق: ${difference > 0 ? "+" : ""}${difference} نقطة\nالسبب: ${reason}`
+  );
+  if (!confirmed) return;
+
+  // حدّث رصيد الموظفة محلياً
+  if (state.employeeScores[employee]) {
+    state.employeeScores[employee].balance  = Math.min(100, Math.max(0, state.employeeScores[employee].balance - difference));
+    state.employeeScores[employee].deducted = Math.max(0, (state.employeeScores[employee].deducted || 0) + difference);
+  }
+
+  try {
+    const res = await callGAS("recordQualityEdit", {
+      managerName: "مدير الجودة",
+      editType, employeeName: employee,
+      originalDeduction: origDeduct,
+      newDeduction: newDeduct,
+      difference, reason, notes
+    });
+
+    if (res && res.success) {
+      showToast("✅ تم تسجيل التعديل في شيت تعديل_سجل_الجودة", "success");
+      // صفّر الفورم
+      document.getElementById("qeOrigDeduct").value = "";
+      document.getElementById("qeNewDeduct").value  = "";
+      document.getElementById("qeReason").value     = "";
+      document.getElementById("qeNotes").value      = "";
+      refreshManagerPage();
+      loadQualityEdits();
+    } else {
+      showToast("❌ " + (res && res.error || "خطأ"), "error");
+    }
+  } catch(e) { showToast("❌ " + e.message, "error"); }
+}
+
+async function loadQualityEdits() {
+  const tbody = document.getElementById("qualityEditsTable");
+  if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;font-family:Cairo;color:var(--text-muted)">⏳ جاري التحميل...</td></tr>';
+
+  try {
+    const res = await callGAS("getQualityEdits");
+    if (!res || !res.success) { showToast("❌ فشل تحميل السجل", "error"); return; }
+
+    const edits = res.edits || [];
+    if (!tbody) return;
+
+    if (edits.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);font-family:Cairo">لا توجد تعديلات بعد</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = edits.slice().reverse().map(e => {
+      const diff  = Number(e.difference) || 0;
+      const color = diff < 0 ? "#10b981" : diff > 0 ? "#ef4444" : "#6b7280";
+      const sign  = diff > 0 ? "+" : "";
+      return `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:8px 12px;color:var(--text-muted);font-size:11px;font-family:Cairo">${e.date || ""}</td>
+        <td style="padding:8px 12px;color:var(--text);font-family:Cairo">${e.editType || ""}</td>
+        <td style="padding:8px 12px;font-weight:700;color:var(--text);font-family:Cairo">${e.employee || "—"}</td>
+        <td style="padding:8px 12px;color:var(--text-muted);font-family:Cairo">${e.originalDeduction ?? "—"}</td>
+        <td style="padding:8px 12px;font-weight:700;color:${color};font-family:Cairo">${sign}${diff} → ${e.newDeduction ?? "—"}</td>
+        <td style="padding:8px 12px;color:var(--text-muted);font-size:11px;font-family:Cairo;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${e.reason || ""}">${e.reason || "—"}</td>
+      </tr>`;
+    }).join("");
+  } catch(e) { showToast("❌ " + e.message, "error"); }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   setEl("maxSupScore", "textContent", MAX_SUP_SCORE);
   initTheme();
+  loadSupName();
   updateDateDisplays();
   setInterval(updateDateDisplays, 60000);
   refreshSupervisorPage();
