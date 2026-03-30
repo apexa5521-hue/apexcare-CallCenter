@@ -1175,11 +1175,18 @@
           <input type="file" id="attachInput" accept="image/*,video/*,.pdf" style="display:none" onchange="handleAttachFile(this)">
           <div id="attachStatus" style="display:none;margin-top:8px;padding:8px 12px;background:var(--bg-card);border-radius:8px;border:1px solid var(--border);font-size:12px;font-family:Cairo"></div>
         </div>
-        <!-- ملاحظات -->
-        <div class="form-group" style="margin-bottom:18px">
-          <label style="color:var(--text-label);font-size:13px;font-weight:600">ملاحظات إضافية</label>
-          <textarea id="notesInput" rows="2" placeholder="أي تفاصيل إضافية..."
-            style="background:var(--bg-card);border:1.5px solid #e5e7eb;border-radius:8px;color:var(--text);padding:10px 14px;font-family:Cairo;font-size:14px;width:100%;resize:vertical"></textarea>
+        <!-- تاريخ حدوث المخالفة -->
+        <div class="form-row" style="margin-bottom:14px">
+          <div class="form-group">
+            <label style="color:var(--text-label);font-size:13px;font-weight:600">📅 تاريخ حدوث المخالفة <span style="color:#ef4444">*</span></label>
+            <input type="date" id="violationDateInput" class="t-input" style="margin-top:4px">
+            <div style="font-size:11px;color:var(--text-muted);font-family:Cairo;margin-top:3px">إذا لم يُحدَّد يُستخدم تاريخ اليوم تلقائياً</div>
+          </div>
+          <div class="form-group">
+            <label style="color:var(--text-label);font-size:13px;font-weight:600">ملاحظات إضافية</label>
+            <textarea id="notesInput" rows="2" placeholder="أي تفاصيل إضافية..."
+              style="background:var(--bg-card);border:1.5px solid #e5e7eb;border-radius:8px;color:var(--text);padding:10px 14px;font-family:Cairo;font-size:14px;width:100%;resize:vertical;margin-top:4px"></textarea>
+          </div>
         </div>
 
         <button id="submitBtn" onclick="submitViolation()" style="
@@ -1389,7 +1396,16 @@
 
     <!-- Rahaf Evaluation -->
     <div class="card">
-      <div class="card-title">🎯 تقييم المشرفة رهف</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin-bottom:0">🎯 تقييم المشرفة</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <label style="font-size:12px;color:var(--text-muted);font-family:Cairo">المشرفة:</label>
+          <select id="evalSupSelect" onchange="onEvalSupChange()"
+            style="font-family:Cairo;font-size:13px;font-weight:700;color:var(--apex-gold);padding:6px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg-input);cursor:pointer">
+            <option value="رهف">رهف</option>
+          </select>
+        </div>
+      </div>
 
       <div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);border-radius:10px;padding:16px;margin-bottom:20px">
         <div style="display:flex;align-items:center;gap:16px">
@@ -1743,8 +1759,8 @@
 // ============================================================
 // CONFIG & STATE
 // ============================================================
-const MANAGER_PASSWORD    = "Apexmang";
-const SUPERVISOR_PASSWORD = "Apexsup11";
+const MANAGER_PASSWORD    = "T9@MG7tYxia8";
+const SUPERVISOR_PASSWORD = "Apex@sup2025";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzvJ0S4NIyjIg9asiHqCc1TrabnwUaPmW3xH9ZeSmc82VxqYiE3p58lFao0yaBFg_QL/exec";
 
 
@@ -2292,11 +2308,14 @@ async function confirmAndSubmit() {
   try {
     const tempSelVal = document.getElementById("tempTrackSelect");
     const activeTrack = (tempSelVal && tempSelVal.value) ? tempSelVal.value : EMPLOYEES[name].track;
+    const violDateInput = document.getElementById("violationDateInput");
+    const violDate = violDateInput && violDateInput.value ? violDateInput.value : new Date().toISOString().slice(0,10);
     const res = await callGAS("recordViolation", {
       supervisorName: supName, employeeName: name,
       criterion: crit, category: cat, notes,
       attachmentUrl: state.attachmentUrl || "",
-      overrideTrack: activeTrack
+      overrideTrack: activeTrack,
+      violationDate: violDate
     });
     if (res && res.duplicate) {
       showToast("⚠️ تم رصد هذه المخالفة مؤخراً — تجنباً للتكرار لم يُسجَّل", "warning");
@@ -2356,6 +2375,7 @@ async function confirmAndSubmit() {
   document.getElementById("empSelect").value = "";
   const tts = document.getElementById("tempTrackSelect");
   if (tts) tts.value = "";
+  // لا نصفّر تاريخ الحدوث — يبقى للرصد التالي في نفس اليوم
   const ttb = document.getElementById("tempTrackBadge");
   if (ttb) ttb.style.display = "none";
   ["categorySelect","criterionSelect"].forEach(id => {
@@ -2639,6 +2659,7 @@ function updateSupervisorScoreDisplay() {
 
 function refreshManagerPage() {
   initQualityEditsDropdown();
+  initEvalSupSelect();
   // Stats — تحقق من وجود العناصر أولاً (قد تكون في صفحة المدير فقط)
   if (!$id("statTotalBonus")) return;
   const totalBonus = Object.values(state.employeeScores).reduce((s, sc) => s + sc.balance * 5, 0);
@@ -4462,6 +4483,46 @@ async function checkMonthlyResetOnLogin() {
   } catch(e) {
     console.warn("checkMonthlyReset:", e.message);
   }
+}
+
+
+// تهيئة قائمة المشرفات في قسم التقييم
+function initEvalSupSelect() {
+  const sel = document.getElementById("evalSupSelect");
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = "";
+  Object.keys(_supervisorsList).forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name; opt.textContent = name;
+    if (name === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  // إذا لم توجد مشرفات — أضف رهف الافتراضية
+  if (sel.options.length === 0) {
+    const opt = document.createElement("option");
+    opt.value = "رهف"; opt.textContent = "رهف";
+    sel.appendChild(opt);
+  }
+}
+
+async function onEvalSupChange() {
+  const name = document.getElementById("evalSupSelect").value;
+  if (!name) return;
+  // حدّث عرض النقاط
+  try {
+    const res = await callGAS("getSupervisorScore", { name });
+    if (res && res.success) {
+      // حدّث state مؤقتاً للعرض
+      const pts    = Math.max(0, (res.earned||0) - (res.deductions||0));
+      const bonus  = Math.floor(pts / 8) * 5;
+      setEl("rahafBalanceDisplay", "textContent", pts);
+      setEl("rahafBonusDisplay",   "textContent", bonus + " ريال");
+      const bar = document.getElementById("rahafBalanceBar");
+      if (bar) bar.style.width = Math.min(100, pts / 8) + "%";
+      showToast("نقاط " + name + " الصافية: " + pts, "info");
+    }
+  } catch(e) {}
 }
 
 document.addEventListener("DOMContentLoaded", () => {
