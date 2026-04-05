@@ -955,7 +955,7 @@
         <div id="supDateDisplay" style="margin-top:12px;font-family:Cairo;font-size:12px;color:rgba(255,255,255,0.75);background:rgba(255,255,255,0.1);border-radius:8px;padding:5px 12px;display:inline-block"></div>
       </div>
       <div style="background:rgba(255,255,255,0.15);border-radius:12px;padding:14px 20px;text-align:center;backdrop-filter:blur(8px);position:relative">
-        <div style="font-size:11px;color:rgba(255,255,255,0.75);font-family:Cairo">نقاطك التراكمية</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.75);font-family:Cairo" id="supScoreLabel">نقاطك التراكمية</div>
         <div style="font-size:28px;font-weight:900;color:#fde68a;font-family:Cairo" id="supScoreDisplay">0</div>
         <div style="font-size:11px;color:rgba(255,255,255,0.75);font-family:Cairo">حافز: <span id="supBonusDisplay" style="color:#6ee7b7;font-weight:700">0</span> ريال</div>
       </div>
@@ -1804,13 +1804,14 @@ function applyDynamicEmployees(emps) {
 }
 
 function updateMaxSupScore() {
-  const count = Object.keys(EMPLOYEES).length;
+  const count  = Object.keys(EMPLOYEES).length;
   const newMax = count * 100;
-  // حدّث الـ badge
-  setEl("maxSupScore", "textContent", newMax);
-  // أعِد حساب العرض
+  setEl("maxSupScore",     "textContent", newMax);
+  setEl("bonusThreshText", "textContent", count + " نقاط");
+  setEl("maxScoreText",    "textContent", newMax + " نقطة");
   updateRahafDisplay();
   updateSupervisorScoreDisplay();
+  updateSupNameInUI();
 }
 
 function rebuildEmployeeDropdowns() {
@@ -1831,7 +1832,8 @@ function rebuildEmployeeDropdowns() {
 }
 
 const MAX_SUP_SCORE = Object.keys(EMPLOYEES).length * 100; // 8 × 100 = 800
-const rahafBonus = pts => Math.floor(pts / 8) * 5; // كل 8 نقاط = 5 ريال
+// الحافز = floor(نقاط_صافية / عدد_الموظفات) × 5 ريال
+const rahafBonus = pts => Math.floor(pts / Object.keys(EMPLOYEES).length) * 5; // كل 8 نقاط = 5 ريال
 
 
 // ── مساعد آمن للوصول للعناصر ──
@@ -2599,6 +2601,7 @@ function printReport() {
 // REFRESH UI
 // ============================================================
 function refreshSupervisorPage() {
+  updateSupNameInUI();
   updateSupervisorScoreDisplay();
   renderLogTable();
   renderSupEmployeeList();
@@ -2714,7 +2717,7 @@ function updateRahafDisplay() {
   const max     = MAX_SUP_SCORE;                   // 800
   const pct     = Math.min(100, (pts / max) * 100);
   const bonus   = rahafBonus(pts);                 // Math.floor(pts / 8) * 5
-  const THRESH  = Object.keys(EMPLOYEES).length;  // 9
+  const THRESH  = Object.keys(EMPLOYEES).length; // ديناميكي
   const remainder = pts % THRESH;
   const toNext  = remainder === 0 && pts > 0 ? 0 : THRESH - remainder;
   const milestone = (pts > 0 && remainder === 0)
@@ -4318,6 +4321,7 @@ async function selectSupAndEnter(name) {
   // أغلق landing وافتح الإشراف
   document.getElementById("landing-screen").style.display = "none";
   switchPage("supervisor");
+  updateSupNameInUI();
   showToast("أهلاً " + name + " 👋", "success");
 
   // اجلب نقاطها
@@ -4525,6 +4529,32 @@ async function onEvalSupChange() {
       showToast("نقاط " + name + " الصافية: " + pts, "info");
     }
   } catch(e) {}
+}
+
+
+// ══════════════════════════════════════════
+// اسم المشرفة الديناميكي
+// ══════════════════════════════════════════
+function getCurrentSupName() {
+  return _currentSupName || localStorage.getItem("apex_last_sup") || "المشرفة";
+}
+
+function updateSupNameInUI() {
+  const name = getCurrentSupName();
+  // عنوان قسم تقييم المشرفة
+  ["rahafTitle","rahafEvalTitle"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = "🎯 تقييم المشرفة " + name;
+  });
+  // شريط النقاط
+  const bar = document.getElementById("supScoreLabel");
+  if (bar) bar.textContent = "نقاط " + name + " التراكمية";
+  // badge الحد الأقصى
+  const maxBadge = document.getElementById("empCountBadge");
+  if (maxBadge) {
+    const cnt = Object.keys(EMPLOYEES).length;
+    maxBadge.textContent = cnt + " موظفة | حد " + name + ": " + (cnt * 100) + " نقطة";
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
