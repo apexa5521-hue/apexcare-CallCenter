@@ -1288,6 +1288,9 @@
         <button onclick="testConnection()" style="padding:8px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg-card);color:var(--text);font-family:Cairo;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px">
           <span id="testConnIcon">🔌</span> اختبار الاتصال
         </button>
+        <button onclick="syncAndRebuildSheets()" style="padding:8px 14px;border-radius:8px;border:1.5px solid var(--apex-teal);background:rgba(14,165,176,0.08);color:var(--apex-teal-light);font-family:Cairo;font-size:13px;cursor:pointer">
+          🔄 مزامنة الشيتات
+        </button>
       </div>
     </div>
 
@@ -1805,7 +1808,7 @@ function applyDynamicEmployees(emps) {
 
 function updateMaxSupScore() {
   const count  = Object.keys(EMPLOYEES).length;
-  const newMax = count * 100;
+  const newMax = getMaxSupScore();
   setEl("maxSupScore",     "textContent", newMax);
   setEl("bonusThreshText", "textContent", count + " نقاط");
   setEl("maxScoreText",    "textContent", newMax + " نقطة");
@@ -1831,7 +1834,9 @@ function rebuildEmployeeDropdowns() {
   });
 }
 
-const MAX_SUP_SCORE = Object.keys(EMPLOYEES).length * 100; // 8 × 100 = 800
+// MAX_SUP_SCORE ديناميكي — يعتمد على عدد الموظفات الحالي
+function getMaxSupScore() { return Object.keys(EMPLOYEES).length * 100; }
+const MAX_SUP_SCORE = getMaxSupScore(); // قيمة أولية — تُحدَّث ديناميكياً // 8 × 100 = 800
 // الحافز = floor(نقاط_صافية / عدد_الموظفات) × 5 ريال
 const rahafBonus = pts => Math.floor(pts / Object.keys(EMPLOYEES).length) * 5; // كل 8 نقاط = 5 ريال
 
@@ -2301,7 +2306,7 @@ async function confirmAndSubmit() {
 
   state.employeeScores[name].balance  = Math.max(0, state.employeeScores[name].balance - deduction);
   state.employeeScores[name].deducted += deduction;
-  state.supervisorScore = Math.min(MAX_SUP_SCORE, state.supervisorScore + 2);
+  state.supervisorScore = Math.min(getMaxSupScore(), state.supervisorScore + 2);
   state.violationLog.unshift({
     date: new Date().toLocaleDateString("ar-SA"),
     time: new Date().toLocaleTimeString("ar-SA"),
@@ -2659,7 +2664,7 @@ function updateSupervisorScoreDisplay() {
   setEl("supScoreDisplay",  "textContent", pts);
   setEl("supScoreDisplay2", "textContent", pts);
   setEl("supBonusDisplay",  "textContent", rahafBonus(pts) + " ريال");
-  setStyle("supScoreBar",   "width", (pts / MAX_SUP_SCORE * 100) + "%");
+  setStyle("supScoreBar",   "width", (pts / getMaxSupScore() * 100) + "%");
 }
 
 function refreshManagerPage() {
@@ -2677,7 +2682,7 @@ function refreshManagerPage() {
   setEl("statTopPerformer", "textContent", top[0] || "--");
   const rahafNet = Math.max(0, state.supervisorScore - state.rahafDeductions);
   setEl("statRahafScore",   "textContent", rahafNet);
-  setEl("statRahafBalance", "textContent", rahafNet + " / " + MAX_SUP_SCORE);
+  setEl("statRahafBalance", "textContent", rahafNet + " / " + getMaxSupScore());
 
   // Employee grid
   const grid = $id("managerEmployeeGrid");
@@ -3409,6 +3414,13 @@ async function loadFromSheet() {
         if (!state.employeeScores[n]) state.employeeScores[n] = { balance: 100, deducted: 0 };
       });
     }
+    // تحديث MAX_SUP_SCORE من GAS
+    if (res.maxSupScore) {
+      Object.defineProperty(window, "MAX_SUP_SCORE_VALUE", { value: res.maxSupScore, writable: true, configurable: true });
+      setEl("maxSupScore", "textContent", res.maxSupScore);
+      setEl("bonusThreshText", "textContent", (res.empCount || Object.keys(EMPLOYEES).length) + " نقاط");
+      setEl("maxScoreText", "textContent", res.maxSupScore + " نقطة");
+    }
     // أرصدة الموظفات
     if (res.employeeScores) {
       Object.keys(res.employeeScores).forEach(n => {
@@ -4038,6 +4050,7 @@ async function addEmployee() {
       refreshManagerPage();
       renderSupEmployeeList();
       document.getElementById("newEmpName").value = "";
+      if (res.maxSupScore) { setEl("maxSupScore","textContent",res.maxSupScore); setEl("maxScoreText","textContent",res.maxSupScore+" نقطة"); setEl("bonusThreshText","textContent",res.count+" نقاط"); }
       showToast("✅ تمت إضافة " + name + " — المسار: " + (track==="calls"?"مكالمات":track==="messages"?"رسائل":"مشترك"), "success");
     } else {
       showToast("❌ " + (res && res.error || "خطأ"), "error");
@@ -4058,6 +4071,7 @@ async function removeEmployee(name) {
       renderEmpListCards();
       refreshManagerPage();
       renderSupEmployeeList();
+      if (res.maxSupScore) { setEl("maxSupScore","textContent",res.maxSupScore); setEl("maxScoreText","textContent",res.maxSupScore+" نقطة"); setEl("bonusThreshText","textContent",res.count+" نقاط"); }
       showToast("✅ تم حذف " + name, "success");
     } else {
       showToast("❌ " + (res && res.error || "خطأ"), "error");
@@ -4555,6 +4569,20 @@ function updateSupNameInUI() {
     const cnt = Object.keys(EMPLOYEES).length;
     maxBadge.textContent = cnt + " موظفة | حد " + name + ": " + (cnt * 100) + " نقطة";
   }
+}
+
+
+async function syncAndRebuildSheets() {
+  showToast("⏳ جاري المزامنة...", "info");
+  try {
+    const res = await callGAS("syncSheets");
+    if (res && res.success) {
+      await callGAS("rebuildSheets");
+      showToast("✅ تمت مزامنة الشيتات وإعادة بنائها", "success");
+    } else {
+      showToast("❌ " + (res && res.error || "خطأ"), "error");
+    }
+  } catch(e) { showToast("❌ " + e.message, "error"); }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
